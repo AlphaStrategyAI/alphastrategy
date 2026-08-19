@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
@@ -83,6 +84,7 @@ class Supervisor:
         self._evaluators = evaluators or {}
         self._weight_fn = weight_fn
         self._prev_clock: ClockSnapshot | None = None
+        self._lock = threading.RLock()
         self._snapshot = load_state(home.state_path())
         if self._snapshot.state == SupervisorState.STARTING:
             self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
@@ -109,13 +111,15 @@ class Supervisor:
 
     def set_policy(self, overlay: dict) -> None:
         """Apply a tighten-only overlay patch to the account policy."""
-        self._policy = merge_limits({}, self._policy, overlay)
+        with self._lock:
+            self._policy = merge_limits({}, self._policy, overlay)
 
     def reload_from_disk(self) -> None:
         """Reload persisted snapshot from disk without reconstructing the broker."""
-        self._snapshot = load_state(self._home.state_path())
-        if self._snapshot.state == SupervisorState.STARTING:
-            self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
+        with self._lock:
+            self._snapshot = load_state(self._home.state_path())
+            if self._snapshot.state == SupervisorState.STARTING:
+                self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
 
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)
@@ -124,104 +128,110 @@ class Supervisor:
         audit.append(self._home.audit_path(), {"event": event, **payload})
 
     def start_sleeve(self, bundle_id: str, allocation: float) -> None:
-        if allocation < 0:
-            raise ValueError("allocation must be >= 0")
-        other_total = sum(
-            alloc
-            for bid, alloc in self._snapshot.sleeves.items()
-            if bid != bundle_id
-        )
-        total = other_total + allocation
-        if total > 1.0:
-            raise ValueError("allocation sum must be <= 1.0")
-        self._snapshot.sleeves[bundle_id] = allocation
-        self._audit("paper_start", bundle_id=bundle_id, allocation=allocation)
-        self._persist()
+        with self._lock:
+            if allocation < 0:
+                raise ValueError("allocation must be >= 0")
+            other_total = sum(
+                alloc
+                for bid, alloc in self._snapshot.sleeves.items()
+                if bid != bundle_id
+            )
+            total = other_total + allocation
+            if total > 1.0:
+                raise ValueError("allocation sum must be <= 1.0")
+            self._snapshot.sleeves[bundle_id] = allocation
+            self._audit("paper_start", bundle_id=bundle_id, allocation=allocation)
+            self._persist()
 
     def stop_sleeve(self, bundle_id: str) -> None:
-        if bundle_id in self._snapshot.sleeves:
-            self._snapshot.sleeves[bundle_id] = 0.0
-            self._audit("paper_stop", bundle_id=bundle_id)
-            self._persist()
+        with self._lock:
+            if bundle_id in self._snapshot.sleeves:
+                self._snapshot.sleeves[bundle_id] = 0.0
+                self._audit("paper_stop", bundle_id=bundle_id)
+                self._persist()
 
     def kill_sleeve(self, bundle_id: str) -> None:
-        if bundle_id not in self._snapshot.sleeves:
-            return
-        self._snapshot.sleeves[bundle_id] = 0.0
-        self._flatten_account()
-        self._audit("kill", bundle_id=bundle_id)
-        self._persist()
+        with self._lock:
+            if bundle_id not in self._snapshot.sleeves:
+                return
+            self._snapshot.sleeves[bundle_id] = 0.0
+            self._flatten_account()
+            self._audit("kill", bundle_id=bundle_id)
+            self._persist()
 
     def kill_account(self) -> None:
-        self._flatten_account()
-        self._audit("kill", scope="account")
-        self._persist()
+        with self._lock:
+            self._flatten_account()
+            self._audit("kill", scope="account")
+            self._persist()
 
     def resume(self) -> None:
-        if self._snapshot.state != SupervisorState.HALTED:
-            return
-        self._snapshot.halt_reason = None
-        self._audit("resume")
-        try:
-            clock_raw = self._broker.get_clock()
-            cur = _clock_snapshot(clock_raw)
-            self._set_idle_state(cur)
-        except Exception:
-            self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
-        self._persist()
+        with self._lock:
+            if self._snapshot.state != SupervisorState.HALTED:
+                return
+            self._snapshot.halt_reason = None
+            self._audit("resume")
+            try:
+                clock_raw = self._broker.get_clock()
+                cur = _clock_snapshot(clock_raw)
+                self._set_idle_state(cur)
+            except Exception:
+                self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
+            self._persist()
 
     def tick(self) -> None:
-        self.reload_from_disk()
-        if self._snapshot.state in (SupervisorState.STOPPED, SupervisorState.FLATTENING):
-            return
-        if self._snapshot.state == SupervisorState.HALTED:
-            return
+        with self._lock:
+            self.reload_from_disk()
+            if self._snapshot.state in (SupervisorState.STOPPED, SupervisorState.FLATTENING):
+                return
+            if self._snapshot.state == SupervisorState.HALTED:
+                return
 
-        try:
-            clock_raw = self._broker.get_clock()
-        except Exception as exc:
-            self._halt(f"broker get_clock failed: {exc}")
-            return
-
-        cur = _clock_snapshot(clock_raw)
-
-        try:
-            self._heartbeat_health_check()
-        except HaltRequested as exc:
-            self._halt(str(exc))
-            self._update_prev_clock(cur, None)
-            return
-        except Exception as exc:
-            self._halt(str(exc))
-            self._update_prev_clock(cur, None)
-            return
-
-        event = next_rebalance_event(
-            self._prev_clock,
-            cur,
-            self._snapshot.last_rebalance_event,
-        )
-
-        if event is None:
-            self._set_idle_state(cur)
-            self._update_prev_clock(cur, None)
-            self._persist()
-            return
-
-        if event in ("open", "close"):
             try:
-                self._rebalance(cur, event)
+                clock_raw = self._broker.get_clock()
+            except Exception as exc:
+                self._halt(f"broker get_clock failed: {exc}")
+                return
+
+            cur = _clock_snapshot(clock_raw)
+
+            try:
+                self._heartbeat_health_check()
             except HaltRequested as exc:
                 self._halt(str(exc))
-            except IllegalWeights as exc:
-                self._halt(str(exc))
-            except FlattenRequested:
-                self._flatten_account()
+                self._update_prev_clock(cur, None)
+                return
             except Exception as exc:
                 self._halt(str(exc))
-            finally:
-                self._update_prev_clock(cur, event)
+                self._update_prev_clock(cur, None)
+                return
+
+            event = next_rebalance_event(
+                self._prev_clock,
+                cur,
+                self._snapshot.last_rebalance_event,
+            )
+
+            if event is None:
+                self._set_idle_state(cur)
+                self._update_prev_clock(cur, None)
                 self._persist()
+                return
+
+            if event in ("open", "close"):
+                try:
+                    self._rebalance(cur, event)
+                except HaltRequested as exc:
+                    self._halt(str(exc))
+                except IllegalWeights as exc:
+                    self._halt(str(exc))
+                except FlattenRequested:
+                    self._flatten_account()
+                except Exception as exc:
+                    self._halt(str(exc))
+                finally:
+                    self._update_prev_clock(cur, event)
+                    self._persist()
 
     def _heartbeat_health_check(self) -> None:
         symbols: set[str] = set()

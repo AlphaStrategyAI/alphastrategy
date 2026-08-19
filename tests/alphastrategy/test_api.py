@@ -345,6 +345,16 @@ def test_get_static_assets(api_client: ApiClient):
     assert b"javascript" in js.headers.get("Content-Type", "").encode()
     assert b"/api/status" in js.body
 
+    static_css = api_client.get("/static/styles.css")
+    assert static_css.status == 200
+    assert b"text/css" in static_css.headers.get("Content-Type", "").encode()
+    assert static_css.body == css.body
+
+    static_js = api_client.get("/static/app.js")
+    assert static_js.status == 200
+    assert b"javascript" in static_js.headers.get("Content-Type", "").encode()
+    assert static_js.body == js.body
+
 
 def test_dispatch_reloads_cli_persisted_sleeve(api_stack):
     client, home, supervisor, broker = api_stack
