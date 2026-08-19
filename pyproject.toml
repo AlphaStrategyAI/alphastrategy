@@ -3,17 +3,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "openstrategy"
-version = "1.1.3"
-description = "Honest, verifiable quantitative research infrastructure — not 'find alpha', 'don't waste time on strategies that don't work'."
+name = "alphastrategy"
+version = "0.1.0"
+description = "Local Alpaca paper execution desk for alphaloop strategy bundles (.asb)."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "OpenStrategy Team"},
+    {name = "AlphaStrategy Team"},
 ]
-keywords = ["quant", "trading", "backtest", "investment", "finance"]
+keywords = ["quant", "trading", "paper-trading", "execution", "finance"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
@@ -28,26 +28,11 @@ requires-python = ">=3.9"
 dependencies = [
     "pandas>=1.5.0",
     "numpy>=1.24.0",
-    "yfinance>=0.2.0",
     "pyyaml>=6.0",
     "typing_extensions>=4.0.0",
 ]
 
 [project.optional-dependencies]
-china = ["akshare>=1.11.0"]
-crypto = ["ccxt>=4.0.0"]
-openbb = ["openbb>=4.0.0"]
-analysis = ["matplotlib>=3.7.0", "seaborn>=0.12.0"]
-optimization = ["scikit-optimize>=0.9.0", "optuna>=3.0.0"]
-all = [
-    "akshare>=1.11.0",
-    "ccxt>=4.0.0",
-    "openbb>=4.0.0",
-    "matplotlib>=3.7.0",
-    "seaborn>=0.12.0",
-    "scikit-optimize>=0.9.0",
-    "optuna>=3.0.0",
-]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -57,16 +42,16 @@ dev = [
 ]
 
 [project.scripts]
-openstrategy = "openstrategy.cli:main"
+alphastrategy = "alphastrategy.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/fpc0000/openstrategy"
-Documentation = "https://github.com/fpc0000/openstrategy#readme"
-Repository = "https://github.com/fpc0000/openstrategy"
-Issues = "https://github.com/fpc0000/openstrategy/issues"
+Homepage = "https://github.com/AlphaStrategyAI/alphastrategy"
+Documentation = "https://github.com/AlphaStrategyAI/alphastrategy#readme"
+Repository = "https://github.com/AlphaStrategyAI/alphastrategy"
+Issues = "https://github.com/AlphaStrategyAI/alphastrategy/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/openstrategy"]
+packages = ["src/alphastrategy"]
 
 [tool.black]
 line-length = 100
