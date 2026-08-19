@@ -1,11 +1,12 @@
-# alphastrategy positioning and v1 execution runtime
+# alphastrategy v1 product requirements
 
 **Date:** 2026-08-19
-**Status:** Draft for written review
+**Status:** Requirements (moved from `docs/superpowers/specs/`)
 **Repo:** `AlphaStrategyAI/alphastrategy`
 **Historical freeze:** git tag `v1.1.3` = `41cbdff78d12080f82d1e61790df33e92ea29540` (openstrategy honest-tool snapshot, pre-alphaloop rename)
+**Technical design:** [`docs/plans/2026-08-19-alphastrategy-v1-technical-design.md`](../plans/2026-08-19-alphastrategy-v1-technical-design.md)
 
-This spec is the product contract for alphastrategy. It does not implement code. Implementation requires a separate plan after this file is approved.
+This document is the product contract for alphastrategy. Implementation follows the technical design in `docs/plans/`.
 
 ## 1. Positioning
 
@@ -290,7 +291,7 @@ New version line starts at execution-product `0.1.0`. Do not pretend this is ope
 
 ## 14. Implementation decomposition
 
-Too large for one plan. After this spec is approved, plans should split at least:
+Work is specified in [`docs/plans/2026-08-19-alphastrategy-v1-technical-design.md`](../plans/2026-08-19-alphastrategy-v1-technical-design.md), split into four independently testable phases:
 
 1. Bundle schema, hash, import, golden fixtures, DSL v0 interpreter + sandbox.
 2. Supervisor, clock, combine-and-order, halt/flatten, Alpaca paper adapter extensions.
