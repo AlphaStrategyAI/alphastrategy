@@ -111,6 +111,12 @@ class Supervisor:
         """Apply a tighten-only overlay patch to the account policy."""
         self._policy = merge_limits({}, self._policy, overlay)
 
+    def reload_from_disk(self) -> None:
+        """Reload persisted snapshot from disk without reconstructing the broker."""
+        self._snapshot = load_state(self._home.state_path())
+        if self._snapshot.state == SupervisorState.STARTING:
+            self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
+
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)
 
@@ -165,6 +171,7 @@ class Supervisor:
         self._persist()
 
     def tick(self) -> None:
+        self.reload_from_disk()
         if self._snapshot.state in (SupervisorState.STOPPED, SupervisorState.FLATTENING):
             return
         if self._snapshot.state == SupervisorState.HALTED:

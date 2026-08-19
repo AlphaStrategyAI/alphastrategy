@@ -351,6 +351,7 @@ def dispatch(
     method: str,
     path: str,
 ) -> None:
+    supervisor.reload_from_disk()
     routes = {
         ("GET", "/api/status"): handle_get_status,
         ("GET", "/api/portfolio"): handle_get_portfolio,

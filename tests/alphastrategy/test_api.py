@@ -323,3 +323,24 @@ def test_import_golden_asb_via_api(api_stack, tmp_path: Path):
     bundle_id = body["bundle_id"]
     assert bundle_id.startswith("asb_")
     assert home.bundle_dir(bundle_id).is_dir()
+
+
+def test_dispatch_reloads_cli_persisted_sleeve(api_stack):
+    client, home, supervisor, broker = api_stack
+    assert supervisor.snapshot.sleeves == {}
+
+    cli_supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_x": {"AAPL": 1.0}},
+    )
+    cli_supervisor.start_sleeve("asb_x", 0.3)
+
+    assert supervisor.snapshot.sleeves == {}
+
+    response = client.get("/api/bundles")
+    assert response.status == 200
+    body = response.json()
+    assert body["paper"]["asb_x"] == 0.3
+    assert supervisor.snapshot.sleeves["asb_x"] == 0.3
