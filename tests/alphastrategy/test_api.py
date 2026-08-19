@@ -68,7 +68,7 @@ class ApiResponse:
         if raw:
             try:
                 self._json = json_module.loads(raw.decode("utf-8"))
-            except json.JSONDecodeError:
+            except json_module.JSONDecodeError:
                 self._json = None
 
     def json(self) -> dict | list:
@@ -323,6 +323,27 @@ def test_import_golden_asb_via_api(api_stack, tmp_path: Path):
     bundle_id = body["bundle_id"]
     assert bundle_id.startswith("asb_")
     assert home.bundle_dir(bundle_id).is_dir()
+
+
+def test_get_root_returns_html(api_client: ApiClient):
+    response = api_client.get("/")
+    assert response.status == 200
+    assert b"text/html" in response.headers.get("Content-Type", "").encode()
+    body = response.body.decode("utf-8")
+    assert "<title>alphastrategy</title>" in body
+    assert "Portfolio" in body
+
+
+def test_get_static_assets(api_client: ApiClient):
+    css = api_client.get("/styles.css")
+    assert css.status == 200
+    assert b"text/css" in css.headers.get("Content-Type", "").encode()
+    assert b"#0b0e14" in css.body
+
+    js = api_client.get("/app.js")
+    assert js.status == 200
+    assert b"javascript" in js.headers.get("Content-Type", "").encode()
+    assert b"/api/status" in js.body
 
 
 def test_dispatch_reloads_cli_persisted_sleeve(api_stack):

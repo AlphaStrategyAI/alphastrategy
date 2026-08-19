@@ -11,7 +11,7 @@ from typing import Any, Callable
 
 import yaml
 
-from alphastrategy.api.app import make_server
+from alphastrategy.api.app import make_server, start_heartbeat
 from alphastrategy.bundle.import_bundle import import_asb
 from alphastrategy.errors import ImportRejected
 from alphastrategy.home import AlphaStrategyHome
@@ -146,6 +146,7 @@ def _cmd_import(home: AlphaStrategyHome, path: Path) -> int:
 
 def _cmd_start(home: AlphaStrategyHome, broker: Any, host: str, port: int) -> int:
     supervisor = _make_supervisor(home, broker)
+    start_heartbeat(supervisor)
     server = make_server(home, supervisor, bind=host, port=port)
     try:
         server.serve_forever()

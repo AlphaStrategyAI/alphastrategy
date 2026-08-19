@@ -120,6 +120,21 @@ def test_start_rejects_public_bind(patch_alpaca: mock.MagicMock) -> None:
     patch_alpaca.assert_not_called()
 
 
+def test_start_starts_supervisor_heartbeat(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
+    with mock.patch("alphastrategy.cli.main.make_server") as make_server:
+        with mock.patch("alphastrategy.cli.main.start_heartbeat") as start_heartbeat:
+            server = mock.MagicMock()
+            server.serve_forever.side_effect = KeyboardInterrupt
+            make_server.return_value = server
+
+            rc = main(["start"])
+
+    assert rc == 0
+    start_heartbeat.assert_called_once()
+    supervisor = start_heartbeat.call_args.args[0]
+    assert supervisor is make_server.call_args.args[1]
+
+
 def test_start_uses_paper_adapter(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
     with mock.patch("alphastrategy.cli.main.make_server") as make_server:
         server = mock.MagicMock()
