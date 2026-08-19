@@ -263,6 +263,28 @@ def test_put_risk_rejects_loosening(api_client: ApiClient):
     assert "error" in response.json()
 
 
+def test_put_risk_sleeve_overlay_rejects_second_loosening(api_stack):
+    client, home, _, _ = api_stack
+    bundle_dir = home.imported_dir() / "asb_test"
+    bundle_dir.mkdir(parents=True)
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+
+    tighten = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_test": {"max_name_weight": 0.15}}},
+    )
+    assert tighten.status == 200
+    risk = client.get("/api/risk").json()
+    assert risk["sleeves"]["asb_test"]["max_name_weight"] == 0.15
+
+    loosen = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_test": {"max_name_weight": 0.18}}},
+    )
+    assert loosen.status == 400
+    assert "error" in loosen.json()
+
+
 def test_import_golden_asb_via_api(api_stack, tmp_path: Path):
     client, home, _, _ = api_stack
     golden = Path(__file__).parent / "fixtures" / "golden.asb"

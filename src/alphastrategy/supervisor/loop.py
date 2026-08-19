@@ -6,7 +6,7 @@ from typing import Any, Callable
 from alphastrategy.errors import FlattenRequested, HaltRequested, IllegalWeights
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.check import check_book
-from alphastrategy.risk.policy import AccountPolicy
+from alphastrategy.risk.policy import AccountPolicy, merge_limits
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, next_rebalance_event
 from alphastrategy.supervisor.combine import combine
@@ -98,6 +98,14 @@ class Supervisor:
     @property
     def policy(self) -> AccountPolicy:
         return self._policy
+
+    @property
+    def broker(self) -> Any:
+        return self._broker
+
+    def set_policy(self, overlay: dict) -> None:
+        """Apply a tighten-only overlay patch to the account policy."""
+        self._policy = merge_limits({}, self._policy, overlay)
 
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)

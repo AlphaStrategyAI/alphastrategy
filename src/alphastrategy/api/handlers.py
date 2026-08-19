@@ -61,7 +61,7 @@ def _apply_startup_runtime(home: AlphaStrategyHome, supervisor: Supervisor) -> N
     runtime = _load_runtime(home)
     overlay = runtime.get("account_overlay")
     if isinstance(overlay, dict) and overlay:
-        supervisor._policy = merge_limits({}, AccountPolicy.defaults(), overlay)
+        supervisor.set_policy(overlay)
 
 
 def _policy_to_dict(policy: AccountPolicy) -> dict[str, Any]:
@@ -139,7 +139,7 @@ def _extract_upload(handler: Any) -> tuple[str, bytes]:
 def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
     snapshot = supervisor.snapshot
     try:
-        clock = supervisor._broker.get_clock()
+        clock = supervisor.broker.get_clock()
     except Exception as exc:
         clock = {"error": str(exc)}
     halted = snapshot.state == SupervisorState.HALTED
@@ -156,10 +156,10 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
 
 
 def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
-    account = supervisor._broker.get_account()
+    account = supervisor.broker.get_account()
     equity = float(account.get("equity", 0))
     cash = float(account.get("cash", equity))
-    positions = supervisor._broker.list_positions()
+    positions = supervisor.broker.list_positions()
     snapshot = supervisor.snapshot
     payload: dict[str, Any] = {
         "equity": equity,
@@ -301,7 +301,7 @@ def handle_put_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
             if not isinstance(account_patch, dict):
                 raise ValueError("account must be an object")
             try:
-                supervisor._policy = merge_limits({}, supervisor.policy, account_patch)
+                supervisor.set_policy(account_patch)
             except ImportRejected as exc:
                 _error(handler, 400, str(exc))
                 return
@@ -317,12 +317,13 @@ def handle_put_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
                     raise ValueError(f"sleeve overlay for {bundle_id} must be an object")
                 envelope = _bundle_envelope(home, bundle_id)
                 current_overlay = sleeve_overlays.get(bundle_id)
+                stored = current_overlay if isinstance(current_overlay, dict) else {}
+                current_effective = merge_limits(envelope, supervisor.policy, stored)
                 try:
-                    merge_limits(envelope, supervisor.policy, patch)
+                    merge_limits({}, current_effective, patch)
                 except ImportRejected as exc:
                     _error(handler, 400, str(exc))
                     return
-                stored = current_overlay if isinstance(current_overlay, dict) else {}
                 stored.update(patch)
                 sleeve_overlays[bundle_id] = stored
             runtime["sleeve_overlays"] = sleeve_overlays
