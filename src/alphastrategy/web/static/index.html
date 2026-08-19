@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>alphastrategy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">alphastrategy · paper</div>
+    <nav id="nav" aria-label="Screens">
+      <button type="button" data-screen="portfolio" class="active">Portfolio</button>
+      <button type="button" data-screen="strategies">Strategies</button>
+      <button type="button" data-screen="run">Run</button>
+      <button type="button" data-screen="activity">Activity</button>
+      <button type="button" data-screen="risk">Risk</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="screen-portfolio" class="screen active" aria-label="Portfolio">
+      <div id="halt-banner" class="banner halt hidden" role="alert"></div>
+      <div id="deviation-banner" class="banner fail hidden" role="alert"></div>
+
+      <div class="metrics nums">
+        <div class="metric">
+          <div class="metric-label">Equity</div>
+          <div id="metric-equity" class="metric-value">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Cash</div>
+          <div id="metric-cash" class="metric-value">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Day PnL</div>
+          <div id="metric-pnl" class="metric-value">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Gross</div>
+          <div id="metric-gross" class="metric-value">—</div>
+        </div>
+      </div>
+
+      <p id="clock-line" class="clock-line nums"></p>
+
+      <div class="grid" style="margin-top: 0.75rem;">
+        <div class="panel">
+          <h2>Positions</h2>
+          <table id="positions-table">
+            <thead>
+              <tr><th>Symbol</th><th>Qty</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h2>Sleeves</h2>
+          <table id="sleeves-table">
+            <thead>
+              <tr><th>Bundle</th><th>Allocation</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-strategies" class="screen" aria-label="Strategies">
+      <div class="panel">
+        <h2>Import bundle</h2>
+        <form id="import-form">
+          <input type="file" id="import-file" accept=".asb" required>
+          <button type="submit" class="action primary">Upload .asb</button>
+        </form>
+        <div id="import-error" class="error-box hidden"></div>
+      </div>
+      <div class="panel" style="margin-top: 0.75rem;">
+        <h2>Imported strategies</h2>
+        <table id="strategies-table">
+          <thead>
+            <tr>
+              <th>Bundle</th>
+              <th>State</th>
+              <th>Allocation</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="screen-run" class="screen" aria-label="Run">
+      <div class="panel">
+        <h2>Paper control</h2>
+        <form id="start-form" class="inline">
+          <label>
+            Bundle
+            <select id="start-bundle" required></select>
+          </label>
+          <label>
+            Allocation
+            <input type="number" id="start-allocation" min="0" max="1" step="0.01" value="0.25" required>
+          </label>
+          <label class="confirm-row">
+            <input type="checkbox" id="start-confirm" required>
+            Confirm paper start
+          </label>
+          <button type="submit" class="action primary">Start paper</button>
+        </form>
+        <div id="run-error" class="error-box hidden"></div>
+      </div>
+
+      <div id="run-sleeves"></div>
+
+      <div class="panel" style="margin-top: 0.75rem;">
+        <h2>Account</h2>
+        <button type="button" id="account-kill" class="action danger account-kill">Kill account — flatten all</button>
+        <button type="button" id="account-resume" class="action warn">Resume after halt</button>
+      </div>
+    </section>
+
+    <section id="screen-activity" class="screen" aria-label="Activity">
+      <div class="panel">
+        <h2>Audit events</h2>
+        <ul id="activity-list" class="activity-list nums"></ul>
+      </div>
+    </section>
+
+    <section id="screen-risk" class="screen" aria-label="Risk">
+      <div class="risk-account-bar">
+        <h2>Account caps (always visible)</h2>
+        <div id="risk-account-caps" class="risk-caps nums"></div>
+      </div>
+      <div class="panel">
+        <h2>Tighten account policy</h2>
+        <form id="risk-account-form" class="inline"></form>
+        <div id="risk-error" class="error-box hidden"></div>
+      </div>
+      <div class="panel" style="margin-top: 0.75rem;">
+        <h2>Sleeve overlays</h2>
+        <div id="risk-sleeves"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
