@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
+import shutil
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,8 +21,32 @@ from alphastrategy.bundle.schema import (
     load_strategy_dsl,
     require_members,
 )
-from alphastrategy.errors import ImportRejected
+from alphastrategy.dsl.sandbox import run_sandbox, weights_match
+from alphastrategy.errors import HaltRequested, ImportRejected
 from alphastrategy.home import AlphaStrategyHome
+
+
+def _bars_from_csv(data: bytes) -> dict:
+    reader = csv.DictReader(io.StringIO(data.decode()))
+    if not reader.fieldnames or "date" not in reader.fieldnames:
+        raise ImportRejected("conformance/bars.csv missing date column")
+    symbols = [c for c in reader.fieldnames if c != "date"]
+    rows = list(reader)
+    bars: dict = {"date": [row["date"] for row in rows]}
+    for sym in symbols:
+        bars[sym] = [float(row[sym]) for row in rows]
+    return bars
+
+
+def _run_conformance(staging: Path, members: dict[str, bytes]) -> None:
+    expected = load_conformance_expected(members["conformance/expected_weights.yaml"])
+    bars = _bars_from_csv(members["conformance/bars.csv"])
+    try:
+        got = run_sandbox(staging, bars, expected.effective_at)
+    except HaltRequested as exc:
+        raise ImportRejected(f"conformance sandbox failed: {exc}") from exc
+    if not weights_match(got, expected.weights):
+        raise ImportRejected("conformance weights mismatch")
 
 
 def import_asb(path: Path, home: AlphaStrategyHome) -> str:
@@ -52,12 +80,19 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
     if bundle_dir.exists():
         raise ImportRejected(f"bundle already imported: {bundle_id}")
 
-    bundle_dir.mkdir(parents=True, exist_ok=False)
+    staging_parent = Path(tempfile.mkdtemp())
+    staging = staging_parent / bundle_id
+    staging.mkdir(parents=True, exist_ok=False)
     try:
         for name, data in sorted(members.items()):
-            dest = bundle_dir / name
+            dest = staging / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(data)
+
+        _run_conformance(staging, members)
+
+        bundle_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(staging), str(bundle_dir))
 
         meta = {
             "imported_at": datetime.now(timezone.utc).isoformat(),
@@ -68,9 +103,12 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
             encoding="utf-8",
         )
     except Exception:
-        import shutil
-
-        shutil.rmtree(bundle_dir, ignore_errors=True)
+        shutil.rmtree(staging_parent, ignore_errors=True)
+        if bundle_dir.exists():
+            shutil.rmtree(bundle_dir, ignore_errors=True)
         raise
+    finally:
+        if staging_parent.exists():
+            shutil.rmtree(staging_parent, ignore_errors=True)
 
     return bundle_id

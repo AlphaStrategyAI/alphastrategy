@@ -42,3 +42,27 @@ def mutate_member(asb_bytes: bytes, name: str, new: bytes) -> bytes:
             data = new if item.filename == name else zin.read(item.filename)
             zout.writestr(item.filename, data)
     return out.getvalue()
+
+
+def mutate_member_rehash(asb_bytes: bytes, name: str, new: bytes) -> bytes:
+    buf_in = io.BytesIO(asb_bytes)
+    members: dict[str, bytes] = {}
+    with zipfile.ZipFile(buf_in) as zin:
+        for item in zin.infolist():
+            members[item.filename] = zin.read(item.filename)
+    members[name] = new
+    sha = content_hash(members)
+    bid = bundle_id_from_hash(sha)
+    members["bundle.yaml"] = (
+        "schema_version: alphastrategy.bundle/v0\n"
+        "dsl_version: alphaloop.dsl/v0\n"
+        f"bundle_id: {bid}\n"
+        f"content_hash: {sha}\n"
+        "created_at: '2026-08-19T00:00:00Z'\n"
+        "registry_uri: null\n"
+    ).encode()
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w") as zout:
+        for member_name, data in sorted(members.items()):
+            zout.writestr(member_name, data)
+    return out.getvalue()
