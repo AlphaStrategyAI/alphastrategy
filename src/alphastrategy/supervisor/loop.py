@@ -370,7 +370,7 @@ class Supervisor:
 
         session_date = cur.next_close.date().isoformat()
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"
-        self._audit("rebalance", event=event, orders=len(plans))
+        self._audit("rebalance", session_event=event, orders=len(plans))
         self._set_idle_state(cur)
 
     def _halt(self, reason: str) -> None:
