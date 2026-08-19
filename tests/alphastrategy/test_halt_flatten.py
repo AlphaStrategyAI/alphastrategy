@@ -1,0 +1,221 @@
+from __future__ import annotations
+
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+
+from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.risk.policy import AccountPolicy
+from alphastrategy.supervisor.loop import Supervisor
+from alphastrategy.supervisor.state import SupervisorState
+
+
+class FakeBroker:
+    def __init__(
+        self,
+        *,
+        equity: float = 10_000.0,
+        is_open: bool = False,
+        next_open: datetime | None = None,
+        next_close: datetime | None = None,
+        now: datetime | None = None,
+    ) -> None:
+        self.equity = equity
+        self.positions: dict[str, float] = {}
+        self.orders: list[tuple[str, float, str]] = []
+        self.close_all_called = False
+        self.raise_on_get_bars = False
+        self._next_open = next_open or datetime(2024, 1, 31, 14, 30)
+        self._next_close = next_close or datetime(2024, 1, 31, 21, 0)
+        self._now = now or self._next_open
+        self._is_open = is_open
+        self.bars: dict = {}
+
+    def _iso(self, dt: datetime) -> str:
+        return dt.isoformat()
+
+    def set_session_open(
+        self,
+        *,
+        open_time: datetime,
+        session_close: datetime,
+        now: datetime,
+    ) -> None:
+        self._next_open = open_time
+        self._next_close = session_close
+        self._now = now
+        self._is_open = True
+
+    def get_account(self) -> dict:
+        return {"equity": str(self.equity), "cash": str(self.equity)}
+
+    def list_positions(self) -> list[dict]:
+        return [{"symbol": symbol, "qty": str(qty)} for symbol, qty in self.positions.items()]
+
+    def place_order(self, symbol: str, qty: float, side: str) -> dict:
+        self.orders.append((symbol, qty, side))
+        delta = qty if side == "buy" else -qty
+        self.positions[symbol] = self.positions.get(symbol, 0.0) + delta
+        return {"id": f"order-{len(self.orders)}", "status": "filled"}
+
+    def cancel_order(self, order_id: str) -> None:
+        return None
+
+    def close_all(self) -> None:
+        self.close_all_called = True
+        self.positions = {}
+
+    def get_clock(self) -> dict:
+        return {
+            "is_open": self._is_open,
+            "next_open": self._iso(self._next_open),
+            "next_close": self._iso(self._next_close),
+            "timestamp": self._iso(self._now),
+        }
+
+    def advance_now(self, now: datetime) -> None:
+        self._now = now
+
+    def get_bars(self, symbols: list[str], start: str, end: str) -> dict:
+        if self.raise_on_get_bars:
+            raise RuntimeError("bars unavailable")
+        out: dict = {}
+        for symbol in symbols:
+            if symbol in self.bars:
+                out[symbol] = self.bars[symbol]
+            else:
+                out[symbol] = {"bars": [{"c": 100.0}]}
+        return out
+
+
+def _make_supervisor(
+    tmp_path: Path,
+    broker: FakeBroker,
+    *,
+    evaluators: dict[str, dict[str, float]] | None = None,
+) -> Supervisor:
+    home = AlphaStrategyHome(root=tmp_path)
+    return Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators=evaluators or {"asb_test": {"AAPL": 1.0}},
+    )
+
+
+def _read_state(tmp_path: Path) -> dict:
+    return json.loads((tmp_path / "supervisor-state.json").read_text(encoding="utf-8"))
+
+
+def test_open_rebalance_places_orders_and_sets_last_event(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(is_open=False, next_open=open_time, next_close=session_close, now=open_time)
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+
+    assert broker.orders
+    assert len(broker.orders) >= 1
+    state = _read_state(tmp_path)
+    assert state["last_rebalance_event"] == "2024-01-31:open"
+
+
+def test_second_tick_same_session_places_no_orders(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(is_open=False, next_open=open_time, next_close=session_close, now=open_time)
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    first_batch = list(broker.orders)
+    assert first_batch
+
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+
+    assert broker.orders == first_batch
+
+
+def test_get_bars_failure_halts_without_flatten(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(is_open=False, next_open=open_time, next_close=session_close, now=open_time)
+    broker.raise_on_get_bars = True
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+
+    assert supervisor.state == SupervisorState.HALTED
+    assert broker.close_all_called is False
+    assert broker.orders == []
+
+
+def test_kill_account_calls_close_all_and_stops(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.positions["AAPL"] = 10.0
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    supervisor.kill_account()
+
+    assert broker.close_all_called is True
+    assert supervisor.state in (SupervisorState.STOPPED, SupervisorState.IDLE_IN_SESSION)
+
+
+def test_resume_after_halt_does_not_place_orders_until_next_event(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(is_open=False, next_open=open_time, next_close=session_close, now=open_time)
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    assert broker.orders
+
+    broker.raise_on_get_bars = True
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.state == SupervisorState.HALTED
+
+    broker.raise_on_get_bars = False
+    supervisor.resume()
+    orders_after_open = list(broker.orders)
+
+    broker.advance_now(open_time + timedelta(minutes=15))
+    supervisor.tick()
+
+    assert broker.orders == orders_after_open
+
+
+def test_start_sleeve_rejects_allocation_over_one(tmp_path: Path):
+    broker = FakeBroker()
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_a", 0.7)
+    with pytest.raises(ValueError):
+        supervisor.start_sleeve("asb_b", 0.4)
