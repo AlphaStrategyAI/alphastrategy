@@ -99,7 +99,6 @@ class Supervisor:
         self._evaluators = evaluators or {}
         self._weight_fn = weight_fn
         self._prev_clock: ClockSnapshot | None = None
-        self._prime_clock_after_resume = False
         self._lock = threading.RLock()
         self._snapshot = load_state(home.state_path())
         if self._snapshot.state == SupervisorState.STARTING:
@@ -188,12 +187,12 @@ class Supervisor:
             if self._snapshot.state != SupervisorState.HALTED:
                 return
             self._snapshot.halt_reason = None
+            self._snapshot.prime_clock_after_resume = True
             self._audit("resume")
             try:
                 clock_raw = self._broker.get_clock()
                 cur = _clock_snapshot(clock_raw)
                 self._prev_clock = cur
-                self._prime_clock_after_resume = False
                 self._snapshot.state = (
                     SupervisorState.IDLE_IN_SESSION
                     if cur.is_open
@@ -201,7 +200,6 @@ class Supervisor:
                 )
             except Exception:
                 self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
-                self._prime_clock_after_resume = True
             self._persist()
 
     def tick(self) -> None:
@@ -224,9 +222,9 @@ class Supervisor:
             except HaltRequested as exc:
                 self._halt(str(exc))
                 return
-            if self._prime_clock_after_resume:
+            if self._snapshot.prime_clock_after_resume:
                 self._prev_clock = cur
-                self._prime_clock_after_resume = False
+                self._snapshot.prime_clock_after_resume = False
 
             event = next_rebalance_event(
                 self._prev_clock,
@@ -463,6 +461,7 @@ class Supervisor:
     def _halt(self, reason: str) -> None:
         self._snapshot.state = SupervisorState.HALTED
         self._snapshot.halt_reason = reason
+        self._snapshot.prime_clock_after_resume = True
         self._audit("halt", reason=reason)
         self._persist()
 

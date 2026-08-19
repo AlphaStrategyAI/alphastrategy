@@ -40,7 +40,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional, Protocol, runtime_checkable
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 
 class LiveTradingRefused(Exception):
@@ -61,6 +61,11 @@ def _normalized_hostname(url: str) -> str | None:
     hostname = urlsplit(url).hostname
     if hostname is None:
         return None
+    while True:
+        decoded = unquote(hostname)
+        if decoded == hostname:
+            break
+        hostname = decoded
     try:
         hostname = hostname.encode("idna").decode("ascii")
     except UnicodeError:

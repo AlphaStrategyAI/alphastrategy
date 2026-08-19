@@ -510,6 +510,34 @@ def test_resume_after_get_clock_halt_does_not_catch_up_open(tmp_path: Path):
     assert broker.orders == []
 
 
+def test_resume_suppression_survives_supervisor_restart(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=True,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    broker.raise_on_get_clock = True
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    supervisor.tick()
+    assert supervisor.state == SupervisorState.HALTED
+
+    broker.raise_on_get_clock = False
+    supervisor.resume()
+    assert _read_state(tmp_path)["prime_clock_after_resume"] is True
+
+    restarted = _make_supervisor(tmp_path, broker)
+    restarted.tick()
+
+    assert restarted.state == SupervisorState.IDLE_IN_SESSION
+    assert broker.orders == []
+    assert _read_state(tmp_path)["prime_clock_after_resume"] is False
+
+
 def test_kill_sleeve_calls_close_all_once(tmp_path: Path):
     broker = FakeBroker(is_open=True)
     broker.positions["AAPL"] = 10.0

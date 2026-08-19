@@ -23,6 +23,7 @@ class SupervisorSnapshot:
     last_rebalance_event: str | None = None
     sleeves: dict[str, float] = field(default_factory=dict)
     halt_reason: str | None = None
+    prime_clock_after_resume: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -37,6 +38,7 @@ class SupervisorSnapshot:
             last_rebalance_event=payload.get("last_rebalance_event"),
             sleeves=dict(payload.get("sleeves") or {}),
             halt_reason=payload.get("halt_reason"),
+            prime_clock_after_resume=bool(payload.get("prime_clock_after_resume", False)),
         )
 
 

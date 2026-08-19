@@ -84,6 +84,8 @@ def test_confirm_flag_is_string_not_truthy_zero():
         LIVE_BASE_URL,
         "https://API.ALPACA.MARKETS",
         "https://api。alpaca。markets",
+        "https://%61pi.alpaca.markets",
+        "https://%2561pi.alpaca.markets",
     ],
 )
 def test_paper_mode_rejects_normalized_live_trading_base_url(base_url: str):
