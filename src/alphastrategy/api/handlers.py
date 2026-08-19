@@ -297,39 +297,49 @@ def handle_put_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
             sleeve_overlays = {}
 
         account_patch = body.get("account")
-        if account_patch is not None:
-            if not isinstance(account_patch, dict):
-                raise ValueError("account must be an object")
-            try:
-                supervisor.set_policy(account_patch)
-            except ImportRejected as exc:
-                _error(handler, 400, str(exc))
-                return
-            account_overlay.update(account_patch)
-            runtime["account_overlay"] = account_overlay
+        if account_patch is not None and not isinstance(account_patch, dict):
+            raise ValueError("account must be an object")
 
         sleeves_patch = body.get("sleeves")
+        if sleeves_patch is not None and not isinstance(sleeves_patch, dict):
+            raise ValueError("sleeves must be an object")
+
+        planned_account_overlay = dict(account_overlay)
+        planned_sleeve_overlays = {
+            bundle_id: dict(overlay)
+            for bundle_id, overlay in sleeve_overlays.items()
+            if isinstance(overlay, dict)
+        }
+
+        projected_policy = supervisor.policy
+        if account_patch is not None:
+            projected_policy = merge_limits({}, supervisor.policy, account_patch)
+            planned_account_overlay.update(account_patch)
+
         if sleeves_patch is not None:
-            if not isinstance(sleeves_patch, dict):
-                raise ValueError("sleeves must be an object")
             for bundle_id, patch in sleeves_patch.items():
                 if not isinstance(patch, dict):
                     raise ValueError(f"sleeve overlay for {bundle_id} must be an object")
                 envelope = _bundle_envelope(home, bundle_id)
-                current_overlay = sleeve_overlays.get(bundle_id)
-                stored = current_overlay if isinstance(current_overlay, dict) else {}
-                current_effective = merge_limits(envelope, supervisor.policy, stored)
-                try:
-                    merge_limits({}, current_effective, patch)
-                except ImportRejected as exc:
-                    _error(handler, 400, str(exc))
-                    return
+                stored = planned_sleeve_overlays.get(bundle_id, {})
+                current_effective = merge_limits(envelope, projected_policy, stored)
+                merge_limits({}, current_effective, patch)
                 stored.update(patch)
-                sleeve_overlays[bundle_id] = stored
-            runtime["sleeve_overlays"] = sleeve_overlays
+                planned_sleeve_overlays[bundle_id] = stored
 
-        _save_runtime(home, runtime)
+        if account_patch is not None:
+            supervisor.set_policy(account_patch)
+            runtime["account_overlay"] = planned_account_overlay
+
+        if sleeves_patch is not None:
+            runtime["sleeve_overlays"] = planned_sleeve_overlays
+
+        if account_patch is not None or sleeves_patch is not None:
+            _save_runtime(home, runtime)
+
         _json_response(handler, 200, {"ok": True})
+    except ImportRejected as exc:
+        _error(handler, 400, str(exc))
     except (json.JSONDecodeError, TypeError, ValueError) as exc:
         _error(handler, 400, str(exc))
 

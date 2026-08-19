@@ -3,10 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
+import yaml
+
+from alphastrategy.bundle.schema import load_risk_envelope
+
 from alphastrategy.errors import FlattenRequested, HaltRequested, IllegalWeights
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.check import check_book
-from alphastrategy.risk.policy import AccountPolicy, merge_limits
+from alphastrategy.risk.policy import AccountPolicy, merge_limits, tighten_policy
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, next_rebalance_event
 from alphastrategy.supervisor.combine import combine
@@ -116,7 +120,12 @@ class Supervisor:
     def start_sleeve(self, bundle_id: str, allocation: float) -> None:
         if allocation < 0:
             raise ValueError("allocation must be >= 0")
-        total = sum(self._snapshot.sleeves.values()) + allocation
+        other_total = sum(
+            alloc
+            for bid, alloc in self._snapshot.sleeves.items()
+            if bid != bundle_id
+        )
+        total = other_total + allocation
         if total > 1.0:
             raise ValueError("allocation sum must be <= 1.0")
         self._snapshot.sleeves[bundle_id] = allocation
@@ -265,6 +274,34 @@ class Supervisor:
         if abs(total - 1.0) > 1e-5:
             raise IllegalWeights(f"weights sum to {total}, expected 1.0")
 
+    def _read_runtime(self) -> dict[str, Any]:
+        path = self._home.runtime_path()
+        if not path.is_file():
+            return {}
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return doc if isinstance(doc, dict) else {}
+
+    def _bundle_envelope(self, bundle_id: str) -> dict[str, Any]:
+        envelope_path = self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"
+        if not envelope_path.is_file():
+            return {}
+        return load_risk_envelope(envelope_path.read_bytes())
+
+    def _effective_sleeve_policy(self, bundle_id: str) -> AccountPolicy:
+        runtime = self._read_runtime()
+        sleeve_overlays = runtime.get("sleeve_overlays", {})
+        overlay = sleeve_overlays.get(bundle_id) if isinstance(sleeve_overlays, dict) else None
+        envelope = self._bundle_envelope(bundle_id)
+        return merge_limits(envelope, self._policy, overlay)
+
+    def _rebalance_policy(self) -> AccountPolicy:
+        policy = self._policy
+        for bundle_id, allocation in self._snapshot.sleeves.items():
+            if allocation <= 0:
+                continue
+            policy = tighten_policy(policy, self._effective_sleeve_policy(bundle_id))
+        return policy
+
     def _equity(self) -> float:
         account = self._broker.get_account()
         return float(account.get("equity", 0))
@@ -297,12 +334,13 @@ class Supervisor:
         self._snapshot.state = SupervisorState.REBALANCING
         combined = combine(sleeves)
         equity = self._equity()
-        check_book(combined, equity, self._policy)
+        rebalance_policy = self._rebalance_policy()
+        check_book(combined, equity, rebalance_policy)
 
         positions = _positions_map(self._broker.list_positions())
         symbols = set(combined) | set(positions)
         prices = self._fetch_prices(symbols)
-        plans = plan_orders(combined, positions, prices, equity, self._policy)
+        plans = plan_orders(combined, positions, prices, equity, rebalance_policy)
 
         for plan in plans:
             self._broker.place_order(plan.symbol, plan.qty, plan.side)

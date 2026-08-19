@@ -115,3 +115,22 @@ def merge_limits(
     if overlay is None:
         return merged
     return _apply_overlay(merged, overlay)
+
+
+def tighten_policy(base: AccountPolicy, tighter: AccountPolicy) -> AccountPolicy:
+    """Return the stricter of two policies (min caps, max min-deltas)."""
+    return AccountPolicy(
+        long_only=base.long_only or tighter.long_only,
+        max_gross=min(base.max_gross, tighter.max_gross),
+        max_name_weight=min(base.max_name_weight, tighter.max_name_weight),
+        max_names=min(base.max_names, tighter.max_names),
+        max_order_notional_frac=min(
+            base.max_order_notional_frac, tighter.max_order_notional_frac
+        ),
+        max_orders_per_rebalance=min(
+            base.max_orders_per_rebalance, tighter.max_orders_per_rebalance
+        ),
+        max_orders_per_day=min(base.max_orders_per_day, tighter.max_orders_per_day),
+        min_delta_dollar=max(base.min_delta_dollar, tighter.min_delta_dollar),
+        min_delta_frac=max(base.min_delta_frac, tighter.min_delta_frac),
+    )

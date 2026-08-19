@@ -185,6 +185,15 @@ def test_start_rejects_allocation_sum_over_one(api_client: ApiClient):
     assert "error" in body
 
 
+def test_start_replaces_existing_sleeve_allocation(api_client: ApiClient):
+    first = api_client.post("/api/paper/start", json={"bundle_id": "asb_x", "allocation": 0.7})
+    assert first.status == 200
+    second = api_client.post("/api/paper/start", json={"bundle_id": "asb_x", "allocation": 0.5})
+    assert second.status == 200
+    bundles = api_client.get("/api/bundles").json()
+    assert bundles["paper"]["asb_x"] == 0.5
+
+
 def test_status_returns_state_clock_and_halt(api_client: ApiClient):
     response = api_client.get("/api/status")
     assert response.status == 200
@@ -261,6 +270,26 @@ def test_put_risk_rejects_loosening(api_client: ApiClient):
     response = api_client.put("/api/risk", json={"account": {"max_name_weight": 0.25}})
     assert response.status == 400
     assert "error" in response.json()
+
+
+def test_put_risk_atomic_invalid_sleeve_leaves_account_policy_unchanged(api_stack):
+    client, home, supervisor, _ = api_stack
+    bundle_dir = home.imported_dir() / "asb_test"
+    bundle_dir.mkdir(parents=True)
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+
+    assert supervisor.policy.max_name_weight == 0.20
+
+    response = client.put(
+        "/api/risk",
+        json={
+            "account": {"max_name_weight": 0.15},
+            "sleeves": {"asb_test": {"max_name_weight": 0.25}},
+        },
+    )
+    assert response.status == 400
+    assert supervisor.policy.max_name_weight == 0.20
+    assert not home.runtime_path().exists()
 
 
 def test_put_risk_sleeve_overlay_rejects_second_loosening(api_stack):

@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import yaml
+
 from dataclasses import replace
 
 import pytest
@@ -306,3 +308,31 @@ def test_kill_sleeve_calls_close_all_once(tmp_path: Path):
 
     assert broker.close_all_count == 1
     assert supervisor.state == SupervisorState.STOPPED
+
+
+def test_sleeve_overlay_tightens_rebalance_policy(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    policy = replace(AccountPolicy.defaults(), max_name_weight=1.0)
+    supervisor = _make_supervisor(tmp_path, broker, policy=policy)
+    home = AlphaStrategyHome(root=tmp_path)
+    bundle_dir = home.imported_dir() / "asb_test"
+    bundle_dir.mkdir(parents=True)
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 1.0\n", encoding="utf-8")
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.10}}}),
+        encoding="utf-8",
+    )
+
+    supervisor.start_sleeve("asb_test", 1.0)
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    assert broker.close_all_called is True
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.orders == []
