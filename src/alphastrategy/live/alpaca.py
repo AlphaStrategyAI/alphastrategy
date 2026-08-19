@@ -24,6 +24,7 @@ from .broker import BrokerConfig, _enforce_safety
 
 PAPER_BASE_URL = "https://paper-api.alpaca.markets"
 LIVE_BASE_URL = "https://api.alpaca.markets"
+DATA_BASE_URL = "https://data.alpaca.markets"
 
 
 class AlpacaAdapter:
@@ -112,7 +113,7 @@ class AlpacaAdapter:
         )
         for symbol in symbols:
             path = f"/v2/stocks/{symbol}/bars?{params}"
-            bars[symbol] = self._request("GET", path)
+            bars[symbol] = self._request("GET", path, base_url=DATA_BASE_URL)
         return bars
 
     def _request(
@@ -120,6 +121,7 @@ class AlpacaAdapter:
         method: str,
         path: str,
         body: Optional[dict] = None,
+        base_url: Optional[str] = None,
     ) -> Any:
         if not self._config.api_key or not self._config.secret:
             raise RuntimeError(
@@ -129,7 +131,7 @@ class AlpacaAdapter:
 
         import urllib.request
 
-        url = self._base_url.rstrip("/") + path
+        url = (base_url or self._base_url).rstrip("/") + path
         data: Optional[bytes] = None
         if body is not None:
             data = json.dumps(body).encode("utf-8")

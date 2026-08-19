@@ -12,6 +12,7 @@ import pytest
 
 from alphastrategy.live import (
     AlpacaAdapter,
+    DATA_BASE_URL,
     PAPER_BASE_URL,
 )
 
@@ -126,6 +127,25 @@ def test_place_order_posts_market_day(monkeypatch):
         "time_in_force": "day",
     }
     assert result == {"id": "order-1", "status": "accepted"}
+
+
+def test_get_bars_uses_data_host(monkeypatch):
+    b = AlpacaAdapter(api_key="PK", secret="SEC")
+    mock_resp = _mock_urlopen_response({"bars": []})
+    captured = {}
+
+    def fake_urlopen(req, timeout):
+        captured["url"] = req.full_url
+        captured["headers"] = dict(req.header_items())
+        return mock_resp
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    b.get_bars(["AAPL"], "2026-01-01", "2026-01-02")
+    assert captured["url"].startswith(DATA_BASE_URL + "/v2/stocks/AAPL/bars")
+    assert "paper-api.alpaca.markets" not in captured["url"]
+    headers_lc = {k.lower(): v for k, v in captured["headers"].items()}
+    assert headers_lc.get("apca-api-key-id") == "PK"
+    assert headers_lc.get("apca-api-secret-key") == "SEC"
 
 
 def test_place_order_not_called_in_this_test_file_against_real_network(monkeypatch):
