@@ -1,0 +1,7 @@
+long_only: true
+max_gross: 1.0
+max_name_weight: 0.20
+max_names: 50
+max_order_notional_frac: 0.20
+max_orders_per_rebalance: 100
+max_orders_per_day: 200

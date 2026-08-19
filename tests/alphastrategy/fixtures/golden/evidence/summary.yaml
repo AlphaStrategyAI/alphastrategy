@@ -1,0 +1,2 @@
+passes_all: true
+gates: [dsr, cv, consistency, vs_random, vs_buyhold, vs_spy]

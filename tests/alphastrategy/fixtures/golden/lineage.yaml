@@ -1,0 +1,5 @@
+run_id: "run_example"
+candidate_id: "cand_example"
+research_outcome: FOUND
+engine_hash: "deadbeef"
+data_snapshot_hash: "cafebabe"
