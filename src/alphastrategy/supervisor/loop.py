@@ -117,10 +117,7 @@ class Supervisor:
         if bundle_id not in self._snapshot.sleeves:
             return
         self._snapshot.sleeves[bundle_id] = 0.0
-        try:
-            self._flatten_account()
-        except Exception:
-            self._flatten_account()
+        self._flatten_account()
         self._audit("kill", bundle_id=bundle_id)
         self._persist()
 

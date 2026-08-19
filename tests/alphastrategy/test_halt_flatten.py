@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from dataclasses import replace
+
 import pytest
 
 from alphastrategy.home import AlphaStrategyHome
@@ -26,7 +28,9 @@ class FakeBroker:
         self.positions: dict[str, float] = {}
         self.orders: list[tuple[str, float, str]] = []
         self.close_all_called = False
+        self.close_all_count = 0
         self.raise_on_get_bars = False
+        self.raise_on_get_clock = False
         self._next_open = next_open or datetime(2024, 1, 31, 14, 30)
         self._next_close = next_close or datetime(2024, 1, 31, 21, 0)
         self._now = now or self._next_open
@@ -65,9 +69,12 @@ class FakeBroker:
 
     def close_all(self) -> None:
         self.close_all_called = True
+        self.close_all_count += 1
         self.positions = {}
 
     def get_clock(self) -> dict:
+        if self.raise_on_get_clock:
+            raise RuntimeError("clock unavailable")
         return {
             "is_open": self._is_open,
             "next_open": self._iso(self._next_open),
@@ -95,12 +102,13 @@ def _make_supervisor(
     broker: FakeBroker,
     *,
     evaluators: dict[str, dict[str, float]] | None = None,
+    policy: AccountPolicy | None = None,
 ) -> Supervisor:
     home = AlphaStrategyHome(root=tmp_path)
     return Supervisor(
         home=home,
         broker=broker,
-        policy=AccountPolicy.defaults(),
+        policy=policy or AccountPolicy.defaults(),
         evaluators=evaluators or {"asb_test": {"AAPL": 1.0}},
     )
 
@@ -219,3 +227,82 @@ def test_start_sleeve_rejects_allocation_over_one(tmp_path: Path):
     supervisor.start_sleeve("asb_a", 0.7)
     with pytest.raises(ValueError):
         supervisor.start_sleeve("asb_b", 0.4)
+
+
+def _trigger_open_rebalance(
+    tmp_path: Path,
+    broker: FakeBroker,
+    supervisor: Supervisor,
+) -> None:
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+
+
+def test_limit_breach_flattens_account(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(is_open=False, next_open=open_time, next_close=session_close, now=open_time)
+    policy = replace(AccountPolicy.defaults(), max_gross=0.5)
+    supervisor = _make_supervisor(
+        tmp_path,
+        broker,
+        evaluators={"asb_test": {"AAPL": 1.0}},
+        policy=policy,
+    )
+    supervisor.start_sleeve("asb_test", 1.0)
+
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    assert broker.close_all_called is True
+    assert broker.close_all_count == 1
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.orders == []
+
+
+def test_illegal_weights_halts_without_flatten(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(is_open=False, next_open=open_time, next_close=session_close, now=open_time)
+    supervisor = _make_supervisor(
+        tmp_path,
+        broker,
+        evaluators={"asb_test": {"AAPL": 0.5}},
+    )
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    assert supervisor.state == SupervisorState.HALTED
+    assert broker.close_all_called is False
+    assert broker.orders == []
+
+
+def test_get_clock_failure_halts_without_flatten(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.raise_on_get_clock = True
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    supervisor.tick()
+
+    assert supervisor.state == SupervisorState.HALTED
+    assert broker.close_all_called is False
+    assert broker.orders == []
+
+
+def test_kill_sleeve_calls_close_all_once(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.positions["AAPL"] = 10.0
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    supervisor.kill_sleeve("asb_test")
+
+    assert broker.close_all_count == 1
+    assert supervisor.state == SupervisorState.STOPPED
