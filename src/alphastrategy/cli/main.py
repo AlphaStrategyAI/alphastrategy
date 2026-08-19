@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import errno
+import http.client
 import json
 import os
+import signal
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -73,7 +76,7 @@ def _make_paper_broker() -> AlpacaAdapter:
 
 def _bars_dict_from_broker(broker: Any, symbols: list[str]) -> dict[str, Any]:
     end = datetime.now(timezone.utc).date().isoformat()
-    start = (datetime.now(timezone.utc).date() - timedelta(days=30)).isoformat()
+    start = (datetime.now(timezone.utc).date() - timedelta(days=400)).isoformat()
     raw = broker.get_bars(sorted(symbols), start, end)
     dates: list[str] = []
     cols: dict[str, list[float]] = {symbol: [] for symbol in symbols}
@@ -84,7 +87,7 @@ def _bars_dict_from_broker(broker: Any, symbols: list[str]) -> dict[str, Any]:
             if not isinstance(bar, dict):
                 continue
             timestamp = bar.get("t") or bar.get("timestamp")
-            date_str = str(timestamp)[:10] if timestamp else f"day{index}"
+            date_str = str(timestamp) if timestamp else f"day{index}"
             if index == len(dates):
                 dates.append(date_str)
             cols[symbol].append(float(bar.get("c", 0.0)))
@@ -101,13 +104,11 @@ def _bundle_universe(bundle_dir: Path) -> list[str]:
     return list(dsl.get("universe", []))
 
 
-def _bundle_effective_at(bundle_dir: Path) -> str:
-    path = bundle_dir / "conformance" / "expected_weights.yaml"
-    if path.is_file():
-        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        if isinstance(doc, dict) and doc.get("effective_at"):
-            return str(doc["effective_at"])
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+def _bundle_effective_at(bars: dict[str, Any]) -> str:
+    dates = bars.get("date")
+    if isinstance(dates, list) and dates:
+        return str(dates[-1])
+    raise ValueError("fetched bars have no effective timestamp")
 
 
 def _make_weight_fn(home: AlphaStrategyHome, broker: Any) -> Callable[[str], dict[str, float]]:
@@ -115,19 +116,54 @@ def _make_weight_fn(home: AlphaStrategyHome, broker: Any) -> Callable[[str], dic
         bundle_dir = home.bundle_dir(bundle_id)
         symbols = _bundle_universe(bundle_dir)
         bars = _bars_dict_from_broker(broker, symbols)
-        effective_at = _bundle_effective_at(bundle_dir)
+        effective_at = _bundle_effective_at(bars)
         return run_sandbox(bundle_dir, bars, effective_at)
 
     return weight_fn
 
 
-def _make_supervisor(home: AlphaStrategyHome, broker: Any) -> Supervisor:
+def _make_supervisor(home: AlphaStrategyHome, broker: Any | None) -> Supervisor:
     return Supervisor(
         home=home,
         broker=broker,
         policy=AccountPolicy.defaults(),
-        weight_fn=_make_weight_fn(home, broker),
+        weight_fn=_make_weight_fn(home, broker) if broker is not None else None,
     )
+
+
+def _control_request(
+    method: str,
+    path: str,
+    port: int,
+    payload: dict[str, Any] | None = None,
+) -> tuple[int, dict[str, Any]] | None:
+    body = json.dumps(payload or {}, separators=(",", ":")).encode("utf-8")
+    headers = {"Content-Type": "application/json"} if method != "GET" else {}
+    connection = http.client.HTTPConnection(DEFAULT_HOST, port, timeout=1.0)
+    try:
+        connection.request(method, path, body=body if method != "GET" else None, headers=headers)
+        response = connection.getresponse()
+        raw = response.read()
+    except ConnectionRefusedError:
+        return None
+    except OSError as exc:
+        if exc.errno == errno.ECONNREFUSED:
+            return None
+        raise
+    finally:
+        connection.close()
+    decoded = json.loads(raw.decode("utf-8")) if raw else {}
+    if not isinstance(decoded, dict):
+        decoded = {"result": decoded}
+    return response.status, decoded
+
+
+def _control_result(response: tuple[int, dict[str, Any]]) -> int:
+    status, payload = response
+    if 200 <= status < 300:
+        return 0
+    print(f"error: {payload.get('error', f'HTTP {status}')}", file=sys.stderr)
+    return 1
 
 
 def _cmd_import(home: AlphaStrategyHome, path: Path) -> int:
@@ -144,28 +180,47 @@ def _cmd_import(home: AlphaStrategyHome, path: Path) -> int:
         return 1
 
 
+def _shutdown_flatten(supervisor: Supervisor, server: Any) -> None:
+    supervisor.kill_account()
+    server.shutdown()
+
+
 def _cmd_start(home: AlphaStrategyHome, broker: Any, host: str, port: int) -> int:
     supervisor = _make_supervisor(home, broker)
-    start_heartbeat(supervisor)
     server = make_server(home, supervisor, bind=host, port=port)
+    start_heartbeat(supervisor)
+    previous_handlers: dict[int, Any] = {}
+
+    def _interrupt(_signum: int, _frame: Any) -> None:
+        raise KeyboardInterrupt
+
+    for signum in (signal.SIGINT, signal.SIGTERM):
+        previous_handlers[signum] = signal.getsignal(signum)
+        signal.signal(signum, _interrupt)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        server.shutdown()
+        _shutdown_flatten(supervisor, server)
+    finally:
+        for signum, previous in previous_handlers.items():
+            signal.signal(signum, previous)
     return 0
 
 
-def _cmd_status(home: AlphaStrategyHome, broker: Any) -> int:
+def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT_PORT) -> int:
+    response = _control_request("GET", "/api/status", port)
+    if response is not None:
+        status, payload = response
+        if not 200 <= status < 300:
+            return _control_result(response)
+        print(json.dumps(payload, separators=(",", ":")))
+        return 0
     supervisor = _make_supervisor(home, broker)
     snapshot = supervisor.snapshot
-    try:
-        clock = broker.get_clock()
-    except Exception as exc:
-        clock = {"error": str(exc)}
     halted = snapshot.state == SupervisorState.HALTED
     payload = {
         "state": snapshot.state.value,
-        "clock": clock,
+        "clock": {"error": "control plane unavailable"},
         "halted": halted,
         "halt_reason": snapshot.halt_reason,
     }
@@ -173,7 +228,21 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any) -> int:
     return 0
 
 
-def _cmd_paper_start(home: AlphaStrategyHome, broker: Any, bundle_id: str, allocation: float) -> int:
+def _cmd_paper_start(
+    home: AlphaStrategyHome,
+    broker: Any | None,
+    bundle_id: str,
+    allocation: float,
+    port: int = DEFAULT_PORT,
+) -> int:
+    response = _control_request(
+        "POST",
+        "/api/paper/start",
+        port,
+        {"bundle_id": bundle_id, "allocation": allocation},
+    )
+    if response is not None:
+        return _control_result(response)
     supervisor = _make_supervisor(home, broker)
     try:
         supervisor.start_sleeve(bundle_id, allocation)
@@ -183,13 +252,41 @@ def _cmd_paper_start(home: AlphaStrategyHome, broker: Any, bundle_id: str, alloc
         return 1
 
 
-def _cmd_paper_stop(home: AlphaStrategyHome, broker: Any, bundle_id: str) -> int:
+def _cmd_paper_stop(
+    home: AlphaStrategyHome,
+    broker: Any | None,
+    bundle_id: str,
+    port: int = DEFAULT_PORT,
+) -> int:
+    response = _control_request(
+        "POST",
+        "/api/paper/stop",
+        port,
+        {"bundle_id": bundle_id},
+    )
+    if response is not None:
+        return _control_result(response)
     supervisor = _make_supervisor(home, broker)
     supervisor.stop_sleeve(bundle_id)
     return 0
 
 
-def _cmd_paper_kill(home: AlphaStrategyHome, broker: Any, bundle_id: str | None) -> int:
+def _cmd_paper_kill(
+    home: AlphaStrategyHome,
+    broker: Any | None,
+    bundle_id: str | None,
+    port: int = DEFAULT_PORT,
+) -> int:
+    response = _control_request(
+        "POST",
+        "/api/paper/kill",
+        port,
+        {"bundle_id": bundle_id} if bundle_id else {},
+    )
+    if response is not None:
+        return _control_result(response)
+    if broker is None:
+        broker = _make_paper_broker()
     supervisor = _make_supervisor(home, broker)
     if bundle_id:
         supervisor.kill_sleeve(bundle_id)
@@ -198,7 +295,14 @@ def _cmd_paper_kill(home: AlphaStrategyHome, broker: Any, bundle_id: str | None)
     return 0
 
 
-def _cmd_paper_resume(home: AlphaStrategyHome, broker: Any) -> int:
+def _cmd_paper_resume(
+    home: AlphaStrategyHome,
+    broker: Any | None,
+    port: int = DEFAULT_PORT,
+) -> int:
+    response = _control_request("POST", "/api/paper/resume", port)
+    if response is not None:
+        return _control_result(response)
     supervisor = _make_supervisor(home, broker)
     supervisor.resume()
     return 0
@@ -218,7 +322,8 @@ def create_parser() -> argparse.ArgumentParser:
     start_parser.add_argument("--host", default=DEFAULT_HOST, help="bind host (v1: localhost only)")
     start_parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="bind port")
 
-    subparsers.add_parser("status", help="show supervisor status")
+    status_parser = subparsers.add_parser("status", help="show supervisor status")
+    status_parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
     paper_parser = subparsers.add_parser("paper", help="paper trading controls")
     paper_sub = paper_parser.add_subparsers(dest="paper_command")
@@ -226,14 +331,18 @@ def create_parser() -> argparse.ArgumentParser:
     paper_start = paper_sub.add_parser("start", help="start paper sleeve")
     paper_start.add_argument("--bundle", required=True, help="bundle id")
     paper_start.add_argument("--allocation", type=float, required=True, help="allocation 0-1")
+    paper_start.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
     paper_stop = paper_sub.add_parser("stop", help="stop paper sleeve")
     paper_stop.add_argument("--bundle", required=True, help="bundle id")
+    paper_stop.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
     paper_kill = paper_sub.add_parser("kill", help="kill sleeve or account")
     paper_kill.add_argument("--bundle", default=None, help="bundle id (omit for account kill)")
+    paper_kill.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
-    paper_sub.add_parser("resume", help="resume from halt")
+    paper_resume = paper_sub.add_parser("resume", help="resume from halt")
+    paper_resume.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
     return parser
 
@@ -262,26 +371,22 @@ def main(argv: list[str] | None = None) -> int:
         if host_rc is not None:
             return host_rc
 
-    needs_broker = args.command in {"start", "status", "paper"}
-    broker: Any | None = None
-    if needs_broker:
-        broker = _make_paper_broker()
-
     if args.command == "start":
+        broker = _make_paper_broker()
         return _cmd_start(home, broker, args.host, args.port)
 
     if args.command == "status":
-        return _cmd_status(home, broker)
+        return _cmd_status(home, None, args.port)
 
     if args.command == "paper":
         if args.paper_command == "start":
-            return _cmd_paper_start(home, broker, args.bundle, args.allocation)
+            return _cmd_paper_start(home, None, args.bundle, args.allocation, args.port)
         if args.paper_command == "stop":
-            return _cmd_paper_stop(home, broker, args.bundle)
+            return _cmd_paper_stop(home, None, args.bundle, args.port)
         if args.paper_command == "kill":
-            return _cmd_paper_kill(home, broker, args.bundle)
+            return _cmd_paper_kill(home, None, args.bundle, args.port)
         if args.paper_command == "resume":
-            return _cmd_paper_resume(home, broker)
+            return _cmd_paper_resume(home, None, args.port)
         parser.error("paper subcommand required")
 
     parser.print_help()

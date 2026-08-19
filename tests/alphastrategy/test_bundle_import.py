@@ -1,9 +1,15 @@
 from pathlib import Path
 
+import pytest
+
 from alphastrategy.errors import ImportRejected
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.bundle.import_bundle import import_asb
-from tests.alphastrategy.fixtures.make_asb import build_golden_asb, mutate_member
+from tests.alphastrategy.fixtures.make_asb import (
+    build_golden_asb,
+    mutate_member,
+    mutate_member_rehash,
+)
 
 
 def _home(tmp_path: Path) -> AlphaStrategyHome:
@@ -112,6 +118,60 @@ def test_import_rejects_secret_like_key_in_bundle_yaml(tmp_path: Path):
     except ImportRejected as e:
         msg = str(e).lower()
         assert "api_key" in msg or "secret" in msg
+
+
+@pytest.mark.parametrize(
+    ("member", "contents", "secret_key"),
+    [
+        ("parameters.yaml", b"model:\n  access_token: forbidden\n", "access_token"),
+        (
+            "lineage.yaml",
+            b"run_id: run-1\ncandidate_id: c-1\nresearch_outcome: FOUND\n"
+            b"engine_hash: engine\npassword_hint: forbidden\n"
+            b"data_snapshot_hash: data\n",
+            "password_hint",
+        ),
+        (
+            "risk-envelope.yaml",
+            b"max_gross: 1.0\nbroker_key_name: forbidden\n",
+            "broker_key_name",
+        ),
+        (
+            "evidence/summary.yaml",
+            b"passes_all: true\ngates: [dsr]\nsecret_note: forbidden\n",
+            "secret_note",
+        ),
+    ],
+)
+def test_import_rejects_secret_like_keys_in_all_yaml_mappings(
+    tmp_path: Path,
+    member: str,
+    contents: bytes,
+    secret_key: str,
+):
+    broken = mutate_member_rehash(build_golden_asb(), member, contents)
+    dest = tmp_path / "secret.asb"
+    dest.write_bytes(broken)
+
+    with pytest.raises(ImportRejected, match="secret-like key") as exc:
+        import_asb(dest, _home(tmp_path))
+
+    assert secret_key in str(exc.value)
+
+
+def test_import_rejects_dsl_version_mismatch_with_manifest(tmp_path: Path):
+    broken = mutate_member_rehash(
+        build_golden_asb(),
+        "strategy.dsl.yaml",
+        b"dsl_version: alphaloop.dsl/v99\n"
+        b"universe: [AAPL, MSFT]\n"
+        b"steps:\n  - op: equal_weight\n",
+    )
+    dest = tmp_path / "dsl-mismatch.asb"
+    dest.write_bytes(broken)
+
+    with pytest.raises(ImportRejected, match="dsl_version"):
+        import_asb(dest, _home(tmp_path))
 
 
 def test_import_rejects_missing_conformance_members(tmp_path: Path):

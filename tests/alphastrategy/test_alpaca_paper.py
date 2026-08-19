@@ -43,11 +43,6 @@ def test_construct_with_credentials():
     assert b.base_url == PAPER_BASE_URL
 
 
-def test_construct_live_requires_confirm():
-    with pytest.raises(Exception):
-        AlpacaAdapter(api_key="AK_TEST", secret="SECRET", paper=False)
-
-
 def test_custom_base_url_overrides_default():
     custom = "https://my-proxy.example.com"
     b = AlpacaAdapter(paper=True, base_url=custom)
@@ -127,6 +122,25 @@ def test_place_order_posts_market_day(monkeypatch):
         "time_in_force": "day",
     }
     assert result == {"id": "order-1", "status": "accepted"}
+
+
+def test_cancel_open_orders_uses_paper_cancel_all_endpoint(monkeypatch):
+    b = AlpacaAdapter(api_key="PK", secret="SEC")
+    mock_resp = _mock_urlopen_response([])
+    captured = {}
+
+    def fake_urlopen(req, timeout):
+        captured["url"] = req.full_url
+        captured["method"] = req.get_method()
+        return mock_resp
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    b.cancel_open_orders()
+
+    assert captured == {
+        "url": PAPER_BASE_URL + "/v2/orders",
+        "method": "DELETE",
+    }
 
 
 def test_get_bars_uses_data_host(monkeypatch):

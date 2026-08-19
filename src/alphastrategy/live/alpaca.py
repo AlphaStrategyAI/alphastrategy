@@ -99,6 +99,9 @@ class AlpacaAdapter:
     def cancel_order(self, order_id: str) -> None:
         self._request("DELETE", f"/v2/orders/{order_id}")
 
+    def cancel_open_orders(self) -> None:
+        self._request("DELETE", "/v2/orders")
+
     def close_all(self) -> None:
         self._request("DELETE", "/v2/positions")
 

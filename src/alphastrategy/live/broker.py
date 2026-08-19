@@ -40,6 +40,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional, Protocol, runtime_checkable
+from urllib.parse import urlsplit
 
 
 class LiveTradingRefused(Exception):
@@ -89,6 +90,13 @@ def _enforce_safety(config: BrokerConfig) -> None:
       1. `paper=False` requires `confirm_live=True`.
       2. `paper=True` accepts any `confirm_live` value.
     """
+    if config.paper and config.base_url:
+        hostname = urlsplit(config.base_url).hostname
+        if hostname and hostname.lower() == "api.alpaca.markets":
+            raise LiveTradingRefused(
+                "Paper trading refused: live trading base URL "
+                "https://api.alpaca.markets is not allowed when paper=True."
+            )
     if not config.paper and not config.confirm_live:
         raise LiveTradingRefused(
             "Live trading refused: paper=False requires "
@@ -143,6 +151,10 @@ class Broker(Protocol):
 
     def cancel_order(self, order_id: str) -> None:
         """Cancel an open order by id."""
+        ...
+
+    def cancel_open_orders(self) -> None:
+        """Cancel every currently open order."""
         ...
 
     def close_all(self) -> None:

@@ -9,7 +9,7 @@ from alphastrategy.errors import ImportRejected
 
 SUPPORTED = {("alphastrategy.bundle/v0", "alphaloop.dsl/v0")}
 
-_SECRET_FRAGMENTS = ("api_key", "secret", "password", "token", "credential")
+_SECRET_FRAGMENTS = ("key", "secret", "token", "password")
 
 _REQUIRED_MEMBERS = {
     "bundle.yaml",
@@ -31,15 +31,20 @@ def _load_yaml(data: bytes, label: str) -> Any:
         raise ImportRejected(f"invalid YAML in {label}: {exc}") from exc
     if doc is None:
         raise ImportRejected(f"empty YAML in {label}")
+    _reject_secret_keys(doc, label)
     return doc
 
 
-def _reject_secret_keys(doc: dict, label: str) -> None:
-    for key in doc:
-        lower = key.lower()
-        for frag in _SECRET_FRAGMENTS:
-            if frag in lower:
+def _reject_secret_keys(doc: Any, label: str) -> None:
+    if isinstance(doc, dict):
+        for key, value in doc.items():
+            lower = str(key).lower()
+            if any(fragment in lower for fragment in _SECRET_FRAGMENTS):
                 raise ImportRejected(f"secret-like key in {label}: {key}")
+            _reject_secret_keys(value, label)
+    elif isinstance(doc, list):
+        for value in doc:
+            _reject_secret_keys(value, label)
 
 
 @dataclass(frozen=True)
@@ -91,7 +96,6 @@ def load_bundle_manifest(data: bytes) -> BundleManifest:
     doc = _load_yaml(data, "bundle.yaml")
     if not isinstance(doc, dict):
         raise ImportRejected("bundle.yaml must be a mapping")
-    _reject_secret_keys(doc, "bundle.yaml")
     try:
         manifest = BundleManifest(
             schema_version=str(doc["schema_version"]),

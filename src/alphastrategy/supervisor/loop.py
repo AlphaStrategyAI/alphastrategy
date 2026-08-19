@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
@@ -15,7 +16,7 @@ from alphastrategy.risk.policy import AccountPolicy, merge_limits, tighten_polic
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, next_rebalance_event
 from alphastrategy.supervisor.combine import combine
-from alphastrategy.supervisor.orders import plan_orders
+from alphastrategy.supervisor.orders import deviations_after, plan_orders
 from alphastrategy.supervisor.state import (
     SupervisorSnapshot,
     SupervisorState,
@@ -57,6 +58,20 @@ def _last_bar_close(symbol_data: Any) -> float | None:
         if "c" in symbol_data:
             return float(symbol_data["c"])
     return None
+
+
+def _last_bar_timestamp(symbol_data: Any) -> datetime | None:
+    if not isinstance(symbol_data, dict):
+        return None
+    bars = symbol_data.get("bars")
+    if isinstance(bars, list) and bars:
+        last = bars[-1]
+        if isinstance(last, dict):
+            timestamp = last.get("t") or last.get("timestamp")
+            if timestamp:
+                return _parse_clock_dt(timestamp)
+    timestamp = symbol_data.get("t") or symbol_data.get("timestamp")
+    return _parse_clock_dt(timestamp) if timestamp else None
 
 
 def _positions_map(positions: list[dict]) -> dict[str, float]:
@@ -129,8 +144,10 @@ class Supervisor:
 
     def start_sleeve(self, bundle_id: str, allocation: float) -> None:
         with self._lock:
-            if allocation < 0:
-                raise ValueError("allocation must be >= 0")
+            if not self._home.bundle_dir(bundle_id).is_dir():
+                raise ValueError(f"bundle is not imported: {bundle_id}")
+            if not math.isfinite(allocation) or not 0.0 <= allocation <= 1.0:
+                raise ValueError("allocation must be finite and between 0 and 1")
             other_total = sum(
                 alloc
                 for bid, alloc in self._snapshot.sleeves.items()
@@ -194,16 +211,10 @@ class Supervisor:
                 return
 
             cur = _clock_snapshot(clock_raw)
-
             try:
-                self._heartbeat_health_check()
+                self._validate_session(cur)
             except HaltRequested as exc:
                 self._halt(str(exc))
-                self._update_prev_clock(cur, None)
-                return
-            except Exception as exc:
-                self._halt(str(exc))
-                self._update_prev_clock(cur, None)
                 return
 
             event = next_rebalance_event(
@@ -211,6 +222,19 @@ class Supervisor:
                 cur,
                 self._snapshot.last_rebalance_event,
             )
+
+            try:
+                self._heartbeat_health_check(cur)
+            except HaltRequested as exc:
+                self._mark_detected_event(cur, event)
+                self._halt(str(exc))
+                self._update_prev_clock(cur, None)
+                return
+            except Exception as exc:
+                self._mark_detected_event(cur, event)
+                self._halt(str(exc))
+                self._update_prev_clock(cur, None)
+                return
 
             if event is None:
                 self._set_idle_state(cur)
@@ -222,18 +246,45 @@ class Supervisor:
                 try:
                     self._rebalance(cur, event)
                 except HaltRequested as exc:
+                    self._mark_detected_event(cur, event)
                     self._halt(str(exc))
                 except IllegalWeights as exc:
+                    self._mark_detected_event(cur, event)
                     self._halt(str(exc))
                 except FlattenRequested:
                     self._flatten_account()
                 except Exception as exc:
+                    self._mark_detected_event(cur, event)
                     self._halt(str(exc))
                 finally:
                     self._update_prev_clock(cur, event)
                     self._persist()
 
-    def _heartbeat_health_check(self) -> None:
+    def _validate_session(self, cur: ClockSnapshot) -> None:
+        if not cur.is_open:
+            return
+        now = cur.now
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        else:
+            now = now.astimezone(timezone.utc)
+        minutes = now.hour * 60 + now.minute
+        if now.weekday() >= 5 or not (13 * 60 + 30 <= minutes <= 21 * 60):
+            raise HaltRequested(
+                f"unexpected open session at {now.isoformat().replace('+00:00', 'Z')}"
+            )
+
+    def _mark_detected_event(
+        self,
+        cur: ClockSnapshot,
+        event: str | None,
+    ) -> None:
+        if event not in ("open", "close"):
+            return
+        session_date = cur.next_close.date().isoformat()
+        self._snapshot.last_rebalance_event = f"{session_date}:{event}"
+
+    def _heartbeat_health_check(self, cur: ClockSnapshot) -> None:
         symbols: set[str] = set()
         for bundle_id, allocation in self._snapshot.sleeves.items():
             if allocation <= 0:
@@ -242,7 +293,7 @@ class Supervisor:
             symbols.update(weights.keys())
         if not symbols:
             return
-        self._fetch_prices(symbols)
+        self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
 
     def _set_idle_state(self, cur: ClockSnapshot) -> None:
         if self._snapshot.state == SupervisorState.HALTED:
@@ -279,17 +330,19 @@ class Supervisor:
                 continue
             weights = self._sleeve_weights(bundle_id)
             self._validate_weights(weights)
+            implied = {asset: allocation * weight for asset, weight in weights.items()}
+            check_book(implied, 0.0, self._effective_sleeve_policy(bundle_id))
             sleeves.append((allocation, weights))
         return sleeves
 
     def _validate_weights(self, weights: dict[str, float]) -> None:
-        if not weights:
-            raise HaltRequested("empty weights")
+        if any(not math.isfinite(w) for w in weights.values()):
+            raise IllegalWeights("non-finite weight")
         if any(w < 0 for w in weights.values()):
             raise IllegalWeights("negative weight")
         total = sum(weights.values())
-        if abs(total - 1.0) > 1e-5:
-            raise IllegalWeights(f"weights sum to {total}, expected 1.0")
+        if total > 1.0 + 1e-9:
+            raise IllegalWeights(f"weights sum to {total}, exceeds 1.0")
 
     def _read_runtime(self) -> dict[str, Any]:
         path = self._home.runtime_path()
@@ -323,31 +376,38 @@ class Supervisor:
         account = self._broker.get_account()
         return float(account.get("equity", 0))
 
-    def _fetch_prices(self, symbols: set[str]) -> dict[str, float]:
+    def _fetch_prices(
+        self,
+        symbols: set[str],
+        now: datetime | None = None,
+    ) -> dict[str, float]:
         if not symbols:
             return {}
-        end = datetime.now(timezone.utc).date().isoformat()
-        start = (datetime.now(timezone.utc).date() - timedelta(days=7)).isoformat()
+        reference = now or datetime.now(timezone.utc)
+        end = reference.date().isoformat()
+        start = (reference.date() - timedelta(days=400)).isoformat()
         try:
             bars = self._broker.get_bars(sorted(symbols), start, end)
         except Exception as exc:
             raise HaltRequested(f"broker get_bars failed: {exc}") from exc
         prices: dict[str, float] = {}
         for symbol in symbols:
-            price = _last_bar_close(bars.get(symbol))
+            symbol_data = bars.get(symbol)
+            price = _last_bar_close(symbol_data)
             if price is None:
                 raise HaltRequested(f"missing price for {symbol}")
+            bar_timestamp = _last_bar_timestamp(symbol_data)
+            if now is not None and bar_timestamp is not None:
+                stale_before = now.date() - timedelta(days=3)
+                if bar_timestamp.date() < stale_before:
+                    raise HaltRequested(
+                        f"stale bars for {symbol}: last bar {bar_timestamp.date()}"
+                    )
             prices[symbol] = price
         return prices
 
     def _rebalance(self, cur: ClockSnapshot, event: str) -> None:
         sleeves = self._collect_sleeves()
-        if not sleeves:
-            session_date = cur.next_close.date().isoformat()
-            self._snapshot.last_rebalance_event = f"{session_date}:{event}"
-            self._set_idle_state(cur)
-            return
-
         self._snapshot.state = SupervisorState.REBALANCING
         combined = combine(sleeves)
         equity = self._equity()
@@ -356,7 +416,7 @@ class Supervisor:
 
         positions = _positions_map(self._broker.list_positions())
         symbols = set(combined) | set(positions)
-        prices = self._fetch_prices(symbols)
+        prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
         plans = plan_orders(combined, positions, prices, equity, rebalance_policy)
 
         for plan in plans:
@@ -367,6 +427,15 @@ class Supervisor:
                 qty=plan.qty,
                 side=plan.side,
             )
+
+        positions_after = _positions_map(self._broker.list_positions())
+        got = {
+            symbol: (qty * prices[symbol]) / equity
+            for symbol, qty in positions_after.items()
+            if symbol in prices and equity > 0
+        }
+        for deviation in deviations_after(combined, got, equity, prices):
+            self._audit("execution_deviation", **deviation)
 
         session_date = cur.next_close.date().isoformat()
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"
@@ -382,6 +451,11 @@ class Supervisor:
     def _flatten_account(self) -> None:
         self._snapshot.state = SupervisorState.FLATTENING
         self._persist()
+        try:
+            self._broker.cancel_open_orders()
+        except Exception as exc:
+            self._halt(f"flatten cancel_open_orders failed: {exc}")
+            return
         try:
             self._broker.close_all()
         except Exception as exc:

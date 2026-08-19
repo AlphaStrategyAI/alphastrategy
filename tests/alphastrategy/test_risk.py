@@ -49,6 +49,18 @@ def test_merge_limits_overlay_increasing_max_name_weight_raises():
         merge_limits({}, account, {"max_name_weight": 0.25})
 
 
+@pytest.mark.parametrize("limits", [{"mystery_cap": 1}, {"max_gross": -0.1}, {"max_names": -1}])
+def test_merge_limits_rejects_unknown_or_negative_limits(limits):
+    with pytest.raises((ImportRejected, ValueError)):
+        merge_limits(limits, AccountPolicy.defaults(), None)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), "not-a-number"])
+def test_merge_limits_rejects_invalid_numeric_caps(value):
+    with pytest.raises((ImportRejected, ValueError)):
+        merge_limits({"max_gross": value}, AccountPolicy.defaults(), None)
+
+
 def test_check_book_gross_breach_flattens_account():
     policy = AccountPolicy.defaults()
     combined = {"A": 0.6, "B": 0.6}

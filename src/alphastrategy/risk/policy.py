@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, replace
 
 from alphastrategy.errors import ImportRejected
@@ -14,6 +15,8 @@ _NUMERIC_CAPS = (
     "min_delta_dollar",
     "min_delta_frac",
 )
+_INTEGER_CAPS = ("max_names", "max_orders_per_rebalance", "max_orders_per_day")
+_LIMIT_KEYS = frozenset((*_NUMERIC_CAPS, "long_only"))
 
 
 @dataclass(frozen=True)
@@ -52,17 +55,38 @@ def _tighten_min_delta_frac(current: float, proposed: float) -> float:
     return max(current, proposed)
 
 
+def _validate_limits(limits: dict, label: str) -> None:
+    unknown = set(limits) - _LIMIT_KEYS
+    if unknown:
+        raise ImportRejected(f"unknown {label} limit: {sorted(unknown)[0]}")
+    if "long_only" in limits and not isinstance(limits["long_only"], bool):
+        raise ImportRejected(f"{label} long_only must be boolean")
+    for key in _NUMERIC_CAPS:
+        if key not in limits:
+            continue
+        value = limits[key]
+        if isinstance(value, bool):
+            raise ImportRejected(f"{label} {key} must be numeric")
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ImportRejected(f"{label} {key} must be numeric") from exc
+        if not math.isfinite(numeric) or numeric < 0:
+            raise ImportRejected(f"{label} {key} must be finite and non-negative")
+        if key in _INTEGER_CAPS and not numeric.is_integer():
+            raise ImportRejected(f"{label} {key} must be an integer")
+
+
 def _apply_envelope(account: AccountPolicy, envelope: dict) -> AccountPolicy:
+    _validate_limits(envelope, "envelope")
     updates: dict = {}
     for key, value in envelope.items():
         if key == "long_only":
             if value is not True:
                 updates["long_only"] = True
             continue
-        if key not in _NUMERIC_CAPS:
-            continue
         current = getattr(account, key)
-        if key in ("max_names", "max_orders_per_rebalance", "max_orders_per_day"):
+        if key in _INTEGER_CAPS:
             updates[key] = _tighten_int(current, int(value))
         elif key in ("min_delta_dollar",):
             updates[key] = _tighten_min_delta_dollar(current, float(value))
@@ -74,6 +98,7 @@ def _apply_envelope(account: AccountPolicy, envelope: dict) -> AccountPolicy:
 
 
 def _apply_overlay(base: AccountPolicy, overlay: dict) -> AccountPolicy:
+    _validate_limits(overlay, "overlay")
     updates: dict = {}
     for key, value in overlay.items():
         if key == "long_only":
@@ -82,10 +107,8 @@ def _apply_overlay(base: AccountPolicy, overlay: dict) -> AccountPolicy:
             if value is True and not base.long_only:
                 updates["long_only"] = True
             continue
-        if key not in _NUMERIC_CAPS:
-            continue
         current = getattr(base, key)
-        if key in ("max_names", "max_orders_per_rebalance", "max_orders_per_day"):
+        if key in _INTEGER_CAPS:
             proposed = int(value)
             if proposed > current:
                 raise ImportRejected(f"overlay cannot loosen {key}")

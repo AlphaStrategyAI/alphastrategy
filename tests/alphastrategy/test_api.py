@@ -43,6 +43,9 @@ class FakeBroker:
     def cancel_order(self, order_id: str) -> None:
         return None
 
+    def cancel_open_orders(self) -> None:
+        return None
+
     def close_all(self) -> None:
         self.positions = {}
 
@@ -143,6 +146,8 @@ class ApiClient:
 def api_stack(tmp_path: Path):
     broker = FakeBroker()
     home = AlphaStrategyHome(root=tmp_path)
+    home.bundle_dir("asb_x").mkdir(parents=True)
+    home.bundle_dir("asb_y").mkdir(parents=True)
     supervisor = Supervisor(
         home=home,
         broker=broker,
@@ -219,10 +224,16 @@ def test_handlers_never_set_paper_false():
             assert not pattern.search(text), f"{path.name} may set paper=False: {pattern.pattern}"
 
 
+def test_make_server_rejects_non_loopback_bind(api_stack):
+    _, home, supervisor, _ = api_stack
+    with pytest.raises(ValueError, match="loopback"):
+        make_server(home, supervisor, bind="0.0.0.0", port=0)
+
+
 def test_get_bundles_lists_imported_and_paper(api_stack):
     client, home, supervisor, _ = api_stack
     bundle_dir = home.imported_dir() / "asb_test"
-    bundle_dir.mkdir(parents=True)
+    bundle_dir.mkdir(parents=True, exist_ok=True)
     (bundle_dir / "bundle.yaml").write_text("bundle_id: asb_test\n", encoding="utf-8")
     supervisor.start_sleeve("asb_test", 0.25)
 

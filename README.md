@@ -50,7 +50,7 @@ alphastrategy start
 alphastrategy paper start --bundle <bundle_id> --allocation 0.4
 ```
 
-Set `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` for paper trading. v1
+Set `ALPACA_API_KEY` and `ALPACA_API_SECRET_KEY` for paper trading. v1
 defaults to `https://paper-api.alpaca.markets` and exposes no live
 trading controls in the CLI or web UI.
 

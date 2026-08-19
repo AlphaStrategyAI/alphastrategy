@@ -72,7 +72,12 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
 
     load_parameters(members["parameters.yaml"])
     load_risk_envelope(members["risk-envelope.yaml"])
-    load_strategy_dsl(members["strategy.dsl.yaml"])
+    strategy_dsl = load_strategy_dsl(members["strategy.dsl.yaml"])
+    if strategy_dsl.dsl_version != manifest.dsl_version:
+        raise ImportRejected(
+            "strategy.dsl.yaml dsl_version does not match bundle.yaml: "
+            f"{strategy_dsl.dsl_version} != {manifest.dsl_version}"
+        )
     load_conformance_expected(members["conformance/expected_weights.yaml"])
 
     bundle_id = manifest.bundle_id

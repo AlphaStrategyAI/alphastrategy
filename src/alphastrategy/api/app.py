@@ -28,6 +28,7 @@ _CONTENT_TYPES = {
 }
 
 HEARTBEAT_INTERVAL_SEC = 20
+_LOOPBACK_BINDS = frozenset({"127.0.0.1", "::1", "localhost"})
 
 
 class _ApiContext:
@@ -96,6 +97,8 @@ def make_server(
     bind: str = "127.0.0.1",
     port: int = 7460,
 ) -> ThreadingHTTPServer:
+    if bind not in _LOOPBACK_BINDS:
+        raise ValueError("control plane bind address must be loopback")
     _apply_startup_runtime(home, supervisor)
     server = ThreadingHTTPServer((bind, port), AlphaStrategyHandler)
     server.api_context = _ApiContext(home, supervisor)
