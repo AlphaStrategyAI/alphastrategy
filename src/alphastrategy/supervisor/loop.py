@@ -91,6 +91,14 @@ class Supervisor:
     def last_rebalance_event(self) -> str | None:
         return self._snapshot.last_rebalance_event
 
+    @property
+    def snapshot(self) -> SupervisorSnapshot:
+        return self._snapshot
+
+    @property
+    def policy(self) -> AccountPolicy:
+        return self._policy
+
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)
 
