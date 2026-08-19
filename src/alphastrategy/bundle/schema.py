@@ -185,6 +185,9 @@ def load_risk_envelope(data: bytes) -> dict:
     doc = _load_yaml(data, "risk-envelope.yaml")
     if not isinstance(doc, dict):
         raise ImportRejected("risk-envelope.yaml must be a mapping")
+    from alphastrategy.risk.policy import AccountPolicy, merge_limits
+
+    merge_limits(doc, AccountPolicy.defaults(), None)
     return doc
 
 

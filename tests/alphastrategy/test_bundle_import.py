@@ -174,6 +174,27 @@ def test_import_rejects_dsl_version_mismatch_with_manifest(tmp_path: Path):
         import_asb(dest, _home(tmp_path))
 
 
+@pytest.mark.parametrize(
+    "risk_envelope",
+    [
+        b"unknown_cap: 0.1\n",
+        b"max_gross: -0.1\n",
+        b"max_name_weight: .nan\n",
+    ],
+)
+def test_import_rejects_invalid_risk_envelope(tmp_path: Path, risk_envelope: bytes):
+    broken = mutate_member_rehash(
+        build_golden_asb(),
+        "risk-envelope.yaml",
+        risk_envelope,
+    )
+    dest = tmp_path / "invalid-risk.asb"
+    dest.write_bytes(broken)
+
+    with pytest.raises(ImportRejected):
+        import_asb(dest, _home(tmp_path))
+
+
 def test_import_rejects_missing_conformance_members(tmp_path: Path):
     raw = build_golden_asb()
     buf_in = __import__("io").BytesIO(raw)
