@@ -34,6 +34,7 @@ class FakeBroker:
         self.cancel_open_orders_count = 0
         self.operations: list[str] = []
         self.fill_orders = True
+        self.fill_fraction = 1.0
         self.raise_on_get_bars = False
         self.raise_on_get_clock = False
         self._next_open = next_open or datetime(2024, 1, 31, 14, 30)
@@ -66,9 +67,11 @@ class FakeBroker:
     def place_order(self, symbol: str, qty: float, side: str) -> dict:
         self.orders.append((symbol, qty, side))
         if self.fill_orders:
-            delta = qty if side == "buy" else -qty
+            filled_qty = qty * self.fill_fraction
+            delta = filled_qty if side == "buy" else -filled_qty
             self.positions[symbol] = self.positions.get(symbol, 0.0) + delta
-        return {"id": f"order-{len(self.orders)}", "status": "filled"}
+        status = "filled" if self.fill_orders else "accepted"
+        return {"id": f"order-{len(self.orders)}", "status": status}
 
     def cancel_order(self, order_id: str) -> None:
         return None
@@ -416,7 +419,38 @@ def test_unexpected_open_session_halts_without_flatten(tmp_path: Path):
     assert broker.orders == []
 
 
-def test_rebalance_audits_execution_deviation_when_orders_do_not_fill(tmp_path: Path):
+def test_rebalance_audits_execution_deviation_after_partial_immediate_fill(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    broker.fill_fraction = 0.5
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    deviations = [event for event in events if event["event"] == "execution_deviation"]
+    assert deviations == [
+        {
+            "event": "execution_deviation",
+            "asset": "AAPL",
+            "wanted": 0.15,
+            "got": 0.075,
+            "ts": deviations[0]["ts"],
+        }
+    ]
+
+
+def test_rebalance_skips_execution_deviation_for_unfilled_order(tmp_path: Path):
     open_time = datetime(2024, 1, 31, 14, 30)
     session_close = datetime(2024, 1, 31, 21, 0)
     broker = FakeBroker(
@@ -435,16 +469,7 @@ def test_rebalance_audits_execution_deviation_when_orders_do_not_fill(tmp_path: 
         json.loads(line)
         for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
     ]
-    deviations = [event for event in events if event["event"] == "execution_deviation"]
-    assert deviations == [
-        {
-            "event": "execution_deviation",
-            "asset": "AAPL",
-            "wanted": 0.15,
-            "got": 0.0,
-            "ts": deviations[0]["ts"],
-        }
-    ]
+    assert not any(event["event"] == "execution_deviation" for event in events)
 
 
 def test_get_clock_failure_halts_without_flatten(tmp_path: Path):
@@ -457,6 +482,31 @@ def test_get_clock_failure_halts_without_flatten(tmp_path: Path):
 
     assert supervisor.state == SupervisorState.HALTED
     assert broker.close_all_called is False
+    assert broker.orders == []
+
+
+def test_resume_after_get_clock_halt_does_not_catch_up_open(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=True,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    broker.raise_on_get_clock = True
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+
+    supervisor.tick()
+    assert supervisor.state == SupervisorState.HALTED
+    assert broker.orders == []
+
+    broker.raise_on_get_clock = False
+    supervisor.resume()
+    supervisor.tick()
+
+    assert supervisor.state == SupervisorState.IDLE_IN_SESSION
     assert broker.orders == []
 
 

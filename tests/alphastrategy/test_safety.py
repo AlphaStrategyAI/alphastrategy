@@ -78,9 +78,17 @@ def test_confirm_flag_is_string_not_truthy_zero():
             _enforce_safety(BrokerConfig(paper=False, confirm_live=falsy))
 
 
-def test_paper_mode_rejects_live_trading_base_url():
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        LIVE_BASE_URL,
+        "https://API.ALPACA.MARKETS",
+        "https://api。alpaca。markets",
+    ],
+)
+def test_paper_mode_rejects_normalized_live_trading_base_url(base_url: str):
     with pytest.raises(LiveTradingRefused, match="live trading base URL"):
-        AlpacaAdapter(paper=True, base_url=LIVE_BASE_URL)
+        AlpacaAdapter(paper=True, base_url=base_url)
 
 
 def test_confirm_flag_constant_value():

@@ -57,6 +57,17 @@ class LiveTradingRefused(Exception):
 CONFIRM_LIVE_FLAG = "confirm_yes_i_know_what_im_doing"
 
 
+def _normalized_hostname(url: str) -> str | None:
+    hostname = urlsplit(url).hostname
+    if hostname is None:
+        return None
+    try:
+        hostname = hostname.encode("idna").decode("ascii")
+    except UnicodeError:
+        pass
+    return hostname.rstrip(".").casefold()
+
+
 @dataclass
 class BrokerConfig:
     """Configuration shared by every Broker adapter.
@@ -91,8 +102,8 @@ def _enforce_safety(config: BrokerConfig) -> None:
       2. `paper=True` accepts any `confirm_live` value.
     """
     if config.paper and config.base_url:
-        hostname = urlsplit(config.base_url).hostname
-        if hostname and hostname.lower() == "api.alpaca.markets":
+        hostname = _normalized_hostname(config.base_url)
+        if hostname == "api.alpaca.markets":
             raise LiveTradingRefused(
                 "Paper trading refused: live trading base URL "
                 "https://api.alpaca.markets is not allowed when paper=True."

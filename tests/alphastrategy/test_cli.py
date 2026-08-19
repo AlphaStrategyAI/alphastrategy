@@ -11,6 +11,7 @@ import pytest
 
 from alphastrategy.api.app import make_server
 from alphastrategy.cli.main import _make_weight_fn, _shutdown_flatten, main
+from alphastrategy.errors import HaltRequested
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.supervisor.loop import Supervisor
@@ -138,19 +139,25 @@ def test_start_starts_supervisor_heartbeat(cli_home: Path, patch_alpaca: mock.Ma
     calls = []
     with mock.patch("alphastrategy.cli.main.make_server") as make_server:
         with mock.patch("alphastrategy.cli.main.start_heartbeat") as start_heartbeat:
-            server = mock.MagicMock()
-            server.serve_forever.side_effect = KeyboardInterrupt
-            make_server.return_value = server
-            make_server.side_effect = lambda *args, **kwargs: calls.append("server") or server
-            start_heartbeat.side_effect = lambda *args, **kwargs: calls.append("heartbeat")
+            with mock.patch("alphastrategy.cli.main.signal.signal") as signal_install:
+                server = mock.MagicMock()
+                server.serve_forever.side_effect = KeyboardInterrupt
+                make_server.return_value = server
+                make_server.side_effect = lambda *args, **kwargs: calls.append("server") or server
+                start_heartbeat.side_effect = lambda *args, **kwargs: calls.append("heartbeat")
+                signal_install.side_effect = lambda _signum, handler: (
+                    calls.append("handler")
+                    if getattr(handler, "__name__", "") == "_interrupt"
+                    else None
+                )
 
-            rc = main(["start"])
+                rc = main(["start"])
 
     assert rc == 0
     start_heartbeat.assert_called_once()
     supervisor = start_heartbeat.call_args.args[0]
     assert supervisor is make_server.call_args.args[1]
-    assert calls == ["server", "heartbeat"]
+    assert calls == ["server", "handler", "handler", "heartbeat"]
 
 
 def test_start_uses_paper_adapter(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
@@ -239,6 +246,26 @@ def test_weight_fn_uses_last_fetched_bar_and_long_lookback(tmp_path: Path) -> No
     assert broker.request is not None
     start, end = broker.request
     assert (date.fromisoformat(end) - date.fromisoformat(start)).days >= 400
+
+
+def test_weight_fn_halts_on_empty_broker_bars(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    bundle_dir = home.bundle_dir("asb_test")
+    bundle_dir.mkdir(parents=True)
+    (bundle_dir / "strategy.dsl.yaml").write_text(
+        "dsl_version: alphaloop.dsl/v0\n"
+        "universe: [AAPL]\n"
+        "steps:\n"
+        "  - op: equal_weight\n",
+        encoding="utf-8",
+    )
+
+    class EmptyBarsBroker:
+        def get_bars(self, symbols, start, end):
+            return {"AAPL": {"bars": []}}
+
+    with pytest.raises(HaltRequested, match="missing bars"):
+        _make_weight_fn(home, EmptyBarsBroker())("asb_test")
 
 
 def test_shutdown_flatten_kills_account_before_server_shutdown() -> None:

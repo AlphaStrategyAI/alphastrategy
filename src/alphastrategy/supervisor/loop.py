@@ -99,6 +99,7 @@ class Supervisor:
         self._evaluators = evaluators or {}
         self._weight_fn = weight_fn
         self._prev_clock: ClockSnapshot | None = None
+        self._prime_clock_after_resume = False
         self._lock = threading.RLock()
         self._snapshot = load_state(home.state_path())
         if self._snapshot.state == SupervisorState.STARTING:
@@ -191,9 +192,16 @@ class Supervisor:
             try:
                 clock_raw = self._broker.get_clock()
                 cur = _clock_snapshot(clock_raw)
-                self._set_idle_state(cur)
+                self._prev_clock = cur
+                self._prime_clock_after_resume = False
+                self._snapshot.state = (
+                    SupervisorState.IDLE_IN_SESSION
+                    if cur.is_open
+                    else SupervisorState.IDLE_OUT_OF_SESSION
+                )
             except Exception:
                 self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
+                self._prime_clock_after_resume = True
             self._persist()
 
     def tick(self) -> None:
@@ -216,6 +224,9 @@ class Supervisor:
             except HaltRequested as exc:
                 self._halt(str(exc))
                 return
+            if self._prime_clock_after_resume:
+                self._prev_clock = cur
+                self._prime_clock_after_resume = False
 
             event = next_rebalance_event(
                 self._prev_clock,
@@ -419,8 +430,12 @@ class Supervisor:
         prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
         plans = plan_orders(combined, positions, prices, equity, rebalance_policy)
 
+        all_orders_filled = bool(plans)
         for plan in plans:
-            self._broker.place_order(plan.symbol, plan.qty, plan.side)
+            result = self._broker.place_order(plan.symbol, plan.qty, plan.side)
+            status = result.get("status") if isinstance(result, dict) else None
+            if str(status).casefold() != "filled":
+                all_orders_filled = False
             self._audit(
                 "order",
                 symbol=plan.symbol,
@@ -428,14 +443,17 @@ class Supervisor:
                 side=plan.side,
             )
 
-        positions_after = _positions_map(self._broker.list_positions())
-        got = {
-            symbol: (qty * prices[symbol]) / equity
-            for symbol, qty in positions_after.items()
-            if symbol in prices and equity > 0
-        }
-        for deviation in deviations_after(combined, got, equity, prices):
-            self._audit("execution_deviation", **deviation)
+        if all_orders_filled:
+            positions_after_raw = self._broker.list_positions()
+            if positions_after_raw:
+                positions_after = _positions_map(positions_after_raw)
+                got = {
+                    symbol: (qty * prices[symbol]) / equity
+                    for symbol, qty in positions_after.items()
+                    if symbol in prices and equity > 0
+                }
+                for deviation in deviations_after(combined, got, equity, prices):
+                    self._audit("execution_deviation", **deviation)
 
         session_date = cur.next_close.date().isoformat()
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"

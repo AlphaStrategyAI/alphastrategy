@@ -16,7 +16,7 @@ import yaml
 
 from alphastrategy.api.app import make_server, start_heartbeat
 from alphastrategy.bundle.import_bundle import import_asb
-from alphastrategy.errors import ImportRejected
+from alphastrategy.errors import HaltRequested, ImportRejected
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.dsl.sandbox import run_sandbox
 from alphastrategy.live.alpaca import AlpacaAdapter
@@ -78,25 +78,34 @@ def _bars_dict_from_broker(broker: Any, symbols: list[str]) -> dict[str, Any]:
     end = datetime.now(timezone.utc).date().isoformat()
     start = (datetime.now(timezone.utc).date() - timedelta(days=400)).isoformat()
     raw = broker.get_bars(sorted(symbols), start, end)
-    dates: list[str] = []
-    cols: dict[str, list[float]] = {symbol: [] for symbol in symbols}
+    if not symbols or not isinstance(raw, dict):
+        raise HaltRequested("missing bars for strategy universe")
+    series: dict[str, dict[str, float]] = {}
     for symbol in symbols:
         sym_data = raw.get(symbol, {})
         bars = sym_data.get("bars", []) if isinstance(sym_data, dict) else []
-        for index, bar in enumerate(bars):
+        by_timestamp: dict[str, float] = {}
+        for bar in bars:
             if not isinstance(bar, dict):
                 continue
             timestamp = bar.get("t") or bar.get("timestamp")
-            date_str = str(timestamp) if timestamp else f"day{index}"
-            if index == len(dates):
-                dates.append(date_str)
-            cols[symbol].append(float(bar.get("c", 0.0)))
-    if not dates:
-        dates = [end]
-        for symbol in symbols:
-            if not cols[symbol]:
-                cols[symbol] = [100.0]
-    return {"date": dates, **cols}
+            if timestamp is None or "c" not in bar:
+                continue
+            by_timestamp[str(timestamp)] = float(bar["c"])
+        if not by_timestamp:
+            raise HaltRequested(f"missing bars for {symbol}")
+        series[symbol] = by_timestamp
+    common_dates = set.intersection(*(set(values) for values in series.values()))
+    if not common_dates:
+        raise HaltRequested("fetched bars have no common complete timestamp")
+    dates = sorted(common_dates)
+    return {
+        "date": dates,
+        **{
+            symbol: [by_timestamp[timestamp] for timestamp in dates]
+            for symbol, by_timestamp in series.items()
+        },
+    }
 
 
 def _bundle_universe(bundle_dir: Path) -> list[str]:
@@ -188,7 +197,6 @@ def _shutdown_flatten(supervisor: Supervisor, server: Any) -> None:
 def _cmd_start(home: AlphaStrategyHome, broker: Any, host: str, port: int) -> int:
     supervisor = _make_supervisor(home, broker)
     server = make_server(home, supervisor, bind=host, port=port)
-    start_heartbeat(supervisor)
     previous_handlers: dict[int, Any] = {}
 
     def _interrupt(_signum: int, _frame: Any) -> None:
@@ -198,6 +206,7 @@ def _cmd_start(home: AlphaStrategyHome, broker: Any, host: str, port: int) -> in
         previous_handlers[signum] = signal.getsignal(signum)
         signal.signal(signum, _interrupt)
     try:
+        start_heartbeat(supervisor)
         server.serve_forever()
     except KeyboardInterrupt:
         _shutdown_flatten(supervisor, server)

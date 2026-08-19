@@ -125,6 +125,11 @@ def test_import_rejects_secret_like_key_in_bundle_yaml(tmp_path: Path):
     [
         ("parameters.yaml", b"model:\n  access_token: forbidden\n", "access_token"),
         (
+            "parameters.yaml",
+            b"model:\n  broker_credential: forbidden\n",
+            "broker_credential",
+        ),
+        (
             "lineage.yaml",
             b"run_id: run-1\ncandidate_id: c-1\nresearch_outcome: FOUND\n"
             b"engine_hash: engine\npassword_hint: forbidden\n"

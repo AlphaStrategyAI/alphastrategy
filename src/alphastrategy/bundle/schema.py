@@ -9,7 +9,7 @@ from alphastrategy.errors import ImportRejected
 
 SUPPORTED = {("alphastrategy.bundle/v0", "alphaloop.dsl/v0")}
 
-_SECRET_FRAGMENTS = ("key", "secret", "token", "password")
+_SECRET_FRAGMENTS = ("key", "secret", "token", "password", "credential")
 
 _REQUIRED_MEMBERS = {
     "bundle.yaml",
