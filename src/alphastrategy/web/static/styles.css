@@ -400,6 +400,10 @@ th {
   color: #f59e0b;
 }
 
+#act-count-rebalance.warn {
+  color: #f59e0b;
+}
+
 .status-fail {
   color: #ef4444;
 }

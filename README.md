@@ -145,7 +145,8 @@ Headroom is **Names / Orders today / Cash / Target cash** (Names is the hero).
 Caps and Headroom stay sticky. Tighten is **Tight / Delta $ / Delta % / Fields**
 (Tight is the hero), then groups **Gross / Names / Orders / Deltas**.
 Activity is three bands: **Beat** (Pulse / Age / Interval / Supervisor;
-Pulse is the hero), **Tape** (Rebalances is the hero), and **Blotter**.
+Pulse is the hero), **Tape** (Rebalances is the hero; the sub names spent
+rebalances), and **Blotter**.
 Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
 
 ---

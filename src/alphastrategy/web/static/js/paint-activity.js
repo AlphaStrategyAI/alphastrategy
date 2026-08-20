@@ -8,8 +8,8 @@
         const wantedN = ev.wanted && typeof ev.wanted === "object" ? Object.keys(ev.wanted).length : 0;
         const gotN = ev.got && typeof ev.got === "object" ? Object.keys(ev.got).length : 0;
         const orders = ev.orders == null ? "" : `${ev.orders} orders`;
-        const incomplete = ev.complete === false ? "incomplete" : "";
-        return `${ev.session_event || ""} · ${orders} · wanted ${wantedN} got ${gotN} ${incomplete}`.trim();
+        const spent = ev.complete === false ? "spent" : "";
+        return `${ev.session_event || ""} · ${orders} · wanted ${wantedN} got ${gotN} ${spent}`.trim();
       }
       case "execution_deviation":
         return `${ev.asset || ""} wanted ${ev.wanted} got ${ev.got}`;
@@ -104,7 +104,7 @@
         detailList([
           ["Session", ev.session_event],
           ["Orders", ev.orders],
-          ["Complete", ev.complete === false ? "no" : "yes"],
+          ["Spent", ev.complete === false ? "yes" : "no"],
         ])
       );
       return wrap;
@@ -189,8 +189,12 @@
       stateEl.classList.toggle("fail", raw === "flattening" || raw === "stopped");
     }
     const counts = { rebalance: 0, halt: 0, deviation: 0, kill: 0 };
+    let spent = 0;
     for (const ev of events) {
-      if (ev.event === "rebalance") counts.rebalance += 1;
+      if (ev.event === "rebalance") {
+        counts.rebalance += 1;
+        if (ev.complete === false) spent += 1;
+      }
       else if (ev.event === "halt") counts.halt += 1;
       else if (ev.event === "execution_deviation") counts.deviation += 1;
       else if (ev.event === "kill" || ev.event === "flatten") counts.kill += 1;
@@ -202,6 +206,13 @@
       if (onClass) el.classList.toggle(onClass, value > 0);
     };
     setTape("act-count-rebalance", counts.rebalance, "status-running");
+    const rebEl = document.getElementById("act-count-rebalance");
+    const spentEl = document.getElementById("act-count-spent");
+    if (rebEl) {
+      rebEl.classList.toggle("status-running", counts.rebalance > 0 && spent === 0);
+      rebEl.classList.toggle("warn", spent > 0);
+    }
+    if (spentEl) spentEl.textContent = spent ? spent + " spent" : "—";
     setTape("act-count-halt", counts.halt, "status-halt");
     setTape("act-count-deviation", counts.deviation, "status-fail");
     setTape("act-count-kill", counts.kill, "status-fail");

@@ -198,6 +198,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Three bands: Beat / Tape / Blotter. "
             "Beat is four tiles Pulse / Age / Interval / Supervisor. Pulse is the hero. "
             "Rebalances is the hero count. "
+            "Tape Rebalances sub names spent. "
+            "Blotter rebalance rows say spent when that event did not finish. "
             "Halt, deviation, and kill tiles are not quiet when above zero. "
             "Time-ordered audit. Empty copy names the two legal rebalances. "
             "Kill rows say isolated residual or flattened account. "
