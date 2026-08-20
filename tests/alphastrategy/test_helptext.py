@@ -97,6 +97,7 @@ REQUIRED_PHRASES = (
     "Risk overlays load runtime once per glance",
     "Heartbeat seeds the live book glance",
     "Sleeve envelopes load once until the file changes",
+    "A heartbeat live book holds until flatten or place",
 )
 
 

@@ -1371,6 +1371,41 @@ def test_heartbeat_live_book_survives_slow_price_fetch(
     assert after_tick_positions >= 1
 
 
+def test_heartbeat_live_book_holds_past_ttl(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphastrategy.supervisor import loop as loop_mod
+
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    clock = {"t": 0.0}
+    monkeypatch.setattr(loop_mod.time, "monotonic", lambda: clock["t"])
+    accounts = {"n": 0}
+    positions = {"n": 0}
+    inner_account = broker.get_account
+    inner_positions = broker.list_positions
+
+    def counted_account() -> dict:
+        accounts["n"] += 1
+        return inner_account()
+
+    def counted_positions() -> list:
+        positions["n"] += 1
+        return inner_positions()
+
+    broker.get_account = counted_account  # type: ignore[method-assign]
+    broker.list_positions = counted_positions  # type: ignore[method-assign]
+    supervisor.tick()
+    after_tick_accounts = accounts["n"]
+    after_tick_positions = positions["n"]
+    clock["t"] += Supervisor.LIVE_BOOK_TTL_SEC + 5.0
+    supervisor.live_book()
+    assert accounts["n"] == after_tick_accounts
+    assert positions["n"] == after_tick_positions
+    assert after_tick_accounts >= 1
+    assert after_tick_positions >= 1
+
+
 def test_bundle_envelope_parses_once_while_unchanged(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

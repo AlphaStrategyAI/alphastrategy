@@ -777,6 +777,43 @@ def test_tick_seeds_live_book_for_status_and_portfolio(api_stack) -> None:
     assert broker.position_reads == positions
 
 
+def test_glance_live_book_expires_after_ttl(
+    api_stack, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphastrategy.supervisor import loop as loop_mod
+
+    client, _home, _supervisor, broker = api_stack
+    broker.positions = {"AAPL": 4.0}
+    clock = {"t": 0.0}
+    monkeypatch.setattr(loop_mod.time, "monotonic", lambda: clock["t"])
+    client.get("/api/status")
+    assert broker.account_reads == 1
+    assert broker.position_reads == 1
+    clock["t"] += Supervisor.LIVE_BOOK_TTL_SEC + 0.1
+    client.get("/api/status")
+    assert broker.account_reads == 2
+    assert broker.position_reads == 2
+
+
+def test_heartbeat_live_book_holds_past_ttl_for_status_and_portfolio(
+    api_stack, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphastrategy.supervisor import loop as loop_mod
+
+    client, _home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 4.0}
+    clock = {"t": 0.0}
+    monkeypatch.setattr(loop_mod.time, "monotonic", lambda: clock["t"])
+    supervisor.tick()
+    accounts = broker.account_reads
+    positions = broker.position_reads
+    clock["t"] += Supervisor.LIVE_BOOK_TTL_SEC + 5.0
+    client.get("/api/status")
+    client.get("/api/portfolio")
+    assert broker.account_reads == accounts
+    assert broker.position_reads == positions
+
+
 def test_portfolio_after_account_kill_is_not_stale_live_book(api_stack) -> None:
     client, _home, supervisor, broker = api_stack
     broker.positions = {"AAPL": 15.0}
