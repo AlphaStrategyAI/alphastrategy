@@ -103,8 +103,9 @@ orders through Alpaca. Strategy code never sees broker credentials.
 shows portfolio state, running sleeves, activity, and risk — not
 backtests or strategy editing. **Help** (header control, not a sixth
 screen) loads a how-to for the **current screen**. **Full runbook** is
-the six runbook sections. `alphastrategy help` prints the screen how-tos
-first, then those same sections.
+the six runbook sections. `alphastrategy help` prints **How to** jobs first,
+then screen how-tos, then those same sections. F1 shows the jobs for the
+current screen (import, start paper, flatten, tighten, wanted versus got).
 Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 (every 20s, no orders), not RTH Session OPEN/CLOSED.

@@ -245,6 +245,21 @@
     p.textContent = howto.body || "";
     howtoRoot.appendChild(h);
     howtoRoot.appendChild(p);
+    const taskRoot = document.getElementById("help-tasks");
+    if (taskRoot) {
+      taskRoot.innerHTML = "";
+      const tasks = helpState.payload.tasks || [];
+      for (const item of tasks) {
+        const screens = item.screens || [];
+        if (screens.indexOf(screen) < 0) continue;
+        const th = document.createElement("h3");
+        th.textContent = item.title || "";
+        const tp = document.createElement("p");
+        tp.textContent = item.body || "";
+        taskRoot.appendChild(th);
+        taskRoot.appendChild(tp);
+      }
+    }
     body.innerHTML = "";
     const title = document.createElement("p");
     title.className = "muted";

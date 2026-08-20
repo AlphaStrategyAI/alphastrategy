@@ -75,7 +75,8 @@ SECTIONS: list[dict[str, str]] = [
             "Expanding a blotter row shows Wanted versus Got, not a JSON dump. "
             "Header LIVE is the Supervisor beat, not Session. "
             "Alt+1 through Alt+5 switch screens. "
-            "F1 is how-to for the current screen. The six runbook sections "
+            "F1 is how-to for the current screen. F1 shows the screen how-to "
+            "and the jobs for that screen. The six runbook sections "
             "match alphastrategy help. "
             "Quiet cockpit JS is assembled from js/ parts. The browser still "
             "loads /app.js. "
@@ -168,16 +169,77 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
 ]
 
 
+TASK_HOWTOS: list[dict[str, Any]] = [
+    {
+        "id": "task_import",
+        "screens": ["strategies"],
+        "title": "How to import a qualified .asb",
+        "body": (
+            "1. Open Strategies (Alt+2). "
+            "2. Under Import .asb choose the file and Upload. "
+            "3. If rejected, the gate (hash, schema, conformance) and a next action are named. "
+            "Import is not permission to trade."
+        ),
+    },
+    {
+        "id": "task_start",
+        "screens": ["strategies", "run"],
+        "title": "How to start a paper sleeve",
+        "body": (
+            "1. Import first if Inventory is empty. "
+            "2. Open Run (Alt+3). "
+            "3. Under Start paper pick the bundle, set allocation, check Confirm paper start, then Start paper. "
+            "This is the second explicit action."
+        ),
+    },
+    {
+        "id": "task_flatten",
+        "screens": ["run"],
+        "title": "How to flatten the paper account",
+        "body": (
+            "1. Open Run (Alt+3). "
+            "2. Under Flatten account — not After halt — check the box, type FLATTEN, then Kill account. "
+            "Halt is not flatten. Resume does not catch up."
+        ),
+    },
+    {
+        "id": "task_tighten",
+        "screens": ["risk"],
+        "title": "How to tighten a cap",
+        "body": (
+            "1. Open Risk (Alt+5). "
+            "2. Caps and Headroom stay sticky. "
+            "3. Under Tighten change only Gross / Names / Orders / Deltas fields you mean to tighten, then Tighten. "
+            "Looser values are refused; PUT keys stay machine names."
+        ),
+    },
+    {
+        "id": "task_wanted",
+        "screens": ["portfolio", "activity"],
+        "title": "How to read wanted versus got",
+        "body": (
+            "1. On Portfolio, Positions Wanted versus Got is last combined target versus current weight. "
+            "2. On Activity, expand a rebalance blotter row for the Wanted / Got table, not a JSON dump."
+        ),
+    },
+]
+
+
 def help_payload() -> dict[str, Any]:
     return {
         "title": HELP_TITLE,
         "sections": [dict(section) for section in SECTIONS],
         "howtos": [dict(item) for item in SCREEN_HOWTOS],
+        "tasks": [dict(item) for item in TASK_HOWTOS],
     }
 
 
 def help_text() -> str:
     lines = [HELP_TITLE, ""]
+    for item in TASK_HOWTOS:
+        lines.append(item["title"])
+        lines.append(item["body"])
+        lines.append("")
     for item in SCREEN_HOWTOS:
         lines.append(item["title"])
         lines.append(item["body"])
