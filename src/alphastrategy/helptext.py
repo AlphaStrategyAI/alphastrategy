@@ -66,6 +66,7 @@ SECTIONS: list[dict[str, str]] = [
             "Tighten and Start paper flatten the same live book as Book. "
             "Caps LIMIT follows the same live book as Tighten. "
             "Caps LIMIT follows a next send through Order size. "
+            "LIMIT names a next send through Order size. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap. "
@@ -162,6 +163,7 @@ SECTIONS: list[dict[str, str]] = [
             "paper kill --bundle isolates when the "
             "last book is clean; otherwise it flattens the account rather than guess. "
             "status names LIMIT while the live book is through the spoken cap. "
+            "LIMIT names a next send through Order size. "
             "status names BOOK heartbeat or glance. "
             "status names Day PnL. "
         ),
@@ -296,6 +298,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Tighten and Start paper flatten the same live book as Book. "
             "Caps LIMIT follows the same live book as Tighten. "
             "Caps LIMIT follows a next send through Order size. "
+            "LIMIT names a next send through Order size. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap."
         ),

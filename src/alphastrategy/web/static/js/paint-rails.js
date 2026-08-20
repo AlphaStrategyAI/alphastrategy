@@ -128,10 +128,10 @@
       return;
     }
     el.classList.remove("hidden");
+    const through =
+      limit.kind === "send" ? "next send through " : "live book through ";
     el.textContent =
-      "LIMIT: live book through " +
-      policyLabel(limit.reason) +
-      " — next rebalance will flatten";
+      "LIMIT: " + through + policyLabel(limit.reason) + " — next rebalance will flatten";
   }
 
   function renderGrossUtilization(gross) {

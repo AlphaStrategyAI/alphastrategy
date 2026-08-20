@@ -45,7 +45,7 @@ def _next_send_limit(
             orders_already_today=int(orders_today),
         )
     except FlattenRequested as exc:
-        return {"reason": str(exc.reason or "limit")}
+        return {"reason": str(exc.reason or "limit"), "kind": "send"}
     except Exception:
         return None
     return None
@@ -89,7 +89,7 @@ def summarize(
         try:
             check_book(dict(last_got), 0.0, policy)
         except FlattenRequested as exc:
-            live_limit = {"reason": str(exc.reason or "limit")}
+            live_limit = {"reason": str(exc.reason or "limit"), "kind": "book"}
 
     return {
         "names": int(names),

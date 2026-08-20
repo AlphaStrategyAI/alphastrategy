@@ -196,6 +196,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Tighten and Start paper flatten the same live book as Book.
   Caps LIMIT follows the same live book as Tighten.
   Caps LIMIT follows a next send through Order size.
+  LIMIT names a next send through Order size.
   Sleeve envelopes load once until the file changes.
   Runtime overlays load once until the file changes.
   Tighten PUT reads runtime overlays from the Supervisor.

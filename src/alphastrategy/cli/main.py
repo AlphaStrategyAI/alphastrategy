@@ -43,6 +43,9 @@ _FLAT_START = (
 _LIMIT_STATUS = (
     "LIMIT: live book through {label} — next rebalance will flatten"
 )
+_LIMIT_SEND_STATUS = (
+    "LIMIT: next send through {label} — next rebalance will flatten"
+)
 _BOOK_STATUS = "BOOK: {source}"
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
@@ -255,7 +258,8 @@ def _status_limit_line(payload: dict[str, Any]) -> str | None:
     reason = limit.get("reason")
     if not reason:
         return None
-    return _LIMIT_STATUS.format(label=label_for(str(reason)))
+    template = _LIMIT_SEND_STATUS if limit.get("kind") == "send" else _LIMIT_STATUS
+    return template.format(label=label_for(str(reason)))
 
 
 def _status_book_line(payload: dict[str, Any]) -> str | None:
