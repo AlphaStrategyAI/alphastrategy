@@ -248,18 +248,12 @@
     const portfolio = state.portfolio || {};
     const equity = Number(portfolio.equity);
     const cash = Number(portfolio.cash);
-    const pnl = Number(portfolio.pnl);
 
     document.getElementById("metric-equity").textContent = fmtNum(equity, 2);
     const eqSub = document.getElementById("metric-equity-sub");
     if (eqSub) eqSub.textContent = bookSourceLabel();
     document.getElementById("metric-cash").textContent = fmtNum(cash, 2);
-
-    const pnlEl = document.getElementById("metric-pnl");
-    pnlEl.textContent = fmtNum(pnl, 2);
-    pnlEl.classList.remove("positive", "negative");
-    if (pnl > 0) pnlEl.classList.add("positive");
-    if (pnl < 0) pnlEl.classList.add("negative");
+    paintDayPnl(portfolio);
 
     const gross = grossExposure(portfolio);
     document.getElementById("metric-gross").textContent = fmtPct(gross);

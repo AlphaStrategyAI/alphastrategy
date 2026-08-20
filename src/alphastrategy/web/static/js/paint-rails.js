@@ -23,6 +23,22 @@
     });
   }
 
+  function paintDayPnl(portfolio) {
+    const pnlEl = document.getElementById("metric-pnl");
+    if (!pnlEl) return;
+    const pnlSub = document.getElementById("metric-pnl-sub");
+    const raw = portfolio && portfolio.pnl;
+    const pnl = Number(raw);
+    const hasPnl = raw != null && raw !== "" && Number.isFinite(pnl);
+    pnlEl.textContent = hasPnl ? fmtNum(pnl, 2) : "—";
+    pnlEl.classList.toggle("positive", hasPnl && pnl > 0);
+    pnlEl.classList.toggle("negative", hasPnl && pnl < 0);
+    if (pnlSub) {
+      pnlSub.textContent =
+        hasPnl && portfolio.pnl_source === "last_close" ? "vs last close" : "—";
+    }
+  }
+
   function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);

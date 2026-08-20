@@ -23,6 +23,29 @@ from alphastrategy.supervisor.loop import Supervisor
 from alphastrategy.supervisor.state import SupervisorState
 
 
+def _optional_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _account_day_pnl(account: dict[str, Any]) -> tuple[float | None, str | None]:
+    for key in ("pnl", "day_pnl"):
+        if key not in account:
+            continue
+        parsed = _optional_float(account.get(key))
+        if parsed is not None:
+            return parsed, "account"
+    last_equity = _optional_float(account.get("last_equity"))
+    equity = _optional_float(account.get("equity"))
+    if last_equity is None or equity is None:
+        return None, None
+    return equity - last_equity, "last_close"
+
+
 def _parse_iso(value: Any) -> datetime:
     if isinstance(value, datetime):
         return value
@@ -271,10 +294,12 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
         snapshot.last_combined,
         snapshot.last_fill_got,
     )
+    pnl, pnl_source = _account_day_pnl(account)
     payload: dict[str, Any] = {
         "equity": equity,
         "cash": cash,
-        "pnl": float(account.get("pnl", account.get("day_pnl", 0)) or 0),
+        "pnl": pnl,
+        "pnl_source": pnl_source,
         "positions": positions,
         "sleeves": dict(snapshot.sleeves),
         "last_combined": dict(snapshot.last_combined),

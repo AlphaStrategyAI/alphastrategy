@@ -116,7 +116,7 @@ The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 **Session OPEN is halt color while Supervisor is HALTED.**
 
 Portfolio is three bands: **Book** (Equity is the hero, with Cash, Day PnL,
-and **Drift**), **Flatten budgets** (Gross, Names, Orders today), and
+and **Drift**; **Day PnL is equity minus last close**), **Flatten budgets** (Gross, Names, Orders today), and
 **Clock** (**Session / Now / Next / Last**; Next is the hero; Next is held
 while Supervisor is HALTED, flat while the paper account is flattened, and
 flatten while the live book is through the spoken cap), then
@@ -198,7 +198,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Runtime overlays load once until the file changes.
   Tighten PUT reads runtime overlays from the Supervisor.
   Book Equity names Beat or Glance.
-  Book, Beat, and Headroom name Beat or Glance. Rebalance flattens a live book that
+  Book, Beat, and Headroom name Beat or Glance.
+  Day PnL is equity minus last close. Rebalance flattens a live book that
   already breaches the spoken cap. Header **LIVE / STALE /
   DEAD** is the Supervisor beat, not RTH session. Header **OPEN / CLOSED**
   is the RTH session. Session OPEN is halt color while Supervisor is
