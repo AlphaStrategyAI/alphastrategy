@@ -163,6 +163,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Positions is four tiles Rows / Wanted / Got / At cap. Wanted is the hero. "
             "Clock is four tiles Session / Now / Next / Last. Next is the hero. "
             "Clock Last names the spent window when that event did not finish. "
+            "Clock Next is held while Supervisor is HALTED. "
             "Positions include wanted names with no fill. "
             "The Positions Book column is wanted versus got. "
             "Header LIVE is the Supervisor beat, not Session OPEN. "

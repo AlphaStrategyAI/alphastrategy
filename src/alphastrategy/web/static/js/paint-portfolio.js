@@ -33,6 +33,7 @@
     const clock = state.status && state.status.clock;
     const countdown = state.status && state.status.countdown;
     applySessionChip(sessionEl);
+    if (countEl) countEl.classList.remove("warn");
     function dashNowLast() {
       if (nowEl) nowEl.textContent = "—";
       if (nowSub) nowSub.textContent = "—";
@@ -50,7 +51,16 @@
     }
     if (countdown) {
       countEl.textContent = fmtCountdown(countdown.seconds);
-      kindEl.textContent = countdown.next_rebalance || "—";
+      const kind = countdown.next_rebalance || "—";
+      const halted =
+        (state.status && state.status.state) === "halted" ||
+        Boolean(state.status && state.status.halted);
+      if (halted) {
+        countEl.classList.add("warn");
+        kindEl.textContent = "held · " + kind;
+      } else {
+        kindEl.textContent = kind;
+      }
     } else {
       countEl.textContent = "—";
       kindEl.textContent = "—";
