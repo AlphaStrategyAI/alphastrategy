@@ -105,6 +105,7 @@ class Supervisor:
         self._snapshot = load_state(home.state_path())
         if self._snapshot.state == SupervisorState.STARTING:
             self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
+        self._recover_interrupted_rebalance()
 
     @property
     def state(self) -> SupervisorState:
@@ -137,6 +138,7 @@ class Supervisor:
             self._snapshot = load_state(self._home.state_path())
             if self._snapshot.state == SupervisorState.STARTING:
                 self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
+            self._recover_interrupted_rebalance()
 
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)
@@ -579,6 +581,9 @@ class Supervisor:
             )
             placed += 1
             self._snapshot.orders_today = already + placed
+            if self._snapshot.state == SupervisorState.REBALANCING:
+                self._snapshot.rebalance_placed = placed
+            self._persist()
         return placed, None
 
     def _snapshot_got(
@@ -597,6 +602,31 @@ class Supervisor:
         for deviation in deviations_after(combined, got, equity, prices):
             self._audit("execution_deviation", **deviation)
         return got
+
+    def _recover_interrupted_rebalance(self) -> None:
+        if self._snapshot.state != SupervisorState.REBALANCING:
+            return
+        combined = dict(self._snapshot.last_combined)
+        prices = dict(self._snapshot.last_prices)
+        try:
+            equity = self._equity()
+            self._snapshot_got(combined, prices, equity)
+        except Exception:
+            pass
+        placed = int(self._snapshot.rebalance_placed or 0)
+        event = "open"
+        marker = self._snapshot.last_rebalance_event or ""
+        if ":" in marker:
+            event = marker.split(":", 1)[1]
+        self._audit(
+            "rebalance",
+            session_event=event,
+            orders=placed,
+            wanted=dict(combined),
+            got=dict(self._snapshot.last_got),
+            complete=False,
+        )
+        self._halt(f"interrupted rebalancing after {placed} orders")
 
     def _rebalance(self, cur: ClockSnapshot, event: str) -> None:
         collected = self._collect_sleeves()
@@ -630,6 +660,10 @@ class Supervisor:
             orders_already_today=already,
         )
 
+        if plans:
+            self._snapshot.last_rebalance_event = f"{session_date}:{event}"
+            self._snapshot.rebalance_placed = 0
+            self._persist()
         placed, place_error = self._place_batch(plans, already)
         got = self._snapshot_got(combined, prices, equity)
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"
@@ -645,6 +679,7 @@ class Supervisor:
             raise HaltRequested(
                 f"place_order failed after {placed} of {len(plans)}: {place_error}"
             ) from place_error
+        self._snapshot.rebalance_placed = 0
         self._set_idle_state(cur)
 
     def _halt(self, reason: str) -> None:

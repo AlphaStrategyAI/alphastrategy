@@ -66,6 +66,7 @@ class SupervisorSnapshot:
     last_got: dict[str, float] = field(default_factory=dict)
     last_kill: dict[str, Any] | None = None
     last_heartbeat_at: str | None = None
+    rebalance_placed: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -116,6 +117,7 @@ class SupervisorSnapshot:
                 if payload.get("last_heartbeat_at") in (None, "")
                 else str(payload.get("last_heartbeat_at"))
             ),
+            rebalance_placed=int(payload.get("rebalance_placed") or 0),
         )
 
 

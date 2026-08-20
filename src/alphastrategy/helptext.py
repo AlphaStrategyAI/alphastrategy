@@ -28,6 +28,9 @@ SECTIONS: list[dict[str, str]] = [
             "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash. "
             "An incomplete rebalance still writes Wanted / Got, counts those orders, "
             "and health-halts. It does not flatten and does not retry that event. "
+            "If the host dies mid-rebalance, the desk treats that as interrupted "
+            "rebalancing: it writes Wanted / Got from the broker, health-halts, "
+            "and does not flatten or retry that event. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },
