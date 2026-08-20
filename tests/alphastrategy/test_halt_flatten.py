@@ -450,7 +450,7 @@ def test_rebalance_audits_execution_deviation_after_partial_immediate_fill(tmp_p
     ]
 
 
-def test_rebalance_skips_execution_deviation_for_unfilled_order(tmp_path: Path):
+def test_rebalance_audits_execution_deviation_for_unfilled_order(tmp_path: Path):
     open_time = datetime(2024, 1, 31, 14, 30)
     session_close = datetime(2024, 1, 31, 21, 0)
     broker = FakeBroker(
@@ -469,7 +469,11 @@ def test_rebalance_skips_execution_deviation_for_unfilled_order(tmp_path: Path):
         json.loads(line)
         for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
     ]
-    assert not any(event["event"] == "execution_deviation" for event in events)
+    deviations = [event for event in events if event["event"] == "execution_deviation"]
+    assert deviations
+    assert deviations[0]["asset"] == "AAPL"
+    assert deviations[0]["wanted"] == 0.15
+    assert deviations[0]["got"] == 0.0
 
 
 def test_get_clock_failure_halts_without_flatten(tmp_path: Path):
@@ -650,3 +654,46 @@ def test_rebalance_persists_contribution_and_stop_does_not_zero_it(tmp_path: Pat
     assert supervisor.snapshot.last_prices["AAPL"] == pytest.approx(100.0)
     supervisor.stop_sleeve("asb_test")
     assert supervisor.snapshot.last_sleeve_contribution["asb_test"]["AAPL"] == pytest.approx(0.15)
+
+
+def test_rebalance_counts_orders_today_and_audits_wanted_got(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+    assert supervisor.snapshot.orders_today == len(broker.orders)
+    assert supervisor.snapshot.orders_date == "2024-01-31"
+    assert "AAPL" in supervisor.snapshot.last_got
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    rebalances = [event for event in events if event["event"] == "rebalance"]
+    assert rebalances
+    assert "wanted" in rebalances[-1]
+    assert "got" in rebalances[-1]
+
+
+def test_daily_order_budget_flattens_without_overflow_batch(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    policy = replace(AccountPolicy.defaults(), max_orders_per_day=0)
+    supervisor = _make_supervisor(tmp_path, broker, policy=policy)
+    supervisor.start_sleeve("asb_test", 0.15)
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+    assert broker.close_all_called is True
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.orders == []

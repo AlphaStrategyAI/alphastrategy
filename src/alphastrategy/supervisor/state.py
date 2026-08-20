@@ -29,6 +29,9 @@ class SupervisorSnapshot:
     last_sleeve_contribution: dict[str, dict[str, float]] = field(default_factory=dict)
     last_prices: dict[str, float] = field(default_factory=dict)
     stopped: list[str] = field(default_factory=list)
+    orders_date: str | None = None
+    orders_today: int = 0
+    last_got: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -67,6 +70,12 @@ class SupervisorSnapshot:
                 for asset, price in (payload.get("last_prices") or {}).items()
             },
             stopped=[str(bundle_id) for bundle_id in (payload.get("stopped") or [])],
+            orders_date=payload.get("orders_date"),
+            orders_today=int(payload.get("orders_today") or 0),
+            last_got={
+                str(asset): float(weight)
+                for asset, weight in (payload.get("last_got") or {}).items()
+            },
         )
 
 

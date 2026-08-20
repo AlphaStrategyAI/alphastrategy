@@ -223,8 +223,22 @@ class Supervisor:
         equity = self._equity()
         positions = _positions_map(self._broker.list_positions())
         policy = self._rebalance_policy()
+        session_date = None
+        try:
+            clock = self._broker.get_clock()
+            session_date = _parse_clock_dt(clock["next_close"]).date().isoformat()
+        except Exception:
+            session_date = self._snapshot.orders_date
+        already = self._session_order_budget(session_date) if session_date else 0
         self._broker.cancel_open_orders()
-        plans = plan_orders(residual, positions, prices, equity, policy)
+        plans = plan_orders(
+            residual,
+            positions,
+            prices,
+            equity,
+            policy,
+            orders_already_today=already,
+        )
         for plan in plans:
             self._broker.place_order(plan.symbol, plan.qty, plan.side)
             self._audit(
@@ -234,6 +248,9 @@ class Supervisor:
                 side=plan.side,
                 reason="sleeve_kill",
             )
+        if session_date:
+            self._snapshot.orders_date = session_date
+            self._snapshot.orders_today = already + len(plans)
         self._snapshot.last_combined = dict(residual)
         self._snapshot.last_sleeve_contribution.pop(bundle_id, None)
         self._snapshot.last_sleeve_weights.pop(bundle_id, None)
@@ -447,6 +464,12 @@ class Supervisor:
         account = self._broker.get_account()
         return float(account.get("equity", 0))
 
+    def _session_order_budget(self, session_date: str) -> int:
+        if self._snapshot.orders_date != session_date:
+            self._snapshot.orders_date = session_date
+            self._snapshot.orders_today = 0
+        return self._snapshot.orders_today
+
     def _fetch_prices(
         self,
         symbols: set[str],
@@ -498,36 +521,45 @@ class Supervisor:
         }
         self._snapshot.last_combined = dict(combined)
         self._snapshot.last_prices = dict(prices)
-        plans = plan_orders(combined, positions, prices, equity, rebalance_policy)
+        session_date = cur.next_close.date().isoformat()
+        already = self._session_order_budget(session_date)
+        plans = plan_orders(
+            combined,
+            positions,
+            prices,
+            equity,
+            rebalance_policy,
+            orders_already_today=already,
+        )
 
-        all_orders_filled = bool(plans)
         for plan in plans:
-            result = self._broker.place_order(plan.symbol, plan.qty, plan.side)
-            status = result.get("status") if isinstance(result, dict) else None
-            if str(status).casefold() != "filled":
-                all_orders_filled = False
+            self._broker.place_order(plan.symbol, plan.qty, plan.side)
             self._audit(
                 "order",
                 symbol=plan.symbol,
                 qty=plan.qty,
                 side=plan.side,
             )
+        self._snapshot.orders_today = already + len(plans)
 
-        if all_orders_filled:
-            positions_after_raw = self._broker.list_positions()
-            if positions_after_raw:
-                positions_after = _positions_map(positions_after_raw)
-                got = {
-                    symbol: (qty * prices[symbol]) / equity
-                    for symbol, qty in positions_after.items()
-                    if symbol in prices and equity > 0
-                }
-                for deviation in deviations_after(combined, got, equity, prices):
-                    self._audit("execution_deviation", **deviation)
+        positions_after = _positions_map(self._broker.list_positions())
+        got = {
+            symbol: (qty * prices[symbol]) / equity
+            for symbol, qty in positions_after.items()
+            if symbol in prices and equity > 0
+        }
+        self._snapshot.last_got = dict(got)
+        for deviation in deviations_after(combined, got, equity, prices):
+            self._audit("execution_deviation", **deviation)
 
-        session_date = cur.next_close.date().isoformat()
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"
-        self._audit("rebalance", session_event=event, orders=len(plans))
+        self._audit(
+            "rebalance",
+            session_event=event,
+            orders=len(plans),
+            wanted=dict(combined),
+            got=dict(got),
+        )
         self._set_idle_state(cur)
 
     def _halt(self, reason: str) -> None:
