@@ -17,6 +17,7 @@ import yaml
 from alphastrategy.api.app import make_server, start_heartbeat
 from alphastrategy.bundle.import_bundle import import_asb
 from alphastrategy.errors import HaltRequested, ImportRejected
+from alphastrategy.helptext import help_text
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.dsl.sandbox import run_sandbox
 from alphastrategy.live.alpaca import AlpacaAdapter
@@ -323,14 +324,21 @@ def _cmd_paper_resume(
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="alphastrategy",
-        description="AlphaStrategy paper trading control plane",
+        description="Local Alpaca paper execution desk for .asb bundles.",
+        epilog="Halt is not flatten. Paper only. Run alphastrategy help for the operator runbook.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command")
+
+    subparsers.add_parser("help", help="print the operator runbook (halt vs flatten)")
 
     import_parser = subparsers.add_parser("import", help="import a strategy bundle (.asb)")
     import_parser.add_argument("file", type=Path, help="path to .asb file")
 
-    start_parser = subparsers.add_parser("start", help="start control plane HTTP server")
+    start_parser = subparsers.add_parser(
+        "start",
+        help="start localhost Quiet cockpit and Supervisor (paper only)",
+    )
     start_parser.add_argument("--host", default=DEFAULT_HOST, help="bind host (v1: localhost only)")
     start_parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="bind port")
 
@@ -345,15 +353,31 @@ def create_parser() -> argparse.ArgumentParser:
     paper_start.add_argument("--allocation", type=float, required=True, help="allocation 0-1")
     paper_start.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
-    paper_stop = paper_sub.add_parser("stop", help="stop paper sleeve")
+    paper_stop = paper_sub.add_parser(
+        "stop",
+        help="zero that sleeve on the next legal rebalance (does not flatten now)",
+        description="Zero that sleeve on the next legal rebalance (does not flatten now).",
+    )
     paper_stop.add_argument("--bundle", required=True, help="bundle id")
     paper_stop.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
-    paper_kill = paper_sub.add_parser("kill", help="kill sleeve or account")
-    paper_kill.add_argument("--bundle", default=None, help="bundle id (omit for account kill)")
+    paper_kill = paper_sub.add_parser(
+        "kill",
+        help="flatten one sleeve, or the whole paper account if --bundle is omitted (not halt)",
+        description="Flatten one sleeve, or the whole paper account if --bundle is omitted. This is not halt.",
+    )
+    paper_kill.add_argument(
+        "--bundle",
+        default=None,
+        help="bundle id (omit to flatten the whole paper account)",
+    )
     paper_kill.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
-    paper_resume = paper_sub.add_parser("resume", help="resume from halt")
+    paper_resume = paper_sub.add_parser(
+        "resume",
+        help="resume from halt; does not catch up and does not flatten",
+        description="Resume from halt; does not catch up and does not flatten.",
+    )
     paper_resume.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
 
     return parser
@@ -374,6 +398,10 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     home = _home()
+
+    if args.command == "help":
+        print(help_text(), end="")
+        return 0
 
     if args.command == "import":
         return _cmd_import(home, args.file)

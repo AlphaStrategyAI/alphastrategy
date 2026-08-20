@@ -318,3 +318,55 @@ def test_paper_start_uses_running_control_plane_without_constructing_alpaca(
     assert rc == 0
     assert supervisor.snapshot.sleeves["asb_test"] == 0.25
     patch_alpaca.assert_not_called()
+
+
+def test_help_command_prints_operator_copy(cli_home: Path, capsys) -> None:
+    rc = main(["help"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "halt is not flatten" in out.lower()
+    assert "FLATTEN" in out
+    assert "sole order placer" in out.lower()
+
+
+def test_help_command_does_not_construct_alpaca(
+    cli_home: Path, patch_alpaca: mock.MagicMock
+) -> None:
+    rc = main(["help"])
+    assert rc == 0
+    patch_alpaca.assert_not_called()
+
+
+def test_top_level_help_epilog_points_to_help_command(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    assert "halt is not flatten" in out.lower()
+    assert "alphastrategy help" in out
+
+
+def test_paper_kill_help_mentions_flatten(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["paper", "kill", "--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.lower()
+    assert "flatten" in out
+    assert "halt" in out
+
+
+def test_paper_resume_help_mentions_no_catch_up(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["paper", "resume", "--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.lower()
+    assert "catch up" in out or "catch-up" in out
+
+
+def test_paper_stop_help_mentions_next_rebalance(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["paper", "stop", "--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.lower()
+    assert "rebalance" in out
+
