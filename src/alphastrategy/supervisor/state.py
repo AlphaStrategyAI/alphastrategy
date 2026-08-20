@@ -67,6 +67,7 @@ class SupervisorSnapshot:
     last_kill: dict[str, Any] | None = None
     last_heartbeat_at: str | None = None
     rebalance_placed: int = 0
+    isolate_in_flight: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -118,6 +119,11 @@ class SupervisorSnapshot:
                 else str(payload.get("last_heartbeat_at"))
             ),
             rebalance_placed=int(payload.get("rebalance_placed") or 0),
+            isolate_in_flight=(
+                None
+                if payload.get("isolate_in_flight") in (None, "")
+                else str(payload.get("isolate_in_flight"))
+            ),
         )
 
 

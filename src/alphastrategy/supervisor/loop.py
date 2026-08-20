@@ -107,6 +107,7 @@ class Supervisor:
             self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
         self._recover_interrupted_rebalance()
         self._recover_interrupted_flatten()
+        self._recover_interrupted_isolate()
 
     @property
     def state(self) -> SupervisorState:
@@ -141,6 +142,7 @@ class Supervisor:
                 self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
             self._recover_interrupted_rebalance()
             self._recover_interrupted_flatten()
+            self._recover_interrupted_isolate()
 
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)
@@ -269,6 +271,8 @@ class Supervisor:
         return all(symbol in prices for symbol in symbols)
 
     def _isolate_sleeve(self, bundle_id: str) -> None:
+        self._snapshot.isolate_in_flight = bundle_id
+        self._persist()
         contribution = dict(self._snapshot.last_sleeve_contribution.get(bundle_id) or {})
         combined = dict(self._snapshot.last_combined)
         prices = dict(self._snapshot.last_prices)
@@ -297,11 +301,13 @@ class Supervisor:
         )
         if place_error is not None:
             raise place_error
+        self._snapshot.isolate_in_flight = None
         if session_date:
             self._snapshot.orders_date = session_date
         self._snapshot.last_combined = dict(residual)
         self._snapshot.last_sleeve_contribution.pop(bundle_id, None)
         self._snapshot.last_sleeve_weights.pop(bundle_id, None)
+        self._persist()
 
     def kill_account(self) -> KillOutcome:
         with self._lock:
@@ -639,6 +645,22 @@ class Supervisor:
             return
         self._flatten_account()
 
+    def _recover_interrupted_isolate(self) -> None:
+        bundle_id = self._snapshot.isolate_in_flight
+        if not bundle_id:
+            return
+        self._flatten_account()
+        self._audit("kill", bundle_id=bundle_id, isolated=False)
+        self._record_kill(
+            KillOutcome(
+                isolated=False,
+                flattened=True,
+                scope="account",
+                reason="fallback_interrupted",
+                bundle_id=bundle_id,
+            )
+        )
+
     def _rebalance(self, cur: ClockSnapshot, event: str) -> None:
         collected = self._collect_sleeves()
         self._snapshot.state = SupervisorState.REBALANCING
@@ -701,6 +723,7 @@ class Supervisor:
         self._persist()
 
     def _flatten_account(self) -> None:
+        self._snapshot.isolate_in_flight = None
         self._snapshot.state = SupervisorState.FLATTENING
         self._persist()
         try:
