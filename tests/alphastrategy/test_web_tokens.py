@@ -580,3 +580,59 @@ def test_js_paints_strategy_inventory(js_text: str) -> None:
     assert "classList.toggle(onClass" in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_html_risk_glance_bands(html_text: str) -> None:
+    assert 'id="risk-caps"' in html_text
+    assert 'id="risk-headroom"' in html_text
+    assert 'id="risk-tighten"' in html_text
+    assert 'id="risk-overlays"' in html_text
+    assert '<h2 class="glance-heading">Caps</h2>' in html_text
+    assert '<h2 class="glance-heading">Headroom</h2>' in html_text
+    assert '<h2 class="glance-heading">Tighten</h2>' in html_text
+    assert '<h2 class="glance-heading">Sleeve overlays</h2>' in html_text
+    risk = html_text[html_text.find('id="screen-risk"') :]
+    caps = risk[risk.find('id="risk-caps"') : risk.find('id="risk-headroom"')]
+    head = risk[risk.find('id="risk-headroom"') : risk.find('id="risk-tighten"')]
+    tighten = risk[risk.find('id="risk-tighten"') : risk.find('id="risk-overlays"')]
+    overlays = risk[risk.find('id="risk-overlays"') :]
+    assert 'id="risk-account-caps"' in caps
+    assert 'id="risk-utilization"' in head
+    assert 'id="risk-account-form"' in tighten
+    assert 'id="risk-error"' in tighten
+    assert 'id="risk-sleeves"' in overlays
+    assert 'id="risk-account-form"' not in overlays
+    sticky = html_text[
+        html_text.find("risk-account-bar") : html_text.find('id="risk-tighten"')
+    ]
+    assert 'id="risk-caps"' in sticky
+    assert 'id="risk-headroom"' in sticky
+    assert 'id="risk-account-form"' not in sticky
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_css_risk_tighten_groups(css_text: str) -> None:
+    assert ".risk-tighten-groups" in css_text
+    assert ".risk-group" in css_text
+
+
+def test_js_risk_tighten_groups(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("RISK_TIGHTEN_GROUPS") : js_text.find("function renderRiskCaps")
+    ]
+    assert 'legend: "Gross"' in paint
+    assert 'legend: "Names"' in paint
+    assert 'legend: "Orders"' in paint
+    assert 'legend: "Deltas"' in paint
+    assert '"max_gross"' in paint
+    assert '"max_names"' in paint
+    assert '"max_orders_per_day"' in paint
+    assert '"min_delta_dollar"' in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+    built = js_text[
+        js_text.find("function buildRiskInputs") : js_text.find("function validateTighten")
+    ]
+    assert 'createElement("fieldset")' in built

@@ -36,6 +36,7 @@ REQUIRED_PHRASES = (
     "own error",
     "assembled from js/",
     "Inventory / Import .asb / Roster",
+    "Caps / Headroom / Tighten",
 )
 
 
