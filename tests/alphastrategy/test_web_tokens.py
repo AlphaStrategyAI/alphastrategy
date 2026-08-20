@@ -388,3 +388,8 @@ def test_css_glance_bands(css_text: str) -> None:
     assert "1.85rem" in css_text
     assert ".metrics-3" in css_text
     assert ".metrics-2" in css_text
+    assert "repeat(3, minmax(0, 1fr))" in css_text
+    assert "repeat(2, minmax(0, 1fr))" in css_text
+    assert "max-width: 639px" in css_text
+    assert "min-width: 800px" in css_text
+    assert ".metric.hero .metric-value" in css_text
