@@ -171,6 +171,28 @@
     } else {
       devEl.classList.add("hidden");
     }
+
+    const killEl = document.getElementById("kill-outcome-banner");
+    const lastKill = state.status && state.status.last_kill;
+    const reason = lastKill && lastKill.reason;
+    if (reason === "isolated") {
+      killEl.className = "banner halt";
+      killEl.textContent =
+        "SLEEVE KILL: isolated residual for " +
+        (lastKill.bundle_id || "sleeve") +
+        " — other sleeves still live";
+    } else if (reason === "fallback_not_ready" || reason === "fallback_error") {
+      killEl.className = "banner fail";
+      killEl.textContent =
+        "SLEEVE KILL: could not isolate — whole paper account flattened";
+    } else if (reason === "unknown_sleeve") {
+      killEl.className = "banner halt";
+      killEl.textContent =
+        "SLEEVE KILL: unknown sleeve " + (lastKill.bundle_id || "");
+    } else {
+      killEl.className = "banner halt hidden";
+      killEl.textContent = "";
+    }
   }
 
   function renderPortfolio() {

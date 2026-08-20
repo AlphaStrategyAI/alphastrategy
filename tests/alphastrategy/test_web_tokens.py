@@ -165,6 +165,30 @@ def test_js_run_sleeve_allocation_and_kill_confirm(js_text: str) -> None:
     assert "box.checked = false" in js_text
     assert "dataset.current" in js_text
 
+
+def test_html_desk_banners_outside_portfolio(html_text: str) -> None:
+    desk_at = html_text.find('id="desk-banners"')
+    portfolio_at = html_text.find('id="screen-portfolio"')
+    assert desk_at != -1
+    assert 0 <= desk_at < portfolio_at
+    for banner_id in (
+        "halt-banner",
+        "flatten-banner",
+        "deviation-banner",
+        "control-plane-banner",
+        "kill-outcome-banner",
+    ):
+        assert html_text.find(f'id="{banner_id}"') < portfolio_at
+        assert html_text.count(f'id="{banner_id}"') == 1
+
+
+def test_js_renders_kill_outcome_from_last_kill(js_text: str) -> None:
+    assert "kill-outcome-banner" in js_text
+    assert "last_kill" in js_text
+    assert "SLEEVE KILL: isolated residual" in js_text
+    assert "could not isolate" in js_text
+    assert "unknown sleeve" in js_text
+
 def test_js_sleeve_kill_does_not_require_flatten_phrase(js_text: str) -> None:
     kill_fn = js_text.split("async function killSleeve")[1].split("async function onImportSubmit")[0]
     assert "FLATTEN" not in kill_fn
