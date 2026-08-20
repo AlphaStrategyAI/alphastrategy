@@ -657,6 +657,7 @@ def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
         "task_flatten",
         "task_tighten",
         "task_wanted",
+        "task_spent",
     ]
     assert [item["id"] for item in payload["tutorials"]] == ["tutorial_first_session"]
     blob = json_module.dumps(payload)

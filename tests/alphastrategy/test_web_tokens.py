@@ -262,6 +262,11 @@ def test_js_first_glance_behaviors(js_text: str) -> None:
     assert "No positions yet. Import a .asb to begin." in js_text
     assert "Imported bundles are not trading. Start paper on Run." in js_text
     assert "The next legal open or close rebalance will trade." in js_text
+    paint = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "Clock Last is spent. Resume does not catch up." in paint
+    assert "last_rebalance_complete" in paint
     assert "wg-track" in js_text
     assert "util-fill" in js_text
     assert "Allocation " in js_text

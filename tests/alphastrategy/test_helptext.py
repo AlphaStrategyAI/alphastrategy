@@ -71,6 +71,8 @@ REQUIRED_PHRASES = (
     "deviation banner follows Book Drift",
     "Roster names imported at",
     "import-meta flushes to disk",
+    "How to read a spent window",
+    "Clock Last is spent",
 )
 
 
@@ -150,6 +152,7 @@ def test_task_howtos_match_jobs() -> None:
         "task_flatten",
         "task_tighten",
         "task_wanted",
+        "task_spent",
     )
     payload = help_payload()
     assert payload["tasks"] == TASK_HOWTOS
@@ -176,6 +179,9 @@ def test_tutorials_come_before_how_to_jobs() -> None:
     assert "You will see" in item["body"]
     assert "You finished the lesson" in item["body"]
     assert "Flatten account" in item["body"]
+    assert "Roster names imported at" in item["body"]
+    assert "Session / Now / Next / Last" in item["body"]
+    assert "Next rebalance" in item["body"]
     text = help_text()
     assert text.index("Your first paper session") < text.index(
         "How to import a qualified .asb"
