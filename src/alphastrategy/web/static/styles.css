@@ -825,3 +825,7 @@ button.action:focus-visible,
 #risk-overlay-tighter.warn {
   color: #f59e0b;
 }
+
+#risk-tighten-tight.warn {
+  color: #f59e0b;
+}

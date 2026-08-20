@@ -410,6 +410,7 @@ def handle_get_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
         200,
         {
             "account": _policy_to_dict(supervisor.policy),
+            "defaults": _policy_to_dict(AccountPolicy.defaults()),
             "sleeves": sleeves,
             "utilization": from_supervisor(supervisor, live=True),
             "labels": dict(POLICY_LABELS),

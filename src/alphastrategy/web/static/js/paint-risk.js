@@ -118,6 +118,23 @@
     return n;
   }
 
+  function renderTightenGlance(risk) {
+    const account = (risk && risk.account) || {};
+    const defaults = (risk && risk.defaults) || {};
+    const tightEl = document.getElementById("risk-tighten-tight");
+    if (tightEl) {
+      const n = overlayTighterCount(account, defaults);
+      tightEl.textContent = String(n);
+      tightEl.classList.toggle("warn", n > 0);
+    }
+    const dollarEl = document.getElementById("risk-tighten-delta-dollar");
+    if (dollarEl) dollarEl.textContent = fmtNum(account.min_delta_dollar, 2);
+    const fracEl = document.getElementById("risk-tighten-delta-frac");
+    if (fracEl) fracEl.textContent = fmtPct(account.min_delta_frac);
+    const fieldsEl = document.getElementById("risk-tighten-fields");
+    if (fieldsEl) fieldsEl.textContent = String(NUMERIC_CAPS.length);
+  }
+
   function renderOverlayGlance(risk) {
     const sleeves = (risk && risk.sleeves) || {};
     const account = (risk && risk.account) || {};
@@ -166,6 +183,7 @@
     const risk = state.risk || { account: {}, sleeves: {} };
     renderRiskCaps(document.getElementById("risk-account-caps"), risk.account);
     renderRiskUtilization();
+    renderTightenGlance(risk);
     renderOverlayGlance(risk);
     if (riskFormIsDirty()) {
       return;
