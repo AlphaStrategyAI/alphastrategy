@@ -71,6 +71,7 @@ SECTIONS: list[dict[str, str]] = [
             "Sleeves show spoken share of the paper book. "
             "Run Sleeves is Remaining / Spoken / Active / Idle. "
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
+            "Caps is Gross cap / Name cap / Names / Orders today. "
             "Risk is four bands Caps / Headroom / Tighten plus Sleeve overlays. "
             "Tighten still posts the policy keys. "
             "Risk lists sleeve overlays as Spoken / Overlays / Tighter / Idle. "
@@ -176,6 +177,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "title": "On Risk",
         "body": (
             "Four bands: Caps / Headroom / Tighten, then Sleeve overlays. "
+            "Caps is four tiles Gross cap / Name cap / Names / Orders today. Gross cap is the hero. "
             "Sleeve overlays is four tiles Spoken / Overlays / Tighter / Idle. Spoken is the hero. "
             "Allocation is a rail, not only text. "
             "Account totals stay sticky. "

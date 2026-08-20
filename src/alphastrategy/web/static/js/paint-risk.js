@@ -6,20 +6,40 @@
   ];
 
   function renderRiskCaps(container, policy) {
-    container.innerHTML = "";
+    const gross = document.getElementById("risk-cap-gross");
+    const name = document.getElementById("risk-cap-name");
+    const names = document.getElementById("risk-cap-names");
+    const orders = document.getElementById("risk-cap-orders");
+    const longEl = document.getElementById("risk-cap-long");
     if (!policy) {
-      container.textContent = "—";
+      if (gross) gross.textContent = "—";
+      if (name) name.textContent = "—";
+      if (names) names.textContent = "—";
+      if (orders) orders.textContent = "—";
+      if (longEl) longEl.textContent = "—";
       return;
     }
-    for (const key of NUMERIC_CAPS) {
-      const row = document.createElement("div");
-      const val = policy[key];
-      row.innerHTML = `<span class="muted">${policyLabel(key)}</span> <span class="nums">${val}</span>`;
-      container.appendChild(row);
+    if (gross) gross.textContent = fmtPct(policy.max_gross);
+    if (name) name.textContent = fmtPct(policy.max_name_weight);
+    if (names) {
+      names.textContent =
+        policy.max_names == null || policy.max_names === undefined
+          ? "—"
+          : String(policy.max_names);
     }
-    const longRow = document.createElement("div");
-    longRow.innerHTML = `<span class="muted">${policyLabel("long_only")}</span> <span class="nums">${policy.long_only}</span>`;
-    container.appendChild(longRow);
+    if (orders) {
+      orders.textContent =
+        policy.max_orders_per_day == null || policy.max_orders_per_day === undefined
+          ? "—"
+          : String(policy.max_orders_per_day);
+    }
+    if (longEl) {
+      const flag = policy.long_only;
+      longEl.textContent =
+        flag == null || flag === undefined
+          ? "—"
+          : policyLabel("long_only") + " " + flag;
+    }
   }
 
   function buildRiskInputs(prefix, policy, current) {
