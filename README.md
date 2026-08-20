@@ -126,6 +126,8 @@ as text. A flattened account shows a red **FLAT** banner; it must not
 look like an idle empty book. `alphastrategy status` includes `utilization`.
 Risk names caps in desk words (**Gross cap**, **Names**, **Orders today**).
 Tighten still posts the policy keys.
+Risk is four bands: **Caps**, **Headroom**, **Tighten**, and **Sleeve overlays**.
+Caps and Headroom stay sticky. Tighten groups **Gross / Names / Orders / Deltas**.
 
 ---
 

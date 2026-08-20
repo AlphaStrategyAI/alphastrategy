@@ -65,6 +65,7 @@ SECTIONS: list[dict[str, str]] = [
             "last combined target. status includes utilization. "
             "Sleeves show spoken share of the paper book. "
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
+            "Risk is four bands Caps / Headroom / Tighten plus Sleeve overlays. "
             "Tighten still posts the policy keys. "
             "Risk lists each sleeve allocation as text. A red FLAT banner means "
             "the paper account was flattened. Activity kill rows say isolated "
@@ -154,8 +155,9 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "screen": "risk",
         "title": "On Risk",
         "body": (
-            "Account caps stay visible. Caps use desk words "
-            "(Gross cap, Names, Orders today). Tighten only; "
+            "Four bands: Caps / Headroom / Tighten, then Sleeve overlays. "
+            "Account totals stay sticky. "
+            "Tighten groups Gross / Names / Orders / Deltas. Tighten only; "
             "the form refuses looser values and still posts the policy keys."
         ),
     },

@@ -1,3 +1,10 @@
+  const RISK_TIGHTEN_GROUPS = [
+    { legend: "Gross", keys: ["max_gross", "max_name_weight", "max_order_notional_frac"] },
+    { legend: "Names", keys: ["max_names"] },
+    { legend: "Orders", keys: ["max_orders_per_rebalance", "max_orders_per_day"] },
+    { legend: "Deltas", keys: ["min_delta_dollar", "min_delta_frac"] },
+  ];
+
   function renderRiskCaps(container, policy) {
     container.innerHTML = "";
     if (!policy) {
@@ -17,22 +24,33 @@
 
   function buildRiskInputs(prefix, policy, current) {
     const form = document.createElement("form");
-    form.className = "inline";
     form.dataset.prefix = prefix;
-
-    for (const key of NUMERIC_CAPS) {
-      const label = document.createElement("label");
-      label.textContent = policyLabel(key);
-      const input = document.createElement("input");
-      input.type = "number";
-      input.name = key;
-      input.step = key.includes("frac") || key === "max_gross" || key === "max_name_weight" ? "0.01" : "1";
-      input.placeholder = String(current[key]);
-      input.dataset.current = String(current[key]);
-      label.appendChild(input);
-      form.appendChild(label);
+    const groups = document.createElement("div");
+    groups.className = "risk-tighten-groups";
+    for (const group of RISK_TIGHTEN_GROUPS) {
+      const set = document.createElement("fieldset");
+      set.className = "risk-group";
+      const legend = document.createElement("legend");
+      legend.textContent = group.legend;
+      set.appendChild(legend);
+      for (const key of group.keys) {
+        const label = document.createElement("label");
+        label.textContent = policyLabel(key);
+        const input = document.createElement("input");
+        input.type = "number";
+        input.name = key;
+        input.step =
+          key.includes("frac") || key === "max_gross" || key === "max_name_weight"
+            ? "0.01"
+            : "1";
+        input.placeholder = String(current[key]);
+        input.dataset.current = String(current[key]);
+        label.appendChild(input);
+        set.appendChild(label);
+      }
+      groups.appendChild(set);
     }
-
+    form.appendChild(groups);
     const submit = document.createElement("button");
     submit.type = "submit";
     submit.className = "action primary";

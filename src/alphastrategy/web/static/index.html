@@ -243,17 +243,24 @@
 
     <section id="screen-risk" class="screen" aria-label="Risk">
       <div class="risk-account-bar">
-        <h2>Account caps (always visible)</h2>
-        <div id="risk-account-caps" class="risk-caps nums"></div>
-        <div id="risk-utilization" class="risk-caps nums"></div>
+        <div id="risk-caps" class="glance-band">
+          <h2 class="glance-heading">Caps</h2>
+          <div id="risk-account-caps" class="risk-caps nums"></div>
+        </div>
+        <div id="risk-headroom" class="glance-band">
+          <h2 class="glance-heading">Headroom</h2>
+          <div id="risk-utilization" class="risk-caps nums"></div>
+        </div>
       </div>
-      <div class="panel">
-        <h2>Tighten account policy</h2>
-        <form id="risk-account-form" class="inline"></form>
-        <div id="risk-error" class="error-box hidden"></div>
+      <div id="risk-tighten" class="glance-band">
+        <h2 class="glance-heading">Tighten</h2>
+        <div class="panel">
+          <form id="risk-account-form"></form>
+          <div id="risk-error" class="error-box hidden"></div>
+        </div>
       </div>
-      <div class="panel stack">
-        <h2>Sleeve overlays</h2>
+      <div id="risk-overlays" class="glance-band">
+        <h2 class="glance-heading">Sleeve overlays</h2>
         <div id="risk-sleeves"></div>
       </div>
     </section>

@@ -482,13 +482,6 @@ button.action.account-kill {
   margin-bottom: 0.75rem;
 }
 
-.risk-account-bar h2 {
-  margin: 0 0 0.5rem;
-  font-size: 0.8rem;
-  color: #9ba3b4;
-  text-transform: uppercase;
-}
-
 .risk-caps {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -496,8 +489,45 @@ button.action.account-kill {
   font-size: 0.85rem;
 }
 
-#risk-utilization {
-  margin-top: 0.65rem;
+.risk-tighten-groups {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 800px) {
+  .risk-tighten-groups {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.risk-group {
+  border: 1px solid #2a3142;
+  background: #0b0e14;
+  border-radius: 4px;
+  margin: 0;
+  min-width: 0;
+  padding: 0.5rem 0.65rem 0.65rem;
+}
+
+.risk-group legend {
+  color: #9ba3b4;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.risk-group label {
+  color: #9ba3b4;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+}
+
+#risk-account-form > .action {
+  margin-top: 0.75rem;
 }
 
 .confirm-row {
