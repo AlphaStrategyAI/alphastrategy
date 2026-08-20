@@ -518,6 +518,26 @@
     renderBanners();
   }
 
+  function pulseLabel(pulse) {
+    if (pulse === "live") return "LIVE";
+    if (pulse === "stale") return "STALE";
+    if (pulse === "dead") return "DEAD";
+    return "NO BEAT";
+  }
+
+  function renderDeskPulse() {
+    const wrap = document.getElementById("desk-pulse");
+    const label = document.getElementById("desk-pulse-label");
+    if (!wrap || !label) return;
+    const hb = (state.status && state.status.heartbeat) || {};
+    const pulse = hb.pulse || "missing";
+    wrap.className = "desk-pulse " + pulse;
+    label.textContent = pulseLabel(pulse);
+    const age = hb.age_seconds;
+    const ageText = age == null || age === undefined ? "no stamp" : age + "s ago";
+    wrap.title = "Supervisor beat " + pulseLabel(pulse) + " · " + ageText;
+  }
+
   function renderStrategies() {
     const bundles = state.bundles || { imported: [], paper: {} };
     const risk = state.risk || { sleeves: {} };
@@ -692,8 +712,21 @@
     const list = document.getElementById("activity-list");
     list.innerHTML = "";
     const events = state.activity || [];
+    const hb = (state.status && state.status.heartbeat) || {};
+    const pulse = hb.pulse || "missing";
+    const beatLine = document.getElementById("activity-heartbeat");
+    if (beatLine) {
+      const age = hb.age_seconds;
+      const st = (state.status && state.status.state) || "—";
+      const ageText = age == null || age === undefined ? "—" : age + "s ago";
+      beatLine.textContent = `Beat ${pulseLabel(pulse)} · ${ageText} · ${st}`;
+    }
     if (!events.length) {
-      list.innerHTML = "<li class='muted'>No events</li>";
+      const copy =
+        pulse === "dead" || pulse === "missing"
+          ? "No audit events yet. Supervisor beat is not live."
+          : "Heartbeat is running. No audit events yet. Rebalances fire at open+3m and close−12m.";
+      list.innerHTML = `<li class='muted'>${copy}</li>`;
       return;
     }
     for (const ev of events.slice().reverse()) {
@@ -873,6 +906,7 @@
       const banner = document.getElementById("control-plane-banner");
       banner.classList.add("hidden");
       banner.textContent = "";
+      renderDeskPulse();
       renderPortfolio();
       renderStrategies();
       if (!runFormIsDirty()) {

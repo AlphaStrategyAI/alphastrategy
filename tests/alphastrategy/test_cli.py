@@ -223,6 +223,8 @@ def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys
     assert "utilization" in payload
     assert payload["utilization"]["orders_today"] == 0
     assert payload["utilization"]["cash_weight"] is None
+    assert "heartbeat" in payload
+    assert payload["heartbeat"]["interval_seconds"] == 20
 
 
 def test_weight_fn_uses_last_fetched_bar_and_long_lookback(tmp_path: Path) -> None:

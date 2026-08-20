@@ -328,3 +328,28 @@ def test_js_import_gate_painters(js_text: str) -> None:
     assert "function showImportOk" in js_text
     assert "Import is not permission to trade" in js_text
     assert "window.confirm" not in js_text
+
+
+def test_html_desk_pulse_and_activity_heartbeat(html_text: str) -> None:
+    assert 'id="desk-pulse"' in html_text
+    assert 'id="desk-pulse-label"' in html_text
+    assert 'id="activity-heartbeat"' in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_desk_pulse_and_activity_empty(js_text: str) -> None:
+    assert "function renderDeskPulse" in js_text
+    assert (
+        "Heartbeat is running. No audit events yet. Rebalances fire at open+3m and close−12m."
+        in js_text
+    )
+    assert "No audit events yet. Supervisor beat is not live." in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_css_desk_pulse_tokens(css_text: str) -> None:
+    assert ".desk-pulse" in css_text
+    assert ".pulse-dot" in css_text
+    assert "prefers-reduced-motion" in css_text

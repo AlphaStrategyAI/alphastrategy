@@ -25,7 +25,8 @@ SECTIONS: list[dict[str, str]] = [
             "target weights over stdin/stdout JSON and never see keys or the broker. "
             "Heartbeat every 20 seconds does not place orders. At most two RTH "
             "rebalances fire: open plus 3 minutes, and 12 minutes before close. "
-            "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash."
+            "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash. "
+            "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },
     {
@@ -60,7 +61,9 @@ SECTIONS: list[dict[str, str]] = [
             "Risk lists each sleeve allocation as text. A red FLAT banner means "
             "the paper account was flattened. Activity kill rows say isolated "
             "residual or flattened account. status includes last_kill even "
-            "when the control plane is down. Alt+1 through Alt+5 switch screens. "
+            "when the control plane is down. Activity empty copy names the two "
+            "legal rebalances. Header LIVE is the Supervisor beat, not Session. "
+            "Alt+1 through Alt+5 switch screens. "
             "F1 toggles Help. Help is this aside, not a sixth screen."
         ),
     },

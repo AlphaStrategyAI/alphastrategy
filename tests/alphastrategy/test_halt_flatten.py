@@ -760,3 +760,25 @@ def test_kill_account_returns_account_outcome(tmp_path: Path):
     assert outcome.scope == "account"
     assert outcome.reason == "account"
     assert outcome.bundle_id is None
+
+
+def test_tick_stamps_heartbeat_when_halted(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    supervisor._snapshot.state = SupervisorState.HALTED
+    supervisor._persist()
+    supervisor.tick()
+    assert supervisor.snapshot.last_heartbeat_at
+    state = _read_state(tmp_path)
+    assert state["last_heartbeat_at"] == supervisor.snapshot.last_heartbeat_at
+
+
+def test_tick_stamps_heartbeat_when_stopped(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    supervisor._snapshot.state = SupervisorState.STOPPED
+    supervisor._persist()
+    first = None
+    supervisor.tick()
+    first = supervisor.snapshot.last_heartbeat_at
+    supervisor.tick()
+    assert supervisor.snapshot.last_heartbeat_at
+    assert supervisor.snapshot.last_heartbeat_at >= first

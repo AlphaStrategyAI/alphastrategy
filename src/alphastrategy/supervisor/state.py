@@ -65,6 +65,7 @@ class SupervisorSnapshot:
     orders_today: int = 0
     last_got: dict[str, float] = field(default_factory=dict)
     last_kill: dict[str, Any] | None = None
+    last_heartbeat_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -110,6 +111,11 @@ class SupervisorSnapshot:
                 for asset, weight in (payload.get("last_got") or {}).items()
             },
             last_kill=_kill_from_payload(payload.get("last_kill")),
+            last_heartbeat_at=(
+                None
+                if payload.get("last_heartbeat_at") in (None, "")
+                else str(payload.get("last_heartbeat_at"))
+            ),
         )
 
 

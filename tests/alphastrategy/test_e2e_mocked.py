@@ -335,6 +335,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert html_resp.status == 200
         assert 'id="help-toggle"' in html
         assert 'id="import-error-kind"' in html
+        assert 'id="desk-pulse"' in html
     finally:
         server.shutdown()
         thread.join(timeout=2)

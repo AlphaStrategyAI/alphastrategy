@@ -27,6 +27,7 @@ REQUIRED_PHRASES = (
     "Orders today",
     "utilization",
     "next action",
+    "Supervisor beat",
 )
 
 

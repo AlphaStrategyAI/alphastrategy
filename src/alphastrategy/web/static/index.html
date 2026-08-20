@@ -8,7 +8,13 @@
 </head>
 <body>
   <header>
-    <div class="brand">alphastrategy · paper</div>
+    <div class="brand">
+      <span id="desk-pulse" class="desk-pulse missing" title="Supervisor heartbeat">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span id="desk-pulse-label">NO BEAT</span>
+      </span>
+      alphastrategy · paper
+    </div>
     <nav id="nav" aria-label="Screens">
       <button type="button" data-screen="portfolio" class="active" aria-keyshortcuts="Alt+1">Portfolio</button>
       <button type="button" data-screen="strategies" aria-keyshortcuts="Alt+2">Strategies</button>
@@ -179,6 +185,7 @@
     <section id="screen-activity" class="screen" aria-label="Activity">
       <div class="panel">
         <h2>Audit events</h2>
+        <p id="activity-heartbeat" class="muted"></p>
         <ul id="activity-list" class="activity-list nums"></ul>
       </div>
     </section>

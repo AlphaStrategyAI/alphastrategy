@@ -236,6 +236,22 @@ def test_status_returns_state_clock_and_halt(api_client: ApiClient):
     assert body["flattened"] is False
 
 
+def test_status_heartbeat_missing_before_tick(api_client: ApiClient) -> None:
+    body = api_client.get("/api/status").json()
+    assert body["heartbeat"]["pulse"] == "missing"
+    assert body["heartbeat"]["interval_seconds"] == 20
+    assert body["heartbeat"]["at"] is None
+
+
+def test_status_heartbeat_live_after_tick(api_stack) -> None:
+    client, _home, supervisor, _broker = api_stack
+    supervisor.tick()
+    body = client.get("/api/status").json()
+    assert body["heartbeat"]["pulse"] == "live"
+    assert body["heartbeat"]["at"]
+    assert body["heartbeat"]["interval_seconds"] == 20
+
+
 def test_status_flattened_true_after_account_kill(api_stack):
     client, _home, supervisor, _broker = api_stack
     supervisor.kill_account()

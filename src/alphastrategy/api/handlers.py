@@ -18,6 +18,7 @@ from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
 from alphastrategy.risk.utilization import from_supervisor
+from alphastrategy.supervisor.heartbeat import describe
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
 from alphastrategy.supervisor.loop import Supervisor
@@ -250,6 +251,7 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
             "last_kill": snapshot.last_kill,
             "utilization": from_supervisor(supervisor, live=True),
+            "heartbeat": describe(snapshot.last_heartbeat_at),
         },
     )
 

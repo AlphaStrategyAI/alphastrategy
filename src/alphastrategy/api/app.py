@@ -8,6 +8,7 @@ from typing import Any
 
 from alphastrategy.api.handlers import _apply_startup_runtime, dispatch
 from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.supervisor.heartbeat import INTERVAL_SEC as HEARTBEAT_INTERVAL_SEC
 from alphastrategy.supervisor.loop import Supervisor
 
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
@@ -27,7 +28,6 @@ _CONTENT_TYPES = {
     ".js": "application/javascript; charset=utf-8",
 }
 
-HEARTBEAT_INTERVAL_SEC = 20
 _LOOPBACK_BINDS = frozenset({"127.0.0.1", "::1", "localhost"})
 
 

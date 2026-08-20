@@ -103,6 +103,8 @@ shows portfolio state, running sleeves, activity, and risk — not
 backtests or strategy editing. **Help** (header control, not a sixth
 screen) loads the same operator runbook as `alphastrategy help`.
 Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
+The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
+(every 20s, no orders), not RTH Session OPEN/CLOSED.
 
 Portfolio is the home screen: **Session** (OPEN/CLOSED) and **Next
 rebalance** countdown tiles, sleeve contribution, and **wanted vs got**
@@ -131,6 +133,9 @@ book. `alphastrategy status` includes `utilization`.
   otherwise it flattens the whole account rather than guess. The CLI
   prints JSON (`isolated` vs `flattened`). A desk banner reports the
   same outcome.
+- Heartbeat every 20s does not place orders. Header **LIVE / STALE /
+  DEAD** is the Supervisor beat, not RTH session. `status` includes
+  `heartbeat`.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio.
 - Activity kill rows say **isolated residual** or **flattened account**.

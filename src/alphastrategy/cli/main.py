@@ -26,6 +26,7 @@ from alphastrategy.live.alpaca import AlpacaAdapter
 from alphastrategy.live.broker import CONFIRM_LIVE_FLAG
 from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.risk.utilization import from_supervisor
+from alphastrategy.supervisor.heartbeat import describe
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.loop import Supervisor
 from alphastrategy.supervisor.state import SupervisorState
@@ -254,6 +255,7 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
         "last_kill": snapshot.last_kill,
         "utilization": from_supervisor(supervisor, live=False),
+        "heartbeat": describe(snapshot.last_heartbeat_at),
     }
     print(json.dumps(payload, separators=(",", ":")))
     return 0

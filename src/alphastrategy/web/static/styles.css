@@ -55,6 +55,66 @@ header {
   font-size: 0.85rem;
   letter-spacing: 0.04em;
   color: #9ba3b4;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.desk-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #5c6573;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5c6573;
+}
+
+.desk-pulse.live {
+  color: #10b981;
+}
+
+.desk-pulse.live .pulse-dot {
+  background: #10b981;
+  animation: desk-pulse-live 1.6s ease-in-out infinite;
+}
+
+.desk-pulse.stale {
+  color: #f59e0b;
+}
+
+.desk-pulse.stale .pulse-dot {
+  background: #f59e0b;
+}
+
+.desk-pulse.dead {
+  color: #ef4444;
+}
+
+.desk-pulse.dead .pulse-dot {
+  background: #ef4444;
+}
+
+@keyframes desk-pulse-live {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-pulse.live .pulse-dot {
+    animation: none;
+  }
 }
 
 .kbd-hint {

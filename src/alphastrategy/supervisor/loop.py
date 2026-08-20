@@ -328,9 +328,14 @@ class Supervisor:
     def tick(self) -> None:
         with self._lock:
             self.reload_from_disk()
+            self._snapshot.last_heartbeat_at = (
+                datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            )
             if self._snapshot.state in (SupervisorState.STOPPED, SupervisorState.FLATTENING):
+                self._persist()
                 return
             if self._snapshot.state == SupervisorState.HALTED:
+                self._persist()
                 return
 
             try:
