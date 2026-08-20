@@ -15,6 +15,7 @@ from alphastrategy.errors import HaltRequested
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.supervisor.loop import Supervisor
+from alphastrategy.supervisor.state import SupervisorState
 
 GOLDEN_ASB = Path(__file__).parent / "fixtures" / "golden.asb"
 
@@ -390,6 +391,37 @@ def test_paper_stop_help_mentions_next_rebalance(capsys) -> None:
     assert exc.value.code == 0
     out = capsys.readouterr().out.lower()
     assert "rebalance" in out
+
+
+def test_paper_start_help_mentions_halted_waits(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["paper", "start", "--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.lower()
+    assert "halt" in out
+    assert "resume" in out
+
+
+def test_paper_start_while_halted_prints_held(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    _create_imported_bundle(cli_home)
+    home = AlphaStrategyHome.from_env()
+    supervisor = Supervisor(
+        home=home,
+        broker=FakeBroker(),
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_test": {"AAPL": 1.0}},
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    supervisor._halt("stale bars")
+    assert supervisor.state == SupervisorState.HALTED
+    rc = main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.3"])
+    assert rc == 0
+    err = capsys.readouterr().err
+    assert "held:" in err.lower()
+    assert "resume" in err.lower()
+    assert "catch up" in err.lower()
 
 
 def test_paper_kill_prints_outcome_json(

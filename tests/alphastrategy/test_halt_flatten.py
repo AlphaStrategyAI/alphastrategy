@@ -1122,6 +1122,29 @@ def test_start_sleeve_after_flatten_leaves_stopped_without_catchup(tmp_path: Pat
     assert broker.orders == orders_after_kill
 
 
+def test_start_sleeve_while_halted_stays_halted_without_catchup(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=True,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor = _make_supervisor(tmp_path, broker)
+    assert supervisor.start_sleeve("asb_test", 0.15) is False
+    supervisor._halt("stale bars")
+    assert supervisor.state == SupervisorState.HALTED
+    orders_before = list(broker.orders)
+    held = supervisor.start_sleeve("asb_test", 0.4)
+    assert held is True
+    assert supervisor.state == SupervisorState.HALTED
+    assert supervisor.snapshot.sleeves["asb_test"] == 0.4
+    supervisor.tick()
+    assert supervisor.state == SupervisorState.HALTED
+    assert broker.orders == orders_before
+
+
 def test_tick_stamps_heartbeat_when_halted(tmp_path: Path) -> None:
     supervisor = _make_supervisor(tmp_path, FakeBroker())
     supervisor._snapshot.state = SupervisorState.HALTED

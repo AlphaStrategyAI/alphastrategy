@@ -104,6 +104,15 @@ def test_v1_done_path(tmp_path: Path) -> None:
     assert halted_supervisor.state == SupervisorState.HALTED
     assert broker.close_all_count == close_all_before_halt
 
+    orders_before_held_start = list(broker.orders)
+    held = halted_supervisor.start_sleeve(bundle_id, 0.5)
+    assert held is True
+    assert halted_supervisor.state == SupervisorState.HALTED
+    halted_supervisor.tick()
+    assert halted_supervisor.state == SupervisorState.HALTED
+    assert broker.orders == orders_before_held_start
+    assert broker.close_all_count == close_all_before_halt
+
     server = make_server(home, halted_supervisor, bind="127.0.0.1", port=0)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

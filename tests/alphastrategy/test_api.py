@@ -16,7 +16,7 @@ from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
 from alphastrategy.supervisor.loop import Supervisor
-from alphastrategy.supervisor.state import save_state
+from alphastrategy.supervisor.state import SupervisorState, save_state
 
 
 class FakeBroker:
@@ -222,6 +222,22 @@ def test_start_replaces_existing_sleeve_allocation(api_client: ApiClient):
     assert second.status == 200
     bundles = api_client.get("/api/bundles").json()
     assert bundles["paper"]["asb_x"] == 0.5
+
+
+def test_start_while_halted_returns_held(api_stack):
+    client, _home, supervisor, _broker = api_stack
+    first = client.post("/api/paper/start", json={"bundle_id": "asb_x", "allocation": 0.15})
+    assert first.status == 200
+    assert first.json()["ok"] is True
+    assert first.json()["held"] is False
+    supervisor._halt("stale bars")
+    second = client.post("/api/paper/start", json={"bundle_id": "asb_x", "allocation": 0.2})
+    assert second.status == 200
+    body = second.json()
+    assert body["ok"] is True
+    assert body["held"] is True
+    assert supervisor.state == SupervisorState.HALTED
+    assert supervisor.snapshot.sleeves["asb_x"] == 0.2
 
 
 def test_status_returns_state_clock_and_halt(api_client: ApiClient):

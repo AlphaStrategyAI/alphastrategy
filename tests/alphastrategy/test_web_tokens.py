@@ -747,6 +747,60 @@ def test_js_paints_run_capacity(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_html_run_start_and_stop_hints(html_text: str) -> None:
+    run = html_text[html_text.find('id="screen-run"') : html_text.find('id="screen-activity"')]
+    promote = run[run.find('id="run-promote"') : run.find('id="run-book"')]
+    book = run[run.find('id="run-book"') : run.find('id="run-recover"')]
+    assert 'id="run-start-hint"' in promote
+    assert 'id="start-form"' in promote
+    assert promote.find('id="start-form"') < promote.find('id="run-start-hint"')
+    assert promote.find('id="run-start-hint"') < promote.find('id="run-error"')
+    assert "Start paper is a second explicit action" in promote
+    assert 'id="run-stop-hint"' in book
+    assert "Stop zeros that sleeve on the next legal rebalance" in book
+    assert 'id="run-stop-hint"' not in promote
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_paints_run_start_hint(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRunStartHint") : js_text.find("function renderRunStopHint")
+    ]
+    assert "run-start-hint" in paint
+    assert "Start paper while halted waits for resume. Resume does not catch up." in paint
+    assert "Start paper after flatten starts the session loop again and does not catch up." in paint
+    assert "Start paper is a second explicit action. Import is not permission to trade." in paint
+    assert 'className = "warn"' in paint
+    assert 'className = "fail"' in paint
+    assert "innerHTML" not in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+    assert "renderRunStartHint();" in js_text
+    refresh = js_text[js_text.find("async function refresh") : js_text.find("async function stopSleeve")]
+    assert "renderRunStartHint" in refresh
+    assert "renderRunStopHint" in refresh
+    assert "runFormIsDirty" in refresh
+
+
+def test_js_paints_run_stop_hint(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRunStopHint") : js_text.find("function renderRunRecover")
+    ]
+    assert "run-stop-hint" in paint
+    assert "Stop zeros that sleeve on the next legal rebalance and does not flatten now." in paint
+    assert "innerHTML" not in paint
+
+
+def test_css_run_start_hint_tokens(css_text: str) -> None:
+    warn = re.search(r"#run-start-hint\.warn\s*\{[^}]*\}", css_text)
+    fail = re.search(r"#run-start-hint\.fail\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
+    assert fail is not None and "#ef4444" in fail.group(0).lower()
+
+
 def test_js_paints_run_halt_reason(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderRunRecover") : js_text.find("function eventSummary")
