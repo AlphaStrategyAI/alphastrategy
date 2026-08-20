@@ -53,6 +53,7 @@ REQUIRED_PHRASES = (
     "Rows / Wanted / Got / At cap",
     "Session / Now / Next / Last",
     "incomplete rebalance",
+    "interrupted rebalancing",
 )
 
 

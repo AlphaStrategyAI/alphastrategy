@@ -16,6 +16,10 @@ from alphastrategy.supervisor.loop import Supervisor
 from alphastrategy.supervisor.state import SupervisorState
 
 
+class SimulatedCrash(BaseException):
+    """Host kill mid-tick: not `Exception`, so `tick` except-handlers do not convert it to halt."""
+
+
 class FakeBroker:
     def __init__(
         self,
@@ -38,6 +42,7 @@ class FakeBroker:
         self.raise_on_get_bars = False
         self.raise_on_get_clock = False
         self.fail_place_after = None
+        self.crash_after_place = None
         self._next_open = next_open or datetime(2024, 1, 31, 14, 30)
         self._next_close = next_close or datetime(2024, 1, 31, 21, 0)
         self._now = now or self._next_open
@@ -68,6 +73,8 @@ class FakeBroker:
     def place_order(self, symbol: str, qty: float, side: str) -> dict:
         if self.fail_place_after is not None and len(self.orders) >= self.fail_place_after:
             raise RuntimeError("broker place_order failed")
+        if self.crash_after_place is not None and len(self.orders) >= self.crash_after_place:
+            raise SimulatedCrash("host killed during place_order")
         self.orders.append((symbol, qty, side))
         if self.fill_orders:
             filled_qty = qty * self.fill_fraction
@@ -724,6 +731,99 @@ def test_rebalance_partial_place_order_failure_halts_without_flatten(tmp_path: P
     supervisor.tick()
     assert broker.orders == first
     assert supervisor.state == SupervisorState.HALTED
+
+
+def test_rebalance_persists_inflight_before_first_place(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+
+    class ProbeBroker(FakeBroker):
+        def place_order(self, symbol: str, qty: float, side: str) -> dict:
+            if not self.orders:
+                self.before_first = _read_state(tmp_path)
+            return super().place_order(symbol, qty, side)
+
+    broker = ProbeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    supervisor = _make_supervisor(
+        tmp_path,
+        broker,
+        evaluators={"asb_test": {"AAPL": 0.5, "MSFT": 0.5}},
+    )
+    supervisor.start_sleeve("asb_test", 0.4)
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    assert broker.before_first["state"] == "rebalancing"
+    assert broker.before_first["last_rebalance_event"] == "2024-01-31:open"
+    assert broker.before_first["orders_today"] == 0
+    assert broker.before_first.get("rebalance_placed", 0) == 0
+    finished = _read_state(tmp_path)
+    assert finished["state"] == "idle_in_session"
+    assert finished["last_rebalance_event"] == "2024-01-31:open"
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    rebalances = [event for event in events if event["event"] == "rebalance"]
+    assert rebalances[-1]["complete"] is True
+
+
+def test_restart_during_rebalancing_halts_without_duplicate_orders(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    broker.crash_after_place = 1
+    supervisor = _make_supervisor(
+        tmp_path,
+        broker,
+        evaluators={"asb_test": {"AAPL": 0.5, "MSFT": 0.5}},
+    )
+    supervisor.start_sleeve("asb_test", 0.4)
+    with pytest.raises(SimulatedCrash):
+        _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    inflight = _read_state(tmp_path)
+    assert inflight["state"] == "rebalancing"
+    assert inflight["last_rebalance_event"] == "2024-01-31:open"
+    assert inflight["orders_today"] == 1
+    assert len(broker.orders) == 1
+
+    restarted = _make_supervisor(
+        tmp_path,
+        broker,
+        evaluators={"asb_test": {"AAPL": 0.5, "MSFT": 0.5}},
+    )
+    assert restarted.state == SupervisorState.HALTED
+    assert broker.close_all_called is False
+    assert restarted.snapshot.orders_today == 1
+    assert restarted.snapshot.last_rebalance_event == "2024-01-31:open"
+    assert restarted.snapshot.last_got
+    assert "interrupted rebalancing" in (restarted.snapshot.halt_reason or "").lower()
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    rebalances = [event for event in events if event["event"] == "rebalance"]
+    assert rebalances
+    assert rebalances[-1]["complete"] is False
+    assert rebalances[-1]["orders"] == 1
+    assert "wanted" in rebalances[-1]
+    assert "got" in rebalances[-1]
+    first = list(broker.orders)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    restarted.tick()
+    assert broker.orders == first
+    assert restarted.state == SupervisorState.HALTED
+    assert broker.close_all_called is False
 
 
 def test_daily_order_budget_flattens_without_overflow_batch(tmp_path: Path):
