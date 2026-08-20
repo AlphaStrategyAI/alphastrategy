@@ -487,3 +487,33 @@ def test_api_kill_sleeve_isolates(api_stack):
     assert bundles["paper"]["asb_y"] == 0.15
     assert broker.positions.get("AAPL", 0.0) == 0.0
     assert broker.positions.get("MSFT", 0.0) > 0
+
+
+def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
+    from alphastrategy.helptext import help_payload
+
+    response = api_client.get("/api/help")
+    assert response.status == 200
+    payload = response.json()
+    assert payload["title"] == help_payload()["title"]
+    ids = [section["id"] for section in payload["sections"]]
+    assert ids == [
+        "identity",
+        "execution",
+        "halt_flatten",
+        "cockpit",
+        "cli",
+        "walls",
+    ]
+    blob = json_module.dumps(payload)
+    assert "secret" not in blob.lower()
+    assert "ALPACA" not in blob
+
+
+def test_get_root_includes_help_control(api_client: ApiClient) -> None:
+    response = api_client.get("/")
+    assert response.status == 200
+    html = response.body.decode("utf-8")
+    assert 'id="help-toggle"' in html
+    assert 'id="help-panel"' in html
+    assert 'data-screen="help"' not in html

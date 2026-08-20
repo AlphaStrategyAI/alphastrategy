@@ -13,6 +13,7 @@ import yaml
 from alphastrategy.bundle.import_bundle import import_asb
 from alphastrategy.bundle.schema import load_risk_envelope
 from alphastrategy.errors import ImportRejected
+from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
 from alphastrategy.supervisor import audit
@@ -219,6 +220,11 @@ def _extract_upload(handler: Any) -> tuple[str, bytes]:
     length = int(handler.headers.get("Content-Length", "0"))
     body = handler.rfile.read(length) if length else b""
     return parse_multipart_file(content_type, body)
+
+
+def handle_get_help(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
+    del home, supervisor
+    _json_response(handler, 200, help_payload())
 
 
 def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
@@ -455,6 +461,7 @@ def dispatch(
     supervisor.reload_from_disk()
     routes = {
         ("GET", "/api/status"): handle_get_status,
+        ("GET", "/api/help"): handle_get_help,
         ("GET", "/api/portfolio"): handle_get_portfolio,
         ("GET", "/api/bundles"): handle_get_bundles,
         ("POST", "/api/import"): handle_post_import,
