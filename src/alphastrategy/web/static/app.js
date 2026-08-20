@@ -137,6 +137,54 @@
     return `gross ${fmtPct(policy.max_gross)} · name ${fmtPct(policy.max_name_weight)}`;
   }
 
+  function importedIds() {
+    const bundles = state.bundles || { imported: [], paper: {} };
+    const paper = bundles.paper || {};
+    return [...new Set([...(bundles.imported || []), ...Object.keys(paper)])];
+  }
+
+  function hasPaperSleeve() {
+    const paper = (state.bundles && state.bundles.paper) || {};
+    return Object.keys(paper).some((id) => Number(paper[id]) > 0);
+  }
+
+  function renderFirstRun() {
+    const el = document.getElementById("first-run");
+    if (!el) return;
+    const empty = importedIds().length === 0;
+    el.classList.toggle("hidden", !empty);
+  }
+
+  function wantedGotBar(wanted, got, cap) {
+    const w = Math.max(0, Number(wanted) || 0);
+    const g = Math.max(0, Number(got) || 0);
+    const scale = Math.max(Number(cap) || 0.2, w, g, 0.01);
+    const wPct = Math.min(100, (w / scale) * 100);
+    const gPct = Math.min(100, (g / scale) * 100);
+    const drift = Math.abs(w - g) > 0.001 ? " drift" : "";
+    return (
+      `<div class="wg-cell"><div class="wg-track${drift}" aria-label="wanted ${fmtPct(w)} got ${fmtPct(g)}">` +
+      `<span class="wg-got" style="width:${gPct}%"></span>` +
+      `<span class="wg-wanted" style="left:${wPct}%"></span>` +
+      `</div></div>`
+    );
+  }
+
+  function renderGrossUtilization(gross) {
+    const bar = document.getElementById("metric-gross-bar");
+    if (!bar) return;
+    const cap = Number(state.risk && state.risk.account && state.risk.account.max_gross);
+    const limit = cap > 0 ? cap : 1;
+    const ratio = limit ? gross / limit : 0;
+    const pct = Math.min(100, Math.max(0, ratio * 100));
+    bar.classList.remove("hidden", "warn", "fail");
+    if (ratio >= 1) bar.classList.add("fail");
+    else if (ratio >= 0.9) bar.classList.add("warn");
+    bar.innerHTML = `<span class="util-fill" style="width:${pct}%"></span>`;
+    bar.setAttribute("aria-label", `gross ${fmtPct(gross)} of cap ${fmtPct(limit)}`);
+    bar.removeAttribute("aria-hidden");
+  }
+
   function renderBanners() {
     const haltEl = document.getElementById("halt-banner");
     const flattenEl = document.getElementById("flatten-banner");
@@ -210,7 +258,10 @@
     if (pnl > 0) pnlEl.classList.add("positive");
     if (pnl < 0) pnlEl.classList.add("negative");
 
-    document.getElementById("metric-gross").textContent = fmtPct(grossExposure(portfolio));
+    const gross = grossExposure(portfolio);
+    document.getElementById("metric-gross").textContent = fmtPct(gross);
+    renderGrossUtilization(gross);
+    renderFirstRun();
 
     const clock = state.status && state.status.clock;
     const countdown = state.status && state.status.countdown;
@@ -231,14 +282,25 @@
     posBody.innerHTML = "";
     const positions = portfolio.positions || [];
     if (!positions.length) {
-      posBody.innerHTML = "<tr><td colspan='5' class='muted'>No positions</td></tr>";
+      let empty = "No positions yet. Import a .asb to begin.";
+      if (importedIds().length) {
+        empty = hasPaperSleeve()
+          ? "No positions yet. The next legal open or close rebalance will trade."
+          : "Imported bundles are not trading. Start paper on Run.";
+      }
+      posBody.innerHTML = `<tr><td colspan='6' class='muted'>${empty}</td></tr>`;
     } else {
+      const cap =
+        (state.risk && state.risk.account && state.risk.account.max_name_weight) || 0.2;
       for (const pos of positions) {
         const tr = document.createElement("tr");
         const notional = pos.notional == null ? "—" : fmtNum(pos.notional, 2);
         const wanted = pos.wanted == null ? "—" : fmtPct(pos.wanted);
         const got = pos.weight == null ? "—" : fmtPct(pos.weight);
-        tr.innerHTML = `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td><td class="nums">${notional}</td><td class="nums">${wanted}</td><td class="nums">${got}</td>`;
+        tr.innerHTML =
+          `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td>` +
+          `<td class="nums">${notional}</td><td class="nums">${wanted}</td>` +
+          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap)}</td>`;
         posBody.appendChild(tr);
       }
     }
@@ -572,7 +634,8 @@
     for (const id of ids) {
       const panel = document.createElement("div");
       panel.className = "panel";
-      panel.innerHTML = `<h2>${id}</h2>`;
+      const alloc = ((state.bundles && state.bundles.paper) || {})[id] || 0;
+      panel.innerHTML = `<h2>${id}</h2><p class="muted nums">Allocation ${fmtPct(alloc)}</p>`;
       const form = buildRiskInputs(id, risk.sleeves[id], risk.sleeves[id]);
       form.addEventListener("submit", (ev) => onRiskSleeveSubmit(ev, id));
       panel.appendChild(form);
@@ -765,6 +828,12 @@
     const btn = ev.target.closest("button[data-screen]");
     if (!btn) return;
     showScreen(btn.dataset.screen);
+  });
+
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-go-screen]");
+    if (!btn) return;
+    showScreen(btn.getAttribute("data-go-screen"));
   });
 
   document.getElementById("import-form").addEventListener("submit", onImportSubmit);

@@ -200,3 +200,40 @@ def test_js_activity_kill_summary_distinguishes_isolated(js_text: str) -> None:
     assert "isolated residual" in kill_branch
     assert "flattened account" in kill_branch
     assert "ev.isolated" in kill_branch
+
+
+def test_html_first_run_and_book_column(html_text: str) -> None:
+    assert 'id="first-run"' in html_text
+    first_at = html_text.find('id="first-run"')
+    portfolio_at = html_text.find('id="screen-portfolio"')
+    assert 0 <= first_at < portfolio_at
+    assert "Start this paper desk" in html_text
+    assert "Import is not permission to trade" in html_text
+    assert 'data-go-screen="strategies"' in html_text
+    assert 'data-go-screen="run"' in html_text
+    assert ">Book<" in html_text
+    assert 'id="metric-gross-bar"' in html_text
+
+
+def test_css_first_glance_tracks_use_locked_tokens(css_text: str) -> None:
+    assert ".first-run" in css_text
+    assert ".wg-track" in css_text
+    assert ".util-track" in css_text
+    assert ".wg-wanted" in css_text
+    first = re.search(r"\.first-run\s*\{[^}]*\}", css_text)
+    assert first is not None
+    assert "#10b981" in first.group(0).lower()
+
+
+def test_js_first_glance_behaviors(js_text: str) -> None:
+    assert "function renderFirstRun" in js_text
+    assert "function wantedGotBar" in js_text
+    assert "function renderGrossUtilization" in js_text
+    assert "data-go-screen" in js_text
+    assert "No positions yet. Import a .asb to begin." in js_text
+    assert "Imported bundles are not trading. Start paper on Run." in js_text
+    assert "The next legal open or close rebalance will trade." in js_text
+    assert "wg-track" in js_text
+    assert "util-fill" in js_text
+    assert "Allocation " in js_text
+    assert "window.confirm" not in js_text

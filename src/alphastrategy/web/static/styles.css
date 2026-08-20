@@ -422,3 +422,62 @@ button.action.account-kill {
   color: #e5e9f0;
   font-size: 0.85rem;
 }
+
+.first-run {
+  border-color: #10b981;
+  margin-bottom: 0.75rem;
+}
+
+.first-run.hidden,
+.util-track.hidden {
+  display: none;
+}
+
+.first-run p {
+  color: #9ba3b4;
+  font-size: 0.85rem;
+  margin: 0 0 0.65rem;
+}
+
+.wg-track,
+.util-track {
+  position: relative;
+  height: 8px;
+  background: #0b0e14;
+  border: 1px solid #2a3142;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.util-track {
+  margin-top: 0.35rem;
+}
+
+.wg-got,
+.util-fill {
+  display: block;
+  height: 100%;
+  background: #10b981;
+}
+
+.wg-track.drift .wg-got,
+.util-track.warn .util-fill {
+  background: #f59e0b;
+}
+
+.util-track.fail .util-fill {
+  background: #ef4444;
+}
+
+.wg-wanted {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #e5e9f0;
+  transform: translateX(-1px);
+}
+
+.wg-cell {
+  min-width: 88px;
+}
