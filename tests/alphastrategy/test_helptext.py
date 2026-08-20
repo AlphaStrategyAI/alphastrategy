@@ -78,6 +78,7 @@ REQUIRED_PHRASES = (
     "Session OPEN is halt color while Supervisor is HALTED",
     "Clock Next is held while Supervisor is HALTED",
     "Clock Next is flat while the paper account is flattened",
+    "stale persist temps and import staging are removed on start",
 )
 
 

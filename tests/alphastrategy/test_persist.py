@@ -178,3 +178,45 @@ def test_replace_bytes_keeps_previous_if_replace_fails(
         persist.replace_bytes(path, b"new\n", prefix=".member.")
     assert path.read_bytes() == b"old\n"
     assert list(tmp_path.glob(".member.*.tmp")) == []
+
+
+def test_discard_stale_removes_temps_and_staging(tmp_path: Path) -> None:
+    from alphastrategy import persist
+
+    root = tmp_path / "home"
+    imported = root / "imported"
+    staging = imported / ".staging.xyz"
+    bundle = imported / "asb_keep"
+    staging.mkdir(parents=True)
+    bundle.mkdir(parents=True)
+    (staging / "junk").write_text("z\n", encoding="utf-8")
+    (bundle / "strategy.dsl.yaml").write_text("ok\n", encoding="utf-8")
+    (root / ".state.abc.tmp").write_text("old\n", encoding="utf-8")
+    (root / ".runtime.abc.tmp").write_text("old\n", encoding="utf-8")
+    (root / "supervisor-state.json").write_text("{}\n", encoding="utf-8")
+    persist.discard_stale(root)
+    assert not (root / ".state.abc.tmp").exists()
+    assert not (root / ".runtime.abc.tmp").exists()
+    assert not staging.exists()
+    assert (root / "supervisor-state.json").read_text(encoding="utf-8") == "{}\n"
+    assert (bundle / "strategy.dsl.yaml").is_file()
+
+
+def test_discard_stale_source_does_not_touch_published_names() -> None:
+    from alphastrategy import persist
+
+    src = Path(persist.__file__).read_text(encoding="utf-8")
+    body = src.split("def discard_stale", 1)[1]
+    assert ".staging." in body
+    assert "supervisor-state.json" not in body
+    assert "rmtree" in body
+
+
+def test_supervisor_init_calls_discard_stale() -> None:
+    from alphastrategy.supervisor import loop as loop_mod
+
+    src = Path(loop_mod.__file__).read_text(encoding="utf-8")
+    body = src.split("def __init__", 1)[1].split("def state", 1)[0]
+    assert "discard_stale" in body
+    assert "load_state" in body
+    assert body.index("discard_stale") < body.index("load_state")

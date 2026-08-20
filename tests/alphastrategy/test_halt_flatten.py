@@ -1142,3 +1142,15 @@ def test_tick_stamps_heartbeat_when_stopped(tmp_path: Path) -> None:
     supervisor.tick()
     assert supervisor.snapshot.last_heartbeat_at
     assert supervisor.snapshot.last_heartbeat_at >= first
+
+
+def test_supervisor_init_discards_stale_temps(tmp_path: Path) -> None:
+    imported = tmp_path / "imported"
+    staging = imported / ".staging.dead"
+    staging.mkdir(parents=True)
+    (staging / "x").write_text("n\n", encoding="utf-8")
+    (tmp_path / ".state.dead.tmp").write_text("n\n", encoding="utf-8")
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    assert supervisor.snapshot is not None
+    assert not staging.exists()
+    assert not (tmp_path / ".state.dead.tmp").exists()
