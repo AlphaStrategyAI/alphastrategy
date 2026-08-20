@@ -155,7 +155,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   not catch up; the next legal open/close rebalance does. Resume is only
   after halt. Persist-before-send flushes the snapshot to disk before
   orders so a host kill still sees interrupted rebalancing, flattening,
-  or sleeve isolate.
+  or sleeve isolate. Audit and runtime overlays flush to disk with that
+  snapshot family.
 - **Account kill** flattens the whole paper account, clears the last book,
   and zeros live sleeves. **Start paper after flatten** starts the session
   loop again and does not catch up. On the Web, flatten lives

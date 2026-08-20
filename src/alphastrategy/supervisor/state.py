@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+from alphastrategy.persist import replace_text
 
 
 class SupervisorState(str, Enum):
@@ -138,30 +138,5 @@ def load_state(path: Path | str) -> SupervisorSnapshot:
 
 
 def save_state(path: Path | str, snapshot: SupervisorSnapshot) -> None:
-    state_path = Path(path)
-    state_path.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(snapshot.to_dict(), separators=(",", ":"), sort_keys=True) + "\n"
-    fd, tmp_name = tempfile.mkstemp(
-        dir=state_path.parent,
-        prefix=".state.",
-        suffix=".tmp",
-        text=True,
-    )
-    tmp_path = Path(tmp_name)
-    replaced = False
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp_path, state_path)
-        replaced = True
-        dir_fd = os.open(str(state_path.parent), os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(dir_fd)
-        finally:
-            os.close(dir_fd)
-    except Exception:
-        if not replaced:
-            tmp_path.unlink(missing_ok=True)
-        raise
+    replace_text(path, payload, prefix=".state.")

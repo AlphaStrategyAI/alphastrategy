@@ -16,6 +16,7 @@ from alphastrategy.bundle.schema import load_risk_envelope
 from alphastrategy.errors import ImportRejected
 from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.persist import replace_text
 from alphastrategy.risk.labels import POLICY_LABELS
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
 from alphastrategy.risk.utilization import from_supervisor
@@ -129,8 +130,7 @@ def _load_runtime(home: AlphaStrategyHome) -> dict[str, Any]:
 
 def _save_runtime(home: AlphaStrategyHome, runtime: dict[str, Any]) -> None:
     path = home.runtime_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(runtime, sort_keys=True), encoding="utf-8")
+    replace_text(path, yaml.safe_dump(runtime, sort_keys=True), prefix=".runtime.")
 
 
 def _apply_startup_runtime(home: AlphaStrategyHome, supervisor: Supervisor) -> None:

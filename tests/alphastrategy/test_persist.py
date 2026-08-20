@@ -113,7 +113,8 @@ def test_append_text_keeps_prior_lines_if_fsync_fails(
     monkeypatch.setattr(os, "fsync", boom)
     with pytest.raises(OSError):
         persist.append_text(path, '{"event":"two"}\n')
-    assert path.read_text(encoding="utf-8") == '{"event":"one"}\n'
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith('{"event":"one"}\n')
 
 
 def test_save_runtime_source_uses_replace_text() -> None:

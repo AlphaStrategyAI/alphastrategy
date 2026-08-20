@@ -33,6 +33,7 @@ SECTIONS: list[dict[str, str]] = [
             "and does not flatten or retry that event. "
             "Persist-before-send flushes the snapshot to disk before orders so a "
             "host kill still sees REBALANCING, FLATTENING, or isolate_in_flight. "
+            "Audit and runtime overlays flush to disk with that snapshot family. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },

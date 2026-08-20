@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from alphastrategy.persist import append_text
+
 _SENSITIVE_SUBSTRINGS = ("key", "secret", "token", "password")
 
 
@@ -34,5 +36,4 @@ def append(path: Path | str, payload: dict) -> None:
         record["ts"] = _utc_ts()
     record = _redact(record)
     line = json.dumps(record, separators=(",", ":")) + "\n"
-    with Path(path).open("a", encoding="utf-8") as handle:
-        handle.write(line)
+    append_text(path, line)
