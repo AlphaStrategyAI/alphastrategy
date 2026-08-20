@@ -152,7 +152,9 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
 
 - **Halt** stops new orders and does not flatten. `paper resume` does
   not catch up; the next legal open/close rebalance does. Resume is only
-  after halt.
+  after halt. Persist-before-send flushes the snapshot to disk before
+  orders so a host kill still sees interrupted rebalancing, flattening,
+  or sleeve isolate.
 - **Account kill** flattens the whole paper account, clears the last book,
   and zeros live sleeves. **Start paper after flatten** starts the session
   loop again and does not catch up. On the Web, flatten lives

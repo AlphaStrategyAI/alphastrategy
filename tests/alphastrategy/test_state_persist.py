@@ -87,12 +87,12 @@ def test_save_state_keeps_previous_file_if_payload_fsync_fails(
         mode = os.fstat(fd).st_mode
         if stat.S_ISREG(mode):
             files["n"] += 1
-            if files["n"] > 1:
-                raise OSError("simulated fsync fail")
+            raise OSError("simulated fsync fail")
         real(fd)
 
     monkeypatch.setattr(os, "fsync", boom)
     with pytest.raises(OSError):
         save_state(path, SupervisorSnapshot(state=SupervisorState.REBALANCING))
+    assert files["n"] == 1
     assert load_state(path).state == SupervisorState.HALTED
     assert list(tmp_path.glob(".state.*.tmp")) == []

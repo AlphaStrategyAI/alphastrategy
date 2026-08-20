@@ -31,6 +31,8 @@ SECTIONS: list[dict[str, str]] = [
             "If the host dies mid-rebalance, the desk treats that as interrupted "
             "rebalancing: it writes Wanted / Got from the broker, health-halts, "
             "and does not flatten or retry that event. "
+            "Persist-before-send flushes the snapshot to disk before orders so a "
+            "host kill still sees REBALANCING, FLATTENING, or isolate_in_flight. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },
