@@ -642,6 +642,22 @@ def test_portfolio_includes_wanted_name_with_no_fill(api_stack):
     assert msft["weight"] == pytest.approx(0.0)
 
 
+def test_portfolio_fill_stays_on_last_rebalance_after_mark(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_combined = {"AAPL": 0.15}
+    supervisor.snapshot.last_prices = {"AAPL": 150.0}
+    supervisor.snapshot.last_got = {"AAPL": 0.225}
+    supervisor.snapshot.last_fill_got = {"AAPL": 0.15}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {"AAPL": 15.0}
+    broker.equity = 10_000.0
+    body = client.get("/api/portfolio").json()
+    pos = next(item for item in body["positions"] if item["symbol"] == "AAPL")
+    assert pos["weight"] == pytest.approx(0.225)
+    assert pos["fill"] == pytest.approx(0.15)
+    assert pos["wanted"] == pytest.approx(0.15)
+
+
 def test_bundles_lists_stopped(api_stack):
     client, _home, supervisor, _broker = api_stack
     supervisor.start_sleeve("asb_x", 0.25)

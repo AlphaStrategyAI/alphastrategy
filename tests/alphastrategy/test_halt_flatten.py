@@ -1048,6 +1048,7 @@ def test_flatten_clears_last_book_and_zeros_sleeves(tmp_path: Path):
     assert snap.state == SupervisorState.STOPPED
     assert snap.last_combined == {}
     assert snap.last_got == {}
+    assert snap.last_fill_got == {}
     assert snap.last_sleeve_weights == {}
     assert snap.last_sleeve_contribution == {}
     assert snap.last_prices == {}
@@ -1302,6 +1303,26 @@ def test_heartbeat_does_not_flatten_when_live_name_breaches_cap(
     supervisor.tick()
     assert broker.close_all_count == 0
     assert supervisor.state != SupervisorState.STOPPED
+
+
+def test_open_rebalance_writes_last_fill_got(tmp_path: Path) -> None:
+    _open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    assert broker.positions.get("AAPL") == pytest.approx(15.0)
+    assert supervisor.snapshot.last_got["AAPL"] == pytest.approx(0.15)
+    assert supervisor.snapshot.last_fill_got["AAPL"] == pytest.approx(0.15)
+
+
+def test_heartbeat_marks_do_not_overwrite_last_fill_got(tmp_path: Path) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    assert supervisor.snapshot.last_fill_got["AAPL"] == pytest.approx(0.15)
+    broker.bars["AAPL"] = {"bars": [{"c": 150.0, "t": "2024-01-31"}]}
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.snapshot.last_got["AAPL"] == pytest.approx(0.225)
+    assert supervisor.snapshot.last_fill_got["AAPL"] == pytest.approx(0.15)
+    disk = _read_state(tmp_path)
+    assert disk["last_got"]["AAPL"] == pytest.approx(0.225)
+    assert disk["last_fill_got"]["AAPL"] == pytest.approx(0.15)
 
 
 def test_close_rebalance_flattens_live_book_after_price_rally(

@@ -1359,6 +1359,25 @@ def test_js_deviation_banner_follows_book_drift(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_book_drift_uses_fill_not_mark(js_text: str) -> None:
+    fn = js_text[
+        js_text.find("function bookDrift") : js_text.find("function renderBookDrift")
+    ]
+    assert "pos.fill" in fn
+    assert "pos.wanted" in fn
+    rails = js_text[
+        js_text.find("function wantedGotBar") : js_text.find("function paintUtilTrack")
+    ]
+    assert "fill" in rails
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+    banners = js_text[
+        js_text.find("function renderBanners") : js_text.find("function renderPortfolio")
+    ]
+    assert banners.count("const reason") == 1
+
+
 def test_js_paints_activity_beat(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
