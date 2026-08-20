@@ -35,6 +35,7 @@ REQUIRED_PHRASES = (
     "Flatten account",
     "own error",
     "assembled from js/",
+    "Inventory / Import .asb / Roster",
 )
 
 

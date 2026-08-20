@@ -531,3 +531,52 @@ def test_cockpit_js_assembled_from_parts() -> None:
     assert "window.state" not in blob
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     assert '<script src="app.js"></script>' in html
+
+
+def test_html_strategies_inventory_bands(html_text: str) -> None:
+    assert 'id="strat-inventory"' in html_text
+    assert 'id="strat-import"' in html_text
+    assert 'id="strat-roster"' in html_text
+    assert '<h2 class="glance-heading">Inventory</h2>' in html_text
+    assert '<h2 class="glance-heading">Import .asb</h2>' in html_text
+    assert '<h2 class="glance-heading">Roster</h2>' in html_text
+    strat = html_text[
+        html_text.find('id="screen-strategies"') : html_text.find('id="screen-run"')
+    ]
+    inventory = strat[strat.find('id="strat-inventory"') : strat.find('id="strat-import"')]
+    bring = strat[strat.find('id="strat-import"') : strat.find('id="strat-roster"')]
+    roster = strat[strat.find('id="strat-roster"') :]
+    assert 'id="strat-count-imported"' in inventory
+    assert 'id="strat-count-paper"' in inventory
+    assert 'id="strat-count-halted"' in inventory
+    assert 'id="strat-count-stopped"' in inventory
+    assert "hero" in inventory
+    assert 'id="import-form"' in bring
+    assert 'id="import-error"' in bring
+    assert 'id="import-ok"' in bring
+    assert 'id="strategies-table"' in roster
+    assert 'id="import-form"' not in roster
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_css_strategies_inventory_bands(css_text: str) -> None:
+    assert ".metrics-4" in css_text
+    assert "repeat(4, minmax(0, 1fr))" in css_text
+
+
+def test_js_paints_strategy_inventory(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderStrategies") : js_text.find("function runFormIsDirty")
+    ]
+    assert 'getElementById("strat-count-paper")' in paint
+    assert 'getElementById("strat-count-imported")' in paint
+    assert 'getElementById("strat-count-halted")' in paint
+    assert 'getElementById("strat-count-stopped")' in paint
+    assert '"status-running"' in paint
+    assert '"status-halt"' in paint
+    assert '"status-stopped"' in paint
+    assert "classList.toggle(onClass" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
