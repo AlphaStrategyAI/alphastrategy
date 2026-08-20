@@ -410,8 +410,18 @@ class Supervisor:
                 except IllegalWeights as exc:
                     self._mark_detected_event(cur, event)
                     self._halt(str(exc))
-                except FlattenRequested:
-                    self._flatten_account()
+                except FlattenRequested as exc:
+                    reason = exc.reason or "limit"
+                    self._flatten_account(reason=reason)
+                    self._record_kill(
+                        KillOutcome(
+                            isolated=False,
+                            flattened=True,
+                            scope="account",
+                            reason=reason,
+                            bundle_id=None,
+                        )
+                    )
                 except Exception as exc:
                     self._mark_detected_event(cur, event)
                     self._halt(str(exc))

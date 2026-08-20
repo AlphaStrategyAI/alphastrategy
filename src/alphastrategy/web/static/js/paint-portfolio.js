@@ -136,7 +136,9 @@
       flattenEl.textContent =
         killReason === "flatten_interrupted"
           ? "FLAT: interrupted flattening — paper account flattened"
-          : "FLAT: paper account flattened";
+          : killReason === "limit"
+            ? "FLAT: limit breach — paper account flattened"
+            : "FLAT: paper account flattened";
     } else {
       flattenEl.classList.add("hidden");
     }

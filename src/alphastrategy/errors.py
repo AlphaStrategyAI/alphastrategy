@@ -15,6 +15,7 @@ class HaltRequested(Exception):
 
 
 class FlattenRequested(Exception):
-    def __init__(self, scope: str):
+    def __init__(self, scope: str, reason: str = "limit"):
         super().__init__(scope)
         self.scope = scope
+        self.reason = reason

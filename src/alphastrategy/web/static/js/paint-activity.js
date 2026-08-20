@@ -34,6 +34,9 @@
         if (ev.reason === "flatten_interrupted") {
           return "interrupted flattening";
         }
+        if (ev.reason === "limit") {
+          return "limit breach";
+        }
         return ev.scope || "account";
       default:
         return ev.event || "event";
