@@ -506,16 +506,41 @@ class Supervisor:
         session_date = cur.next_close.date().isoformat()
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"
 
-    def _heartbeat_health_check(self, cur: ClockSnapshot) -> None:
+    def _price_universe(self, positions: dict[str, float]) -> set[str]:
         symbols: set[str] = set()
         for bundle_id, allocation in self._snapshot.sleeves.items():
             if allocation <= 0:
                 continue
-            weights = self._sleeve_weights(bundle_id)
-            symbols.update(weights.keys())
+            symbols.update(self._sleeve_weights(bundle_id).keys())
+        symbols.update(self._snapshot.last_combined.keys())
+        symbols.update(positions.keys())
+        return {
+            str(symbol).strip().upper() for symbol in symbols if str(symbol).strip()
+        }
+
+    def _heartbeat_health_check(self, cur: ClockSnapshot) -> None:
+        try:
+            positions = _positions_map(self._broker.list_positions())
+        except Exception as exc:
+            raise HaltRequested(f"heartbeat live book: {exc}") from exc
+        symbols = self._price_universe(positions)
         if not symbols:
             return
-        self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
+        prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
+        try:
+            equity = self._equity()
+        except Exception as exc:
+            raise HaltRequested(f"heartbeat live book: {exc}") from exc
+        self._snapshot.last_prices = {
+            **self._snapshot.last_prices,
+            **{symbol: float(price) for symbol, price in prices.items()},
+        }
+        if equity > 0:
+            self._snapshot.last_got = {
+                symbol: (qty * prices[symbol]) / equity
+                for symbol, qty in positions.items()
+                if symbol in prices and qty != 0.0
+            }
 
     def _set_idle_state(self, cur: ClockSnapshot) -> None:
         if self._snapshot.state == SupervisorState.HALTED:
@@ -767,6 +792,12 @@ class Supervisor:
         }
         self._snapshot.last_combined = dict(combined)
         self._snapshot.last_prices = dict(prices)
+        self._enforce_live_book()
+        if self._snapshot.state in (
+            SupervisorState.FLATTENING,
+            SupervisorState.STOPPED,
+        ):
+            return
         session_date = cur.next_close.date().isoformat()
         already = self._session_order_budget(session_date)
         plans = plan_orders(
