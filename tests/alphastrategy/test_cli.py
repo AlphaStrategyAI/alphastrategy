@@ -229,6 +229,49 @@ def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys
     assert payload["heartbeat"]["interval_seconds"] == 20
 
 
+def test_status_prints_limit_on_stderr(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    from alphastrategy.supervisor.state import load_state, save_state
+
+    _create_imported_bundle(cli_home)
+    main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"])
+    home = AlphaStrategyHome.from_env()
+    snap = load_state(home.state_path())
+    snap.last_got = {"AAPL": 0.225}
+    save_state(home.state_path(), snap)
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out.strip())
+    assert payload["utilization"]["live_limit"]["reason"] == "max_name_weight"
+    err = captured.err
+    assert "LIMIT:" in err
+    assert "Name cap" in err
+    assert "next rebalance will flatten" in err.lower()
+    patch_alpaca.assert_not_called()
+
+
+def test_status_omits_limit_when_flattened(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    from alphastrategy.supervisor.state import load_state, save_state
+
+    _create_imported_bundle(cli_home)
+    main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"])
+    home = AlphaStrategyHome.from_env()
+    snap = load_state(home.state_path())
+    snap.last_got = {"AAPL": 0.225}
+    snap.state = SupervisorState.STOPPED
+    save_state(home.state_path(), snap)
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    json.loads(captured.out.strip())
+    assert "LIMIT:" not in captured.err
+    patch_alpaca.assert_not_called()
+
+
 def test_weight_fn_uses_last_fetched_bar_and_long_lookback(tmp_path: Path) -> None:
     home = AlphaStrategyHome(root=tmp_path)
     bundle_dir = home.bundle_dir("asb_test")

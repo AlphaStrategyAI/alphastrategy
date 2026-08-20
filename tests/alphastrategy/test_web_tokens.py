@@ -1253,6 +1253,32 @@ def test_css_risk_cap_spoken_warn_token(css_text: str) -> None:
     assert name is not None and "#f59e0b" in name.group(0).lower()
 
 
+def test_js_paints_risk_caps_live_limit(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRiskCaps") : js_text.find("function buildRiskInputs")
+    ]
+    assert "live_limit" in paint
+    assert 'classList.add("fail")' in paint
+    assert "max_name_weight" in paint
+    assert "long_only" in paint
+    assert "warn" in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_risk_cap_live_limit_fail_token(css_text: str) -> None:
+    for sel in (
+        "#risk-cap-gross.fail",
+        "#risk-cap-name.fail",
+        "#risk-cap-names.fail",
+        "#risk-cap-orders.fail",
+        "#risk-cap-long.fail",
+    ):
+        block = re.search(re.escape(sel) + r"\s*\{[^}]*\}", css_text)
+        assert block is not None and "#ef4444" in block.group(0).lower()
+
+
 def test_js_paints_risk_headroom_tiles(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderRiskUtilization") : js_text.find("function nameCapBar")

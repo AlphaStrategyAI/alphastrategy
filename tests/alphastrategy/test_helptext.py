@@ -90,6 +90,8 @@ REQUIRED_PHRASES = (
     "A live book through the spoken cap warns before the next rebalance flattens",
     "Clock Next is flatten while the live book is through the spoken cap",
     "Start paper that flattens names the breached cap",
+    "Caps names the cap the live book is through",
+    "status names LIMIT while the live book is through the spoken cap",
 )
 
 
