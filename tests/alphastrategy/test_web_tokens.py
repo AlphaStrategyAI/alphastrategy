@@ -426,3 +426,38 @@ def test_js_renders_howto_for_active_screen(js_text: str) -> None:
     assert 'getElementById("help-howto")' in load
     assert "Help unavailable" in load
     assert "window.confirm" not in js_text
+
+
+def test_html_run_kill_switch_zones(html_text: str) -> None:
+    assert 'id="run-promote"' in html_text
+    assert 'id="run-book"' in html_text
+    assert 'id="run-recover"' in html_text
+    assert 'id="run-flatten"' in html_text
+    assert '<h2 class="glance-heading">Start paper</h2>' in html_text
+    assert '<h2 class="glance-heading">Sleeves</h2>' in html_text
+    assert '<h2 class="glance-heading">After halt</h2>' in html_text
+    assert '<h2 class="glance-heading">Flatten account</h2>' in html_text
+    run = html_text[html_text.find('id="screen-run"') : html_text.find('id="screen-activity"')]
+    promote = run[run.find('id="run-promote"') : run.find('id="run-book"')]
+    book = run[run.find('id="run-book"') : run.find('id="run-recover"')]
+    recover = run[run.find('id="run-recover"') : run.find('id="run-flatten"')]
+    flatten = run[run.find('id="run-flatten"') :]
+    assert 'id="start-form"' in promote
+    assert 'id="run-error"' in promote
+    assert 'id="run-sleeves"' in book
+    assert 'id="account-resume"' in recover
+    assert 'id="account-kill"' not in recover
+    assert 'id="account-kill"' in flatten
+    assert 'id="account-kill-phrase"' in flatten
+    assert 'id="account-kill-confirm"' in flatten
+    assert 'id="account-resume"' not in flatten
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_css_run_kill_switch_zones(css_text: str) -> None:
+    assert ".flatten-zone" in css_text
+    assert ".recover-zone" in css_text
+    assert ".flatten-zone .panel" in css_text
+    assert ".flatten-zone .glance-heading" in css_text

@@ -32,6 +32,7 @@ REQUIRED_PHRASES = (
     "Positions Book column",
     "Gross cap",
     "On Portfolio",
+    "Flatten account",
 )
 
 
