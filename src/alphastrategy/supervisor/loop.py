@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import threading
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 import yaml
@@ -110,6 +111,7 @@ class Supervisor:
         self._recover_interrupted_rebalance()
         self._recover_interrupted_flatten()
         self._recover_interrupted_isolate()
+        self._spoken_cache: tuple[tuple, AccountPolicy] | None = None
 
     @property
     def state(self) -> SupervisorState:
@@ -604,23 +606,59 @@ class Supervisor:
             return {}
         return load_risk_envelope(envelope_path.read_bytes())
 
-    def _effective_sleeve_policy(self, bundle_id: str) -> AccountPolicy:
-        runtime = self._read_runtime()
-        sleeve_overlays = runtime.get("sleeve_overlays", {})
+    def _effective_sleeve_policy(
+        self, bundle_id: str, runtime: dict[str, Any] | None = None
+    ) -> AccountPolicy:
+        doc = runtime if runtime is not None else self._read_runtime()
+        sleeve_overlays = doc.get("sleeve_overlays", {})
         overlay = sleeve_overlays.get(bundle_id) if isinstance(sleeve_overlays, dict) else None
         envelope = self._bundle_envelope(bundle_id)
         return merge_limits(envelope, self._policy, overlay)
+
+    def _file_stamp(self, path: Path) -> tuple[int, int]:
+        if not path.is_file():
+            return (0, 0)
+        stat = path.stat()
+        return (int(stat.st_mtime_ns), int(stat.st_size))
+
+    def _spoken_cache_key(self) -> tuple:
+        allocated = tuple(
+            sorted(
+                (bundle_id, float(allocation))
+                for bundle_id, allocation in self._snapshot.sleeves.items()
+                if float(allocation) > 0
+            )
+        )
+        envelopes = tuple(
+            (
+                bundle_id,
+                self._file_stamp(self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"),
+            )
+            for bundle_id, _allocation in allocated
+        )
+        return (
+            self._file_stamp(self._home.runtime_path()),
+            envelopes,
+            allocated,
+            self._policy,
+        )
 
     def spoken_policy(self) -> AccountPolicy:
         with self._lock:
             return self._rebalance_policy()
 
     def _rebalance_policy(self) -> AccountPolicy:
+        key = self._spoken_cache_key()
+        cached = self._spoken_cache
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        runtime = self._read_runtime()
         policy = self._policy
         for bundle_id, allocation in self._snapshot.sleeves.items():
             if allocation <= 0:
                 continue
-            policy = tighten_policy(policy, self._effective_sleeve_policy(bundle_id))
+            policy = tighten_policy(policy, self._effective_sleeve_policy(bundle_id, runtime))
+        self._spoken_cache = (key, policy)
         return policy
 
     def _equity(self) -> float:

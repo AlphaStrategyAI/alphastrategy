@@ -149,6 +149,7 @@ Risk is four bands: **Caps**, **Headroom**, **Tighten**, and **Sleeve overlays**
 Caps is **Gross cap / Name cap / Names / Orders today** (Gross cap is the hero).
 Caps is the spoken book. Tighten still edits the account form.
 Caps names the cap the live book is through.
+Spoken policy is reused until overlays or allocations change.
 Headroom is **Names / Orders today / Cash / Target cash** (Names is the hero).
 Caps and Headroom stay sticky. Tighten is **Tight / Delta $ / Delta % / Fields**
 (Tight is the hero), then groups **Gross / Names / Orders / Deltas**.

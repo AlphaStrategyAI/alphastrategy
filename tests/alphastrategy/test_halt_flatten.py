@@ -1223,7 +1223,6 @@ def test_spoken_policy_reads_runtime_once_while_unchanged(tmp_path: Path) -> Non
         yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
         encoding="utf-8",
     )
-    supervisor.start_sleeve("asb_test", 0.25)
     reads = {"n": 0}
     inner = supervisor._read_runtime
 
@@ -1232,6 +1231,7 @@ def test_spoken_policy_reads_runtime_once_while_unchanged(tmp_path: Path) -> Non
         return inner()
 
     supervisor._read_runtime = counted  # type: ignore[method-assign]
+    supervisor.start_sleeve("asb_test", 0.25)
     first = supervisor.spoken_policy()
     second = supervisor.spoken_policy()
     assert first.max_name_weight == pytest.approx(0.05)
