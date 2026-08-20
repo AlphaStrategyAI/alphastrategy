@@ -643,7 +643,16 @@ class Supervisor:
     def _recover_interrupted_flatten(self) -> None:
         if self._snapshot.state != SupervisorState.FLATTENING:
             return
-        self._flatten_account()
+        self._flatten_account(reason="flatten_interrupted")
+        self._record_kill(
+            KillOutcome(
+                isolated=False,
+                flattened=True,
+                scope="account",
+                reason="flatten_interrupted",
+                bundle_id=None,
+            )
+        )
 
     def _recover_interrupted_isolate(self) -> None:
         bundle_id = self._snapshot.isolate_in_flight
@@ -727,7 +736,7 @@ class Supervisor:
         self._audit("halt", reason=reason)
         self._persist()
 
-    def _flatten_account(self) -> None:
+    def _flatten_account(self, *, reason: str = "account") -> None:
         self._snapshot.isolate_in_flight = None
         self._snapshot.state = SupervisorState.FLATTENING
         self._persist()
@@ -752,5 +761,5 @@ class Supervisor:
             self._snapshot.sleeves[bundle_id] = 0.0
             if bundle_id not in self._snapshot.stopped:
                 self._snapshot.stopped.append(bundle_id)
-        self._audit("flatten", scope="account")
+        self._audit("flatten", scope="account", reason=reason)
         self._persist()

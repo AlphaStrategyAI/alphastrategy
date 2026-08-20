@@ -31,6 +31,9 @@
         return id || ev.scope || "";
       }
       case "flatten":
+        if (ev.reason === "flatten_interrupted") {
+          return "interrupted flattening";
+        }
         return ev.scope || "account";
       default:
         return ev.event || "event";

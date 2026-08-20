@@ -121,6 +121,8 @@
       (state.portfolio && state.portfolio.halt_reason) ||
       (state.status && state.status.halt_reason) ||
       "";
+    const lastKill = state.status && state.status.last_kill;
+    const killReason = lastKill && lastKill.reason;
 
     if (halted || reason) {
       haltEl.classList.remove("hidden");
@@ -131,7 +133,10 @@
 
     if (flattened) {
       flattenEl.classList.remove("hidden");
-      flattenEl.textContent = "FLAT: paper account flattened";
+      flattenEl.textContent =
+        killReason === "flatten_interrupted"
+          ? "FLAT: interrupted flattening — paper account flattened"
+          : "FLAT: paper account flattened";
     } else {
       flattenEl.classList.add("hidden");
     }
@@ -144,8 +149,6 @@
     }
 
     const killEl = document.getElementById("kill-outcome-banner");
-    const lastKill = state.status && state.status.last_kill;
-    const killReason = lastKill && lastKill.reason;
     if (killReason === "isolated") {
       killEl.className = "banner halt";
       killEl.textContent =

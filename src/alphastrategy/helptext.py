@@ -42,6 +42,8 @@ SECTIONS: list[dict[str, str]] = [
             "If the host dies while flattening, the desk treats that as "
             "interrupted flattening: it retries cancel and close_all. If the "
             "broker is unreachable it health-halts. "
+            "The flatten banner names interrupted flattening when the host died "
+            "mid-close_all. "
             "If the host dies during a sleeve isolate, the desk treats that as "
             "interrupted sleeve isolate: it flattens the whole paper account "
             "rather than guess the residual. "
