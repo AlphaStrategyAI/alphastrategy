@@ -165,7 +165,7 @@ class Supervisor:
         self._live_book_cache = (now, account, positions, False)
         return account, positions
 
-    def _live_book_weights(
+    def _priced_live_weights(
         self, equity: float, raw_positions: list[dict[str, Any]]
     ) -> dict[str, float]:
         positions = _positions_map(raw_positions)
@@ -178,9 +178,28 @@ class Supervisor:
             }
             if got:
                 return got
+        return {}
+
+    def _live_book_weights(
+        self, equity: float, raw_positions: list[dict[str, Any]]
+    ) -> dict[str, float]:
+        priced = self._priced_live_weights(equity, raw_positions)
+        if priced:
+            return priced
         if self._snapshot.last_got:
             return dict(self._snapshot.last_got)
         return dict(self._snapshot.last_combined)
+
+    def live_cap_weights(
+        self, equity: float, raw_positions: list[dict[str, Any]]
+    ) -> dict[str, float]:
+        with self._lock:
+            priced = self._priced_live_weights(equity, raw_positions)
+            if priced:
+                return priced
+            if self._snapshot.last_got:
+                return dict(self._snapshot.last_got)
+            return {}
 
     def _enforce_live_book(
         self,

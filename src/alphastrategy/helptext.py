@@ -28,6 +28,7 @@ SECTIONS: list[dict[str, str]] = [
             "Heartbeat seeds the live book glance. "
             "A heartbeat live book holds until flatten or place. "
             "Tighten and Start paper flatten the same live book as Book. "
+            "Caps LIMIT follows the same live book as Tighten. "
             "Runtime overlays load once until the file changes. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "At most two RTH rebalances fire: open plus 3 minutes, and 12 minutes before close. "
@@ -63,6 +64,7 @@ SECTIONS: list[dict[str, str]] = [
             "words (Gross cap, Name cap, Names, Orders today). "
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
+            "Caps LIMIT follows the same live book as Tighten. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap. "
@@ -285,6 +287,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "the form refuses looser values and still posts the policy keys. "
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
+            "Caps LIMIT follows the same live book as Tighten. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap."
         ),
@@ -366,6 +369,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "Looser values are refused; PUT keys stay machine names. "
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
+            "Caps LIMIT follows the same live book as Tighten. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now."
         ),

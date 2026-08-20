@@ -193,6 +193,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   prices and does not flatten. Heartbeat seeds the live book glance.
   A heartbeat live book holds until flatten or place.
   Tighten and Start paper flatten the same live book as Book.
+  Caps LIMIT follows the same live book as Tighten.
   Sleeve envelopes load once until the file changes.
   Runtime overlays load once until the file changes.
   Tighten PUT reads runtime overlays from the Supervisor.

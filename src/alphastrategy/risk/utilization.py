@@ -74,15 +74,18 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
     equity = None
     cash = None
     positions = None
+    live_weights = None
     if live:
         try:
             account, positions = supervisor.live_book()
             equity = float(account.get("equity", 0))
             cash = float(account.get("cash", equity))
+            live_weights = supervisor.live_cap_weights(equity, positions)
         except Exception:
             equity = None
             cash = None
             positions = None
+            live_weights = None
     return summarize(
         policy=supervisor.spoken_policy(),
         orders_today=snapshot.orders_today,
@@ -90,5 +93,5 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
         cash=cash,
         positions=positions,
         last_combined=snapshot.last_combined,
-        last_got=snapshot.last_got,
+        last_got=live_weights or snapshot.last_got,
     )
