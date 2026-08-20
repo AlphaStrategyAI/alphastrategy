@@ -856,6 +856,10 @@ def test_js_paints_risk_overlay_glance(js_text: str) -> None:
     assert "paintUtilTrack" in paint
     assert "No sleeve overlays" in paint
     assert "tighter than account" in paint
+    assert "tighter-line" in paint
+    assert "risk-sleeve-tighten" in paint
+    assert "Tighten this sleeve" in paint
+    assert 'createElement("details")' in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 
@@ -898,6 +902,15 @@ def test_css_risk_overlay_tokens(css_text: str) -> None:
     assert warn is not None and "#f59e0b" in warn.group(0).lower()
     assert fail is not None and "#ef4444" in fail.group(0).lower()
     assert tight is not None and "#f59e0b" in tight.group(0).lower()
+
+
+def test_css_risk_overlay_card_tokens(css_text: str) -> None:
+    tight = re.search(
+        r"#risk-sleeves\s+\.tighter-line\.warn\s*\{[^}]*\}", css_text
+    )
+    summary = re.search(r"\.risk-sleeve-tighten\s+summary\s*\{[^}]*\}", css_text)
+    assert tight is not None and "#f59e0b" in tight.group(0).lower()
+    assert summary is not None and "#9ba3b4" in summary.group(0).lower()
 
 
 def test_js_paints_risk_caps_tiles(js_text: str) -> None:

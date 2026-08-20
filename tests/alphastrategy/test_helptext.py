@@ -60,6 +60,7 @@ REQUIRED_PHRASES = (
     "flatten banner names interrupted flattening",
     "Tight / Delta $ / Delta % / Fields",
     "flushes the snapshot to disk before orders",
+    "Tighten this sleeve",
 )
 
 
