@@ -550,6 +550,38 @@ def test_kill_sleeve_calls_close_all_once(tmp_path: Path):
     assert supervisor.state == SupervisorState.STOPPED
 
 
+def test_kill_sleeve_isolates_when_last_book_exists(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    evaluators = {"asb_a": {"AAPL": 1.0}, "asb_b": {"MSFT": 1.0}}
+    supervisor = _make_supervisor(tmp_path, broker, evaluators=evaluators)
+    supervisor.start_sleeve("asb_a", 0.15)
+    supervisor.start_sleeve("asb_b", 0.15)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    assert "AAPL" in broker.positions
+    assert "MSFT" in broker.positions
+    close_all_before = broker.close_all_count
+    supervisor.kill_sleeve("asb_a")
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state != SupervisorState.STOPPED
+    assert supervisor.snapshot.sleeves["asb_a"] == 0.0
+    assert supervisor.snapshot.sleeves["asb_b"] == 0.15
+    assert broker.positions.get("AAPL", 0.0) == 0.0
+    assert broker.positions.get("MSFT", 0.0) > 0
+    assert "asb_a" in supervisor.snapshot.stopped
+
+
 def test_sleeve_overlay_tightens_rebalance_policy(tmp_path: Path):
     open_time = datetime(2024, 1, 31, 14, 30)
     session_close = datetime(2024, 1, 31, 21, 0)

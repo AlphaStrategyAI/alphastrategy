@@ -204,3 +204,61 @@ def test_operator_desk_portfolio_after_rebalance(tmp_path: Path) -> None:
     finally:
         server.shutdown()
         thread.join(timeout=2)
+
+
+def test_e2e_isolated_sleeve_kill(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    home.root.mkdir(parents=True, exist_ok=True)
+    for bundle_id in ("asb_a", "asb_b"):
+        home.bundle_dir(bundle_id).mkdir(parents=True)
+
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    broker.bars["AAPL"] = {"bars": [{"c": 100.0, "t": "2024-01-31"}]}
+    broker.bars["MSFT"] = {"bars": [{"c": 100.0, "t": "2024-01-31"}]}
+
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_a": {"AAPL": 1.0}, "asb_b": {"MSFT": 1.0}},
+    )
+    supervisor.start_sleeve("asb_a", 0.15)
+    supervisor.start_sleeve("asb_b", 0.15)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+        payload = json.dumps({"bundle_id": "asb_a"}).encode("utf-8")
+        conn.request(
+            "POST",
+            "/api/paper/kill",
+            body=payload,
+            headers={"Content-Type": "application/json", "Content-Length": str(len(payload))},
+        )
+        response = conn.getresponse()
+        assert response.status == 200
+        response.read()
+        assert broker.close_all_count == 0
+        assert supervisor.state != SupervisorState.STOPPED
+        conn.request("GET", "/api/bundles")
+        bundles = json.loads(conn.getresponse().read().decode("utf-8"))
+        assert "asb_a" in bundles["stopped"]
+        assert bundles["paper"]["asb_b"] == 0.15
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)

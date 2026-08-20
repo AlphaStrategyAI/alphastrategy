@@ -17,6 +17,7 @@ from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, next_rebalance_event
 from alphastrategy.supervisor.combine import combine
 from alphastrategy.supervisor.orders import deviations_after, plan_orders
+from alphastrategy.supervisor.residual import residual_book
 from alphastrategy.supervisor.state import (
     SupervisorSnapshot,
     SupervisorState,
@@ -178,9 +179,64 @@ class Supervisor:
             if bundle_id not in self._snapshot.sleeves:
                 return
             self._snapshot.sleeves[bundle_id] = 0.0
+            if bundle_id not in self._snapshot.stopped:
+                self._snapshot.stopped.append(bundle_id)
+            if self._isolation_ready(bundle_id):
+                try:
+                    self._isolate_sleeve(bundle_id)
+                    self._audit("kill", bundle_id=bundle_id, isolated=True)
+                    self._persist()
+                    return
+                except Exception:
+                    self._flatten_account()
+                    self._audit("kill", bundle_id=bundle_id, isolated=False)
+                    self._persist()
+                    return
             self._flatten_account()
-            self._audit("kill", bundle_id=bundle_id)
+            self._audit("kill", bundle_id=bundle_id, isolated=False)
             self._persist()
+
+    def _isolation_ready(self, bundle_id: str) -> bool:
+        contribution = self._snapshot.last_sleeve_contribution.get(bundle_id) or {}
+        combined = self._snapshot.last_combined
+        prices = self._snapshot.last_prices
+        if not contribution or not combined or not prices:
+            return False
+        try:
+            clock = self._broker.get_clock()
+        except Exception:
+            return False
+        if not clock.get("is_open"):
+            return False
+        symbols = (
+            set(_positions_map(self._broker.list_positions()))
+            | set(combined)
+            | set(contribution)
+        )
+        return all(symbol in prices for symbol in symbols)
+
+    def _isolate_sleeve(self, bundle_id: str) -> None:
+        contribution = dict(self._snapshot.last_sleeve_contribution.get(bundle_id) or {})
+        combined = dict(self._snapshot.last_combined)
+        prices = dict(self._snapshot.last_prices)
+        residual = residual_book(combined, contribution)
+        equity = self._equity()
+        positions = _positions_map(self._broker.list_positions())
+        policy = self._rebalance_policy()
+        self._broker.cancel_open_orders()
+        plans = plan_orders(residual, positions, prices, equity, policy)
+        for plan in plans:
+            self._broker.place_order(plan.symbol, plan.qty, plan.side)
+            self._audit(
+                "order",
+                symbol=plan.symbol,
+                qty=plan.qty,
+                side=plan.side,
+                reason="sleeve_kill",
+            )
+        self._snapshot.last_combined = dict(residual)
+        self._snapshot.last_sleeve_contribution.pop(bundle_id, None)
+        self._snapshot.last_sleeve_weights.pop(bundle_id, None)
 
     def kill_account(self) -> None:
         with self._lock:

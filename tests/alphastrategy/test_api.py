@@ -28,6 +28,8 @@ class FakeBroker:
     ) -> None:
         self.equity = equity
         self.positions: dict[str, float] = {}
+        self.close_all_count = 0
+        self.orders: list[tuple[str, float, str]] = []
         self._is_open = is_open
         self._now = datetime(2024, 1, 31, 14, 30)
         self._next_open = datetime(2024, 1, 31, 14, 30)
@@ -40,6 +42,9 @@ class FakeBroker:
         return [{"symbol": symbol, "qty": str(qty)} for symbol, qty in self.positions.items()]
 
     def place_order(self, symbol: str, qty: float, side: str) -> dict:
+        self.orders.append((symbol, qty, side))
+        delta = qty if side == "buy" else -qty
+        self.positions[symbol] = self.positions.get(symbol, 0.0) + delta
         return {"id": "order-1", "status": "filled"}
 
     def cancel_order(self, order_id: str) -> None:
@@ -49,6 +54,7 @@ class FakeBroker:
         return None
 
     def close_all(self) -> None:
+        self.close_all_count += 1
         self.positions = {}
 
     def get_clock(self) -> dict:
@@ -450,3 +456,24 @@ def test_bundles_lists_stopped(api_stack):
     body = client.get("/api/bundles").json()
     assert "asb_x" in body["stopped"]
     assert "asb_x" not in body["paper"]
+
+
+def test_api_kill_sleeve_isolates(api_stack):
+    client, _home, supervisor, broker = api_stack
+    supervisor.start_sleeve("asb_x", 0.15)
+    supervisor.start_sleeve("asb_y", 0.15)
+    broker._is_open = True
+    broker._now = datetime(2024, 1, 31, 14, 33)
+    supervisor.tick()
+    assert broker.positions.get("AAPL", 0) > 0
+    assert broker.positions.get("MSFT", 0) > 0
+    close_all_before = broker.close_all_count
+    response = client.post("/api/paper/kill", json={"bundle_id": "asb_x"})
+    assert response.status == 200
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+    bundles = client.get("/api/bundles").json()
+    assert "asb_x" in bundles["stopped"]
+    assert bundles["paper"]["asb_y"] == 0.15
+    assert broker.positions.get("AAPL", 0.0) == 0.0
+    assert broker.positions.get("MSFT", 0.0) > 0
