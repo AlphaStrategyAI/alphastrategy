@@ -48,10 +48,13 @@ SECTIONS: list[dict[str, str]] = [
         "body": (
             "Five screens: Portfolio, Strategies, Run, Activity, Risk. "
             "Wanted is the last combined target weight; Got is the current "
-            "position weight. A red FLAT banner means the paper account was "
-            "flattened. Activity kill rows say isolated residual or flattened "
-            "account. status includes last_kill even when the control plane is down. "
-            "Help is this aside, not a sixth screen."
+            "position weight. An empty desk says Start this paper desk and "
+            "tells you to import, then start paper. Portfolio Book is wanted "
+            "versus got. Gross utilization is against the account cap. Risk "
+            "lists each sleeve allocation as text. A red FLAT banner means "
+            "the paper account was flattened. Activity kill rows say isolated "
+            "residual or flattened account. status includes last_kill even "
+            "when the control plane is down. Help is this aside, not a sixth screen."
         ),
     },
     {

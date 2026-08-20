@@ -268,6 +268,7 @@ def test_e2e_isolated_sleeve_kill(tmp_path: Path) -> None:
         html = conn.getresponse().read().decode("utf-8")
         assert 'id="desk-banners"' in html
         assert 'id="kill-outcome-banner"' in html
+        assert 'id="first-run"' in html
         conn.request("GET", "/api/bundles")
         bundles = json.loads(conn.getresponse().read().decode("utf-8"))
         assert "asb_a" in bundles["stopped"]

@@ -19,6 +19,7 @@ REQUIRED_PHRASES = (
     "FLATTEN",
     "--force",
     "isolated residual",
+    "Start this paper desk",
     "Wanted",
     "Got",
 )
