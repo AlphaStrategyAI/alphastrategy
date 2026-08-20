@@ -44,52 +44,65 @@
       <button type="button" class="action" data-go-screen="run">Open Run</button>
     </div>
     <section id="screen-portfolio" class="screen active" aria-label="Portfolio">
-      <div class="metrics nums">
-        <div class="metric">
-          <div class="metric-label">Equity</div>
-          <div id="metric-equity" class="metric-value">—</div>
+      <div id="glance-book" class="glance-band">
+        <h2 class="glance-heading">Book</h2>
+        <div class="metrics metrics-3 nums">
+          <div class="metric hero">
+            <div class="metric-label">Equity</div>
+            <div id="metric-equity" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Cash</div>
+            <div id="metric-cash" class="metric-value">—</div>
+            <div id="metric-cash-sub" class="metric-sub">—</div>
+            <div id="metric-cash-bar" class="cash-track hidden" aria-hidden="true"></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Day PnL</div>
+            <div id="metric-pnl" class="metric-value">—</div>
+          </div>
         </div>
-        <div class="metric">
-          <div class="metric-label">Cash</div>
-          <div id="metric-cash" class="metric-value">—</div>
-          <div id="metric-cash-sub" class="metric-sub">—</div>
-          <div id="metric-cash-bar" class="cash-track hidden" aria-hidden="true"></div>
+      </div>
+      <div id="glance-risk" class="glance-band">
+        <h2 class="glance-heading">Flatten budgets</h2>
+        <div class="metrics metrics-3 nums">
+          <div class="metric">
+            <div class="metric-label">Gross</div>
+            <div id="metric-gross" class="metric-value">—</div>
+            <div id="metric-gross-bar" class="util-track hidden" aria-hidden="true"></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Names</div>
+            <div id="metric-names" class="metric-value">—</div>
+            <div id="metric-names-cap" class="metric-sub">—</div>
+            <div id="metric-names-bar" class="util-track hidden" aria-hidden="true"></div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Orders today</div>
+            <div id="metric-orders" class="metric-value">—</div>
+            <div id="metric-orders-cap" class="metric-sub">—</div>
+            <div id="metric-orders-bar" class="util-track hidden" aria-hidden="true"></div>
+          </div>
         </div>
-        <div class="metric">
-          <div class="metric-label">Day PnL</div>
-          <div id="metric-pnl" class="metric-value">—</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Gross</div>
-          <div id="metric-gross" class="metric-value">—</div>
-          <div id="metric-gross-bar" class="util-track hidden" aria-hidden="true"></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Names</div>
-          <div id="metric-names" class="metric-value">—</div>
-          <div id="metric-names-cap" class="metric-sub">—</div>
-          <div id="metric-names-bar" class="util-track hidden" aria-hidden="true"></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Orders today</div>
-          <div id="metric-orders" class="metric-value">—</div>
-          <div id="metric-orders-cap" class="metric-sub">—</div>
-          <div id="metric-orders-bar" class="util-track hidden" aria-hidden="true"></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Session</div>
-          <div id="metric-session" class="metric-value">—</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Next rebalance</div>
-          <div id="metric-countdown" class="metric-value">—</div>
-          <div id="metric-countdown-kind" class="metric-sub">—</div>
+      </div>
+      <div id="glance-clock" class="glance-band">
+        <h2 class="glance-heading">Clock</h2>
+        <div class="metrics metrics-2 nums">
+          <div class="metric">
+            <div class="metric-label">Session</div>
+            <div id="metric-session" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Next rebalance</div>
+            <div id="metric-countdown" class="metric-value">—</div>
+            <div id="metric-countdown-kind" class="metric-sub">—</div>
+          </div>
         </div>
       </div>
 
       <p id="clock-line" class="clock-line nums"></p>
 
-      <div class="grid" style="margin-top: 0.75rem;">
+      <div class="grid book-grid stack">
         <div class="panel">
           <h2>Positions</h2>
           <table id="positions-table">
@@ -128,7 +141,7 @@
         </div>
         <div id="import-ok" class="ok-box hidden" role="status"></div>
       </div>
-      <div class="panel" style="margin-top: 0.75rem;">
+      <div class="panel stack">
         <h2>Imported strategies</h2>
         <table id="strategies-table">
           <thead>
@@ -167,7 +180,7 @@
 
       <div id="run-sleeves"></div>
 
-      <div class="panel" style="margin-top: 0.75rem;">
+      <div class="panel stack">
         <h2>Account</h2>
         <label class="confirm-row">
           <input type="checkbox" id="account-kill-confirm">
@@ -201,7 +214,7 @@
         <form id="risk-account-form" class="inline"></form>
         <div id="risk-error" class="error-box hidden"></div>
       </div>
-      <div class="panel" style="margin-top: 0.75rem;">
+      <div class="panel stack">
         <h2>Sleeve overlays</h2>
         <div id="risk-sleeves"></div>
       </div>

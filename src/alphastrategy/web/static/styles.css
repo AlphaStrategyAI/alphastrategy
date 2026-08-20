@@ -200,10 +200,50 @@ main {
   gap: 0.75rem;
 }
 
+.glance-heading {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ba3b4;
+  margin: 0 0 0.4rem;
+}
+
+.glance-band + .glance-band {
+  margin-top: 0.85rem;
+}
+
 .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 0.5rem;
+}
+
+.metrics-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metrics-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 639px) {
+  .metrics-3,
+  .metrics-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric.hero .metric-value {
+  font-size: 1.85rem;
+}
+
+.stack {
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 800px) {
+  .book-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .metric {
