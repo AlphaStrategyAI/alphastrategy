@@ -1213,6 +1213,69 @@ def test_start_sleeve_without_overlay_does_not_flatten_live_book_inside_name_cap
     assert broker.close_all_count == 0
 
 
+def test_spoken_policy_reads_runtime_once_while_unchanged(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    home = AlphaStrategyHome(root=tmp_path)
+    (home.bundle_dir("asb_test") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+        encoding="utf-8",
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    reads = {"n": 0}
+    inner = supervisor._read_runtime
+
+    def counted() -> dict:
+        reads["n"] += 1
+        return inner()
+
+    supervisor._read_runtime = counted  # type: ignore[method-assign]
+    first = supervisor.spoken_policy()
+    second = supervisor.spoken_policy()
+    assert first.max_name_weight == pytest.approx(0.05)
+    assert second.max_name_weight == pytest.approx(0.05)
+    assert reads["n"] == 1
+
+
+def test_spoken_policy_sees_runtime_yaml_write(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    home = AlphaStrategyHome(root=tmp_path)
+    (home.bundle_dir("asb_test") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.10}}}),
+        encoding="utf-8",
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.10)
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+        encoding="utf-8",
+    )
+    assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.05)
+
+
+def test_spoken_policy_idle_overlay_unpublished_after_stop(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    home = AlphaStrategyHome(root=tmp_path)
+    (home.bundle_dir("asb_test") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+        encoding="utf-8",
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.05)
+    supervisor.stop_sleeve("asb_test")
+    assert supervisor.spoken_policy().max_name_weight == pytest.approx(
+        AccountPolicy.defaults().max_name_weight
+    )
+
+
 def _open_then_idle(
     tmp_path: Path,
     *,

@@ -92,6 +92,7 @@ REQUIRED_PHRASES = (
     "Start paper that flattens names the breached cap",
     "Caps names the cap the live book is through",
     "status names LIMIT while the live book is through the spoken cap",
+    "Spoken policy is reused until overlays or allocations change",
 )
 
 
