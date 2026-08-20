@@ -528,3 +528,6 @@ def test_cockpit_js_assembled_from_parts() -> None:
     assert "function setRunError" in blob
     assert "function renderPortfolio" in blob
     assert "window.confirm" not in blob
+    assert "window.state" not in blob
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert '<script src="app.js"></script>' in html
