@@ -697,3 +697,66 @@ def test_daily_order_budget_flattens_without_overflow_batch(tmp_path: Path):
     assert broker.close_all_called is True
     assert supervisor.state == SupervisorState.STOPPED
     assert broker.orders == []
+
+
+def test_kill_sleeve_returns_isolated_outcome(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    evaluators = {"asb_a": {"AAPL": 1.0}, "asb_b": {"MSFT": 1.0}}
+    supervisor = _make_supervisor(tmp_path, broker, evaluators=evaluators)
+    supervisor.start_sleeve("asb_a", 0.15)
+    supervisor.start_sleeve("asb_b", 0.15)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    outcome = supervisor.kill_sleeve("asb_a")
+    assert outcome.isolated is True
+    assert outcome.flattened is False
+    assert outcome.scope == "sleeve"
+    assert outcome.reason == "isolated"
+    assert outcome.bundle_id == "asb_a"
+    assert supervisor.snapshot.last_kill["isolated"] is True
+    assert supervisor.snapshot.last_kill["reason"] == "isolated"
+
+
+def test_kill_sleeve_returns_fallback_outcome_when_not_ready(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.positions["AAPL"] = 10.0
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    outcome = supervisor.kill_sleeve("asb_test")
+    assert outcome.isolated is False
+    assert outcome.flattened is True
+    assert outcome.scope == "account"
+    assert outcome.reason == "fallback_not_ready"
+    assert supervisor.snapshot.last_kill["flattened"] is True
+
+
+def test_kill_sleeve_unknown_bundle_does_not_flatten(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    supervisor = _make_supervisor(tmp_path, broker)
+    outcome = supervisor.kill_sleeve("missing")
+    assert outcome.scope == "none"
+    assert outcome.reason == "unknown_sleeve"
+    assert outcome.flattened is False
+    assert broker.close_all_count == 0
+    assert supervisor.snapshot.last_kill["reason"] == "unknown_sleeve"
+
+
+def test_kill_account_returns_account_outcome(tmp_path: Path):
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    outcome = supervisor.kill_account()
+    assert outcome.isolated is False
+    assert outcome.flattened is True
+    assert outcome.scope == "account"
+    assert outcome.reason == "account"
+    assert outcome.bundle_id is None

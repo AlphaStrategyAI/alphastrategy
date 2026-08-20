@@ -19,6 +19,7 @@ from alphastrategy.supervisor.combine import combine
 from alphastrategy.supervisor.orders import deviations_after, plan_orders
 from alphastrategy.supervisor.residual import residual_book
 from alphastrategy.supervisor.state import (
+    KillOutcome,
     SupervisorSnapshot,
     SupervisorState,
     load_state,
@@ -143,6 +144,11 @@ class Supervisor:
     def _audit(self, event: str, **payload: Any) -> None:
         audit.append(self._home.audit_path(), {"event": event, **payload})
 
+    def _record_kill(self, outcome: KillOutcome) -> KillOutcome:
+        self._snapshot.last_kill = outcome.to_dict()
+        self._persist()
+        return outcome
+
     def start_sleeve(self, bundle_id: str, allocation: float) -> None:
         with self._lock:
             if not self._home.bundle_dir(bundle_id).is_dir():
@@ -174,10 +180,18 @@ class Supervisor:
             self._audit("paper_stop", bundle_id=bundle_id)
             self._persist()
 
-    def kill_sleeve(self, bundle_id: str) -> None:
+    def kill_sleeve(self, bundle_id: str) -> KillOutcome:
         with self._lock:
             if bundle_id not in self._snapshot.sleeves:
-                return
+                return self._record_kill(
+                    KillOutcome(
+                        isolated=False,
+                        flattened=False,
+                        scope="none",
+                        reason="unknown_sleeve",
+                        bundle_id=bundle_id,
+                    )
+                )
             self._snapshot.sleeves[bundle_id] = 0.0
             if bundle_id not in self._snapshot.stopped:
                 self._snapshot.stopped.append(bundle_id)
@@ -185,16 +199,38 @@ class Supervisor:
                 try:
                     self._isolate_sleeve(bundle_id)
                     self._audit("kill", bundle_id=bundle_id, isolated=True)
-                    self._persist()
-                    return
+                    return self._record_kill(
+                        KillOutcome(
+                            isolated=True,
+                            flattened=False,
+                            scope="sleeve",
+                            reason="isolated",
+                            bundle_id=bundle_id,
+                        )
+                    )
                 except Exception:
                     self._flatten_account()
                     self._audit("kill", bundle_id=bundle_id, isolated=False)
-                    self._persist()
-                    return
+                    return self._record_kill(
+                        KillOutcome(
+                            isolated=False,
+                            flattened=True,
+                            scope="account",
+                            reason="fallback_error",
+                            bundle_id=bundle_id,
+                        )
+                    )
             self._flatten_account()
             self._audit("kill", bundle_id=bundle_id, isolated=False)
-            self._persist()
+            return self._record_kill(
+                KillOutcome(
+                    isolated=False,
+                    flattened=True,
+                    scope="account",
+                    reason="fallback_not_ready",
+                    bundle_id=bundle_id,
+                )
+            )
 
     def _isolation_ready(self, bundle_id: str) -> bool:
         contribution = self._snapshot.last_sleeve_contribution.get(bundle_id) or {}
@@ -255,11 +291,19 @@ class Supervisor:
         self._snapshot.last_sleeve_contribution.pop(bundle_id, None)
         self._snapshot.last_sleeve_weights.pop(bundle_id, None)
 
-    def kill_account(self) -> None:
+    def kill_account(self) -> KillOutcome:
         with self._lock:
             self._flatten_account()
             self._audit("kill", scope="account")
-            self._persist()
+            return self._record_kill(
+                KillOutcome(
+                    isolated=False,
+                    flattened=True,
+                    scope="account",
+                    reason="account",
+                    bundle_id=None,
+                )
+            )
 
     def resume(self) -> None:
         with self._lock:

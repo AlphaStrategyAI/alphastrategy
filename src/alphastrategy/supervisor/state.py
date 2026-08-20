@@ -17,6 +17,38 @@ class SupervisorState(str, Enum):
     STOPPED = "stopped"
 
 
+@dataclass(frozen=True)
+class KillOutcome:
+    isolated: bool
+    flattened: bool
+    scope: str
+    reason: str
+    bundle_id: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "isolated": self.isolated,
+            "flattened": self.flattened,
+            "scope": self.scope,
+            "reason": self.reason,
+            "bundle_id": self.bundle_id,
+        }
+
+
+def _kill_from_payload(raw: Any) -> dict[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    return {
+        "isolated": bool(raw.get("isolated")),
+        "flattened": bool(raw.get("flattened")),
+        "scope": str(raw.get("scope") or "none"),
+        "reason": str(raw.get("reason") or ""),
+        "bundle_id": (
+            None if raw.get("bundle_id") in (None, "") else str(raw.get("bundle_id"))
+        ),
+    }
+
+
 @dataclass
 class SupervisorSnapshot:
     state: SupervisorState = SupervisorState.STARTING
@@ -32,6 +64,7 @@ class SupervisorSnapshot:
     orders_date: str | None = None
     orders_today: int = 0
     last_got: dict[str, float] = field(default_factory=dict)
+    last_kill: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -76,6 +109,7 @@ class SupervisorSnapshot:
                 str(asset): float(weight)
                 for asset, weight in (payload.get("last_got") or {}).items()
             },
+            last_kill=_kill_from_payload(payload.get("last_kill")),
         )
 
 
