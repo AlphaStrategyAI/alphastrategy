@@ -204,6 +204,8 @@
       flattenEl.classList.add("hidden");
     }
 
+    renderLiveLimitBanner(flattened);
+
     if (state.deviationActive) {
       devEl.classList.remove("hidden");
       devEl.textContent = "DEVIATION: execution drift exceeds tolerance";
@@ -275,10 +277,7 @@
       }
       posBody.innerHTML = `<tr><td colspan='7' class='muted'>${empty}</td></tr>`;
     } else {
-      const cap =
-        Number(spokenPolicy().max_name_weight) ||
-        Number(utilization().max_name_weight) ||
-        0.2;
+      const cap = spokenNameCap();
       for (const pos of positions) {
         const tr = document.createElement("tr");
         const notional = pos.notional == null ? "—" : fmtNum(pos.notional, 2);
@@ -340,10 +339,7 @@
     const gotEl = document.getElementById("pos-count-got");
     const capEl = document.getElementById("pos-count-cap");
     const rows = positions || [];
-    const cap =
-      Number(spokenPolicy().max_name_weight) ||
-      Number(utilization().max_name_weight) ||
-      0.2;
+    const cap = spokenNameCap();
     let wantedN = 0;
     let gotN = 0;
     let atCap = 0;
@@ -352,7 +348,7 @@
         wantedN += 1;
       }
       if (Number(pos.qty) !== 0) gotN += 1;
-      if (cap > 0 && Number(pos.weight) >= cap) atCap += 1;
+      if (Number.isFinite(cap) && Math.abs(Number(pos.weight) || 0) > cap) atCap += 1;
     }
     if (rowsEl) rowsEl.textContent = String(rows.length);
     if (wantedEl) wantedEl.textContent = String(wantedN);

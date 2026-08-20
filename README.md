@@ -199,6 +199,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   flatten, not a partial batch. The flatten banner names the breached cap.
   Tighten that breaches the live book flattens now.
   A sleeve overlay that breaches the live book flattens now.
+  A live book through the spoken cap warns before the next rebalance flattens.
 - Same runbook: `alphastrategy help`, `GET /api/help`, cockpit Help.
 
 ---

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from alphastrategy.errors import FlattenRequested
+from alphastrategy.risk.check import check_book
 from alphastrategy.risk.policy import AccountPolicy
 
 _EPS = 1e-12
@@ -46,6 +48,13 @@ def summarize(
     if last_combined:
         target_cash_weight = max(0.0, 1.0 - sum(float(v) for v in last_combined.values()))
 
+    live_limit = None
+    if last_got:
+        try:
+            check_book(dict(last_got), 0.0, policy)
+        except FlattenRequested as exc:
+            live_limit = {"reason": str(exc.reason or "limit")}
+
     return {
         "names": int(names),
         "max_names": int(policy.max_names),
@@ -56,6 +65,7 @@ def summarize(
         "target_cash_weight": target_cash_weight,
         "max_gross": float(policy.max_gross),
         "max_name_weight": float(policy.max_name_weight),
+        "live_limit": live_limit,
     }
 
 

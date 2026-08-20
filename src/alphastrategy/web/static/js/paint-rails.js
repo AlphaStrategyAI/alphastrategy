@@ -1,7 +1,13 @@
+  function finiteNumber(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
   function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);
-    const scale = Math.max(Number(cap) || 0.2, w, g, 0.01);
+    const capN = finiteNumber(cap, 0.2);
+    const scale = Math.max(capN, w, g, 0.01);
     const wPct = Math.min(100, (w / scale) * 100);
     const gPct = Math.min(100, (g / scale) * 100);
     const fillW =
@@ -17,16 +23,28 @@
 
   function paintUtilTrack(bar, used, cap, label) {
     if (!bar) return;
+    const usedN = Number(used) || 0;
     const limit = Number(cap);
-    const safeLimit = limit > 0 ? limit : 0;
-    const ratio = safeLimit ? Number(used || 0) / safeLimit : 0;
-    const pct = Math.min(100, Math.max(0, ratio * 100));
     bar.classList.remove("hidden", "warn", "fail");
-    if (safeLimit && ratio >= 1) bar.classList.add("fail");
-    else if (safeLimit && ratio >= 0.9) bar.classList.add("warn");
+    bar.removeAttribute("aria-hidden");
+    if (!Number.isFinite(limit)) {
+      bar.classList.add("hidden");
+      bar.setAttribute("aria-hidden", "true");
+      bar.innerHTML = "";
+      return;
+    }
+    let pct;
+    if (limit === 0) {
+      if (usedN > 0) bar.classList.add("fail");
+      pct = usedN > 0 ? 100 : 0;
+    } else {
+      const ratio = usedN / limit;
+      pct = Math.min(100, Math.max(0, ratio * 100));
+      if (ratio >= 1) bar.classList.add("fail");
+      else if (ratio >= 0.9) bar.classList.add("warn");
+    }
     bar.innerHTML = `<span class="util-fill" style="width:${pct}%"></span>`;
     bar.setAttribute("aria-label", label);
-    bar.removeAttribute("aria-hidden");
   }
 
   function utilization() {
@@ -45,12 +63,39 @@
     );
   }
 
+  function spokenNameCap() {
+    const spoken = spokenPolicy();
+    const util = utilization();
+    if (Number.isFinite(Number(spoken.max_name_weight))) {
+      return Number(spoken.max_name_weight);
+    }
+    if (Number.isFinite(Number(util.max_name_weight))) {
+      return Number(util.max_name_weight);
+    }
+    return 0.2;
+  }
+
+  function renderLiveLimitBanner(flattened) {
+    const el = document.getElementById("live-limit-banner");
+    if (!el) return;
+    const limit = utilization().live_limit;
+    if (flattened || !limit || !limit.reason) {
+      el.classList.add("hidden");
+      el.textContent = "";
+      return;
+    }
+    el.classList.remove("hidden");
+    el.textContent =
+      "LIMIT: live book through " +
+      policyLabel(limit.reason) +
+      " — next rebalance will flatten";
+  }
+
   function renderGrossUtilization(gross) {
     const bar = document.getElementById("metric-gross-bar");
     const util = utilization();
     const spoken = spokenPolicy();
-    const cap = Number(util.max_gross) || Number(spoken.max_gross);
-    const limit = cap > 0 ? cap : 1;
+    const limit = finiteNumber(util.max_gross, finiteNumber(spoken.max_gross, 1));
     paintUtilTrack(bar, gross, limit, `gross ${fmtPct(gross)} of cap ${fmtPct(limit)}`);
   }
 
@@ -128,7 +173,7 @@
       if (valueEl) {
         valueEl.textContent = used == null || used === undefined ? "—" : String(used);
         const atCap =
-          !missing && Number(cap) > 0 && Number(used) >= Number(cap);
+          !missing && Number.isFinite(Number(cap)) && Number(used) > Number(cap);
         valueEl.classList.toggle("fail", atCap);
       }
       if (capEl) {
@@ -141,7 +186,7 @@
         bar.setAttribute("aria-hidden", "true");
         return;
       }
-      paintUtilTrack(bar, Number(used) || 0, Number(cap) || 0, `${label} ${used} of ${cap}`);
+      paintUtilTrack(bar, Number(used) || 0, Number(cap), `${label} ${used} of ${cap}`);
     }
     fillUsedCap(
       "risk-head-names",
@@ -203,12 +248,18 @@
 
   function nameCapBar(got, cap) {
     const g = Math.max(0, Number(got) || 0);
-    const limit = Number(cap) > 0 ? Number(cap) : 0.2;
-    const ratio = g / limit;
-    const pct = Math.min(100, Math.max(0, ratio * 100));
+    const limit = finiteNumber(cap, 0.2);
     let cls = "util-track";
-    if (ratio >= 1) cls += " fail";
-    else if (ratio >= 0.9) cls += " warn";
+    let pct;
+    if (limit === 0) {
+      if (g > 0) cls += " fail";
+      pct = g > 0 ? 100 : 0;
+    } else {
+      const ratio = g / limit;
+      pct = Math.min(100, Math.max(0, ratio * 100));
+      if (ratio >= 1) cls += " fail";
+      else if (ratio >= 0.9) cls += " warn";
+    }
     return (
       `<div class="wg-cell"><div class="${cls}" aria-label="name ${fmtPct(g)} of cap ${fmtPct(limit)}">` +
       `<span class="util-fill" style="width:${pct}%"></span></div></div>`
