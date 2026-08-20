@@ -310,6 +310,21 @@ def test_js_activity_flatten_interrupted(js_text: str) -> None:
     assert "interrupted flattening" in flatten_branch
 
 
+def test_js_flatten_banner_names_limit_breach(js_text: str) -> None:
+    block = js_text.split("function renderBanners")[1].split("function renderPortfolio")[0]
+    assert "FLAT: limit breach — paper account flattened" in block
+    assert 'killReason === "limit"' in block
+    assert block.count("const reason") == 1
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_js_activity_flatten_limit_breach(js_text: str) -> None:
+    flatten_branch = js_text.split('case "flatten":')[1].split("default:")[0]
+    assert 'ev.reason === "limit"' in flatten_branch
+    assert "limit breach" in flatten_branch
+
+
 def test_html_session_and_cap_mounts(html_text: str) -> None:
     assert 'id="metric-session"' in html_text
     assert 'id="metric-countdown"' in html_text
