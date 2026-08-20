@@ -57,6 +57,7 @@ REQUIRED_PHRASES = (
     "interrupted flattening",
     "interrupted sleeve isolate",
     "After halt shows the halt reason",
+    "flatten banner names interrupted flattening",
 )
 
 

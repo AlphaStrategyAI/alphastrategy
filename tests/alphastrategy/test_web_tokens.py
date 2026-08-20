@@ -295,6 +295,21 @@ def test_js_render_banners_declares_reason_once(js_text: str) -> None:
     assert "killReason" in block
 
 
+def test_js_flatten_banner_names_interrupted_flattening(js_text: str) -> None:
+    block = js_text.split("function renderBanners")[1].split("function renderPortfolio")[0]
+    assert "FLAT: paper account flattened" in block
+    assert "flatten_interrupted" in block
+    assert "FLAT: interrupted flattening — paper account flattened" in block
+    assert block.count("const reason") == 1
+    assert "window.confirm" not in js_text
+
+
+def test_js_activity_flatten_interrupted(js_text: str) -> None:
+    flatten_branch = js_text.split('case "flatten":')[1].split("default:")[0]
+    assert "flatten_interrupted" in flatten_branch
+    assert "interrupted flattening" in flatten_branch
+
+
 def test_html_session_and_cap_mounts(html_text: str) -> None:
     assert 'id="metric-session"' in html_text
     assert 'id="metric-countdown"' in html_text

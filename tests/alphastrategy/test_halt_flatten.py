@@ -1000,6 +1000,9 @@ def test_restart_during_flattening_finishes_flatten(tmp_path: Path):
         for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
     ]
     assert any(event["event"] == "flatten" for event in events)
+    assert restarted.snapshot.last_kill["reason"] == "flatten_interrupted"
+    flattens = [event for event in events if event["event"] == "flatten"]
+    assert flattens[-1]["reason"] == "flatten_interrupted"
 
 
 def test_kill_account_host_crash_then_restart_finishes_flatten(tmp_path: Path):
