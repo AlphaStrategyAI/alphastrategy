@@ -56,6 +56,7 @@ SECTIONS: list[dict[str, str]] = [
             "paper account. The flatten banner names the breached cap in desk "
             "words (Gross cap, Name cap, Names, Orders today). "
             "Tighten that breaches the live book flattens now. "
+            "A sleeve overlay that breaches the live book flattens now. "
             "Activity flatten rows say limit breach or that cap plus breach. "
             "If the host dies during a sleeve isolate, the desk treats that as "
             "interrupted sleeve isolate: it flattens the whole paper account "
@@ -196,6 +197,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Each sleeve card names imported, paper, halted, or stopped. Allocation is a rail. "
             "Start paper is a second explicit action. "
             "Start paper while halted waits for resume. Resume does not catch up. "
+            "A sleeve overlay that breaches the live book flattens now. "
             "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
             "Resume lives under After halt and does not catch up. "
@@ -241,7 +243,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Account totals stay sticky. "
             "Tighten groups Gross / Names / Orders / Deltas. Tighten only; "
             "the form refuses looser values and still posts the policy keys. "
-            "Tighten that breaches the live book flattens now."
+            "Tighten that breaches the live book flattens now. "
+            "A sleeve overlay that breaches the live book flattens now."
         ),
     },
 ]
@@ -295,7 +298,8 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "3. Under Start paper pick the bundle, set allocation, check Confirm paper start, then Start paper. "
             "This is the second explicit action. "
             "Start paper after flatten starts the session loop again and does not catch up. "
-            "Start paper while halted waits for resume. Resume does not catch up."
+            "Start paper while halted waits for resume. Resume does not catch up. "
+            "A sleeve overlay that breaches the live book flattens now."
         ),
     },
     {
@@ -317,7 +321,8 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "2. Caps and Headroom stay sticky. "
             "3. Under Tighten change only Gross / Names / Orders / Deltas fields you mean to tighten, then Tighten. "
             "Looser values are refused; PUT keys stay machine names. "
-            "Tighten that breaches the live book flattens now."
+            "Tighten that breaches the live book flattens now. "
+            "A sleeve overlay that breaches the live book flattens now."
         ),
     },
     {
