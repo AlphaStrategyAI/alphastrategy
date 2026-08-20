@@ -234,9 +234,33 @@
     </section>
 
     <section id="screen-activity" class="screen" aria-label="Activity">
-      <div class="panel">
-        <h2>Audit events</h2>
+      <div id="act-beat" class="glance-band">
+        <h2 class="glance-heading">Beat</h2>
         <p id="activity-heartbeat" class="muted"></p>
+      </div>
+      <div id="act-tape" class="glance-band">
+        <h2 class="glance-heading">Tape</h2>
+        <div class="metrics metrics-4 nums">
+          <div class="metric hero">
+            <div class="metric-label">Rebalances</div>
+            <div id="act-count-rebalance" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Halts</div>
+            <div id="act-count-halt" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Deviations</div>
+            <div id="act-count-deviation" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Kills</div>
+            <div id="act-count-kill" class="metric-value">—</div>
+          </div>
+        </div>
+      </div>
+      <div id="act-blotter" class="glance-band">
+        <h2 class="glance-heading">Blotter</h2>
         <ul id="activity-list" class="activity-list nums"></ul>
       </div>
     </section>

@@ -46,6 +46,23 @@
       const ageText = age == null || age === undefined ? "—" : age + "s ago";
       beatLine.textContent = `Beat ${pulseLabel(pulse)} · ${ageText} · ${st}`;
     }
+    const counts = { rebalance: 0, halt: 0, deviation: 0, kill: 0 };
+    for (const ev of events) {
+      if (ev.event === "rebalance") counts.rebalance += 1;
+      else if (ev.event === "halt") counts.halt += 1;
+      else if (ev.event === "execution_deviation") counts.deviation += 1;
+      else if (ev.event === "kill" || ev.event === "flatten") counts.kill += 1;
+    }
+    const setTape = (elId, value, onClass) => {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.textContent = String(value);
+      if (onClass) el.classList.toggle(onClass, value > 0);
+    };
+    setTape("act-count-rebalance", counts.rebalance, "status-running");
+    setTape("act-count-halt", counts.halt, "status-halt");
+    setTape("act-count-deviation", counts.deviation, "status-fail");
+    setTape("act-count-kill", counts.kill, "status-fail");
     if (!events.length) {
       const copy =
         pulse === "dead" || pulse === "missing"

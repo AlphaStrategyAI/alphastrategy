@@ -71,7 +71,8 @@ SECTIONS: list[dict[str, str]] = [
             "the paper account was flattened. Activity kill rows say isolated "
             "residual or flattened account. status includes last_kill even "
             "when the control plane is down. Activity empty copy names the two "
-            "legal rebalances. Header LIVE is the Supervisor beat, not Session. "
+            "legal rebalances. Activity is three bands Beat / Tape / Blotter. "
+            "Header LIVE is the Supervisor beat, not Session. "
             "Alt+1 through Alt+5 switch screens. "
             "F1 is how-to for the current screen. The six runbook sections "
             "match alphastrategy help. "
@@ -145,9 +146,11 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "screen": "activity",
         "title": "On Activity",
         "body": (
+            "Three bands: Beat / Tape / Blotter. Rebalances is the hero count. "
+            "Halt, deviation, and kill tiles are not quiet when above zero. "
             "Time-ordered audit. Empty copy names the two legal rebalances. "
             "Kill rows say isolated residual or flattened account. "
-            "Expand a row for the payload."
+            "Expand a blotter row for the payload."
         ),
     },
     {
