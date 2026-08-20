@@ -33,7 +33,7 @@
     const clock = state.status && state.status.clock;
     const countdown = state.status && state.status.countdown;
     applySessionChip(sessionEl);
-    if (countEl) countEl.classList.remove("warn");
+    if (countEl) countEl.classList.remove("warn", "fail");
     function dashNowLast() {
       if (nowEl) nowEl.textContent = "—";
       if (nowSub) nowSub.textContent = "—";
@@ -55,9 +55,16 @@
       const halted =
         (state.status && state.status.state) === "halted" ||
         Boolean(state.status && state.status.halted);
+      const flattened =
+        Boolean(state.status && state.status.flattened) ||
+        (state.status &&
+          (state.status.state === "stopped" || state.status.state === "flattening"));
       if (halted) {
         countEl.classList.add("warn");
         kindEl.textContent = "held · " + kind;
+      } else if (flattened) {
+        countEl.classList.add("fail");
+        kindEl.textContent = "flat · " + kind;
       } else {
         kindEl.textContent = kind;
       }

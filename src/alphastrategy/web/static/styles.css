@@ -814,6 +814,10 @@ button.action:focus-visible,
   color: #f59e0b;
 }
 
+#metric-countdown.fail {
+  color: #ef4444;
+}
+
 #metric-last-rebalance.warn {
   color: #f59e0b;
 }
