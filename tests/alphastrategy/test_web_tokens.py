@@ -1039,6 +1039,7 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert 'id="risk-cap-names"' in caps
     assert 'id="risk-cap-orders"' in caps
     assert 'id="risk-cap-long"' in caps
+    assert 'id="risk-cap-order"' in caps
     assert "metrics-4" in caps
     assert "hero" in caps
     assert ">Gross cap<" in caps
@@ -1218,9 +1219,11 @@ def test_js_paints_risk_caps_tiles(js_text: str) -> None:
     assert "risk-cap-names" in paint
     assert "risk-cap-orders" in paint
     assert "risk-cap-long" in paint
+    assert "risk-cap-order" in paint
     assert "max_gross" in paint
     assert "max_name_weight" in paint
     assert "max_orders_per_day" in paint
+    assert "max_order_notional_frac" in paint
     assert "fmtPct" in paint
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
@@ -1324,6 +1327,8 @@ def test_js_gross_and_name_rails_use_spoken_caps(js_text: str) -> None:
 def test_css_risk_cap_spoken_warn_token(css_text: str) -> None:
     name = re.search(r"#risk-cap-name\.warn\s*\{[^}]*\}", css_text)
     assert name is not None and "#f59e0b" in name.group(0).lower()
+    order = re.search(r"#risk-cap-order\.warn\s*\{[^}]*\}", css_text)
+    assert order is not None and "#f59e0b" in order.group(0).lower()
 
 
 def test_js_paints_risk_caps_live_limit(js_text: str) -> None:
@@ -1334,6 +1339,7 @@ def test_js_paints_risk_caps_live_limit(js_text: str) -> None:
     assert 'classList.add("fail")' in paint
     assert "max_name_weight" in paint
     assert "long_only" in paint
+    assert "max_order_notional_frac" in paint
     assert "warn" in paint
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
@@ -1347,6 +1353,7 @@ def test_css_risk_cap_live_limit_fail_token(css_text: str) -> None:
         "#risk-cap-names.fail",
         "#risk-cap-orders.fail",
         "#risk-cap-long.fail",
+        "#risk-cap-order.fail",
     ):
         block = re.search(re.escape(sel) + r"\s*\{[^}]*\}", css_text)
         assert block is not None and "#ef4444" in block.group(0).lower()

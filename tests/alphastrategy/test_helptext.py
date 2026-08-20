@@ -105,6 +105,7 @@ REQUIRED_PHRASES = (
     "Tighten and Start paper flatten the same live book as Book",
     "Tighten PUT reads runtime overlays from the Supervisor",
     "Caps LIMIT follows the same live book as Tighten",
+    "Caps LIMIT follows a next send through Order size",
     "Day PnL is equity minus last close",
     "status names Day PnL",
     "Positions Day is that name since last close",

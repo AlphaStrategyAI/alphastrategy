@@ -686,6 +686,23 @@ def test_status_live_limit_priced_book_wins_over_stale_last_got(api_stack):
     assert body["utilization"]["live_limit"]["reason"] == "max_name_weight"
 
 
+def test_status_live_limit_next_send_order_size(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.set_policy({"max_order_notional_frac": 0.10})
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.18}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    risk = client.get("/api/risk").json()
+    assert risk["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
 def test_put_risk_rejects_loosening(api_client: ApiClient):
     response = api_client.put("/api/risk", json={"account": {"max_name_weight": 0.25}})
     assert response.status == 400

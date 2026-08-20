@@ -170,6 +170,32 @@ def test_from_supervisor_live_limit_ignores_last_combined() -> None:
     assert out["live_limit"] is None
 
 
+def test_from_supervisor_live_limit_next_send_order_size() -> None:
+    from alphastrategy.risk.utilization import from_supervisor
+
+    class Snap:
+        orders_today = 0
+        last_combined = {"AAPL": 0.18}
+        last_got = {}
+        last_prices = {"AAPL": 100.0}
+
+    class Fake:
+        snapshot = Snap()
+
+        def spoken_policy(self):
+            return replace(AccountPolicy.defaults(), max_order_notional_frac=0.10)
+
+        def live_book(self):
+            return {"equity": 10_000.0, "cash": 10_000.0}, []
+
+        def live_cap_weights(self, equity, positions):
+            del equity, positions
+            return {}
+
+    out = from_supervisor(Fake(), live=True)
+    assert out["live_limit"]["reason"] == "max_order_notional_frac"
+
+
 def test_summarize_live_limit_from_marked_name() -> None:
     out = summarize(
         policy=AccountPolicy.defaults(),
