@@ -5,7 +5,8 @@ How to find the right document. Names follow [Diátaxis](https://diataxis.fr/) (
 ## Start here
 
 - Product contract (reference): [`docs/requirements/2026-08-19-alphastrategy-v1-requirements.md`](requirements/2026-08-19-alphastrategy-v1-requirements.md)
-- Operator how-to: [README](../README.md) and in-desk **Help** (`alphastrategy help`, `GET /api/help`)
+- Operator tutorial: in-desk **Help → Your first paper session** (`alphastrategy help`, `GET /api/help`)
+- Operator how-to: [README](../README.md) and in-desk **Help** jobs / screen maps
 - Runtime explanation: [`docs/explanation/architecture.md`](explanation/architecture.md)
 
 ## Reference (what must be true)

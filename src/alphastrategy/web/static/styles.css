@@ -636,6 +636,10 @@ button.action.account-kill {
   color: #9ba3b4;
 }
 
+#help-tutorial h3 {
+  color: #10b981;
+}
+
 #help-panel p {
   margin: 0;
   color: #e5e9f0;

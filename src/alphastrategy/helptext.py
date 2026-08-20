@@ -80,8 +80,8 @@ SECTIONS: list[dict[str, str]] = [
             "Expanding a blotter row shows Wanted versus Got, not a JSON dump. "
             "Header LIVE is the Supervisor beat, not Session. "
             "Alt+1 through Alt+5 switch screens. "
-            "F1 is how-to for the current screen. F1 shows the screen how-to "
-            "and the jobs for that screen. The six runbook sections "
+            "F1 opens Help. Help starts with Your first paper session, then "
+            "the screen how-to and the jobs for that screen. The six runbook sections "
             "match alphastrategy help. "
             "Quiet cockpit JS is assembled from js/ parts. The browser still "
             "loads /app.js. "
@@ -177,6 +177,29 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
 ]
 
 
+TUTORIALS: list[dict[str, str]] = [
+    {
+        "id": "tutorial_first_session",
+        "title": "Your first paper session",
+        "body": (
+            "This lesson walks one paper session. You will import a qualified .asb "
+            "and start a sleeve. You will not flatten. "
+            "1. Run alphastrategy start and open the Quiet cockpit. "
+            "You will see empty Portfolio: Start this paper desk, then Book / Flatten budgets / Clock. "
+            "2. Open Strategies (Alt+2). Under Import .asb upload the file. "
+            "You will see Inventory Imported count 1. You are not trading yet. "
+            "3. Open Run (Alt+3). Under Start paper pick the bundle, set a small allocation, "
+            "check Confirm paper start, then Start paper. "
+            "You will see the sleeve on Run. Portfolio Clock shows Session and Next rebalance. "
+            "4. Open Portfolio Positions. Empty rows until the next legal rebalance are expected. "
+            "Book Drift stays an em dash or 0 until then. "
+            "You finished the lesson when the sleeve is on Run and Clock shows Next rebalance. "
+            "Do not use Flatten account in this lesson."
+        ),
+    },
+]
+
+
 TASK_HOWTOS: list[dict[str, Any]] = [
     {
         "id": "task_import",
@@ -240,11 +263,16 @@ def help_payload() -> dict[str, Any]:
         "sections": [dict(section) for section in SECTIONS],
         "howtos": [dict(item) for item in SCREEN_HOWTOS],
         "tasks": [dict(item) for item in TASK_HOWTOS],
+        "tutorials": [dict(item) for item in TUTORIALS],
     }
 
 
 def help_text() -> str:
     lines = [HELP_TITLE, ""]
+    for item in TUTORIALS:
+        lines.append(item["title"])
+        lines.append(item["body"])
+        lines.append("")
     for item in TASK_HOWTOS:
         lines.append(item["title"])
         lines.append(item["body"])

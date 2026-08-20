@@ -235,6 +235,19 @@
     const howtoRoot = document.getElementById("help-howto");
     const body = document.getElementById("help-body");
     if (!howtoRoot || !body || !helpState.payload) return;
+    const tutorialRoot = document.getElementById("help-tutorial");
+    if (tutorialRoot) {
+      tutorialRoot.innerHTML = "";
+      const tutorials = helpState.payload.tutorials || [];
+      for (const item of tutorials) {
+        const th = document.createElement("h3");
+        th.textContent = item.title || "";
+        const tp = document.createElement("p");
+        tp.textContent = item.body || "";
+        tutorialRoot.appendChild(th);
+        tutorialRoot.appendChild(tp);
+      }
+    }
     const screen = activeScreen();
     const howtos = helpState.payload.howtos || [];
     const howto = howtos.find((item) => item.screen === screen) || howtos[0] || {};
