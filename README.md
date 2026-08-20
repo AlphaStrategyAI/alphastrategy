@@ -192,6 +192,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
 - Heartbeat every 20s does not place orders. Heartbeat refreshes last
   prices and does not flatten. Heartbeat seeds the live book glance.
   A heartbeat live book holds until flatten or place.
+  Tighten and Start paper flatten the same live book as Book.
   Sleeve envelopes load once until the file changes.
   Runtime overlays load once until the file changes.
   Book Equity names Beat or Glance.

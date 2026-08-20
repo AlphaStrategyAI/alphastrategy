@@ -27,6 +27,7 @@ SECTIONS: list[dict[str, str]] = [
             "Heartbeat refreshes last prices and does not flatten. "
             "Heartbeat seeds the live book glance. "
             "A heartbeat live book holds until flatten or place. "
+            "Tighten and Start paper flatten the same live book as Book. "
             "Runtime overlays load once until the file changes. "
             "At most two RTH rebalances fire: open plus 3 minutes, and 12 minutes before close. "
             "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash. "
@@ -60,6 +61,7 @@ SECTIONS: list[dict[str, str]] = [
             "paper account. The flatten banner names the breached cap in desk "
             "words (Gross cap, Name cap, Names, Orders today). "
             "Tighten that breaches the live book flattens now. "
+            "Tighten and Start paper flatten the same live book as Book. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap. "
             "A live book through the spoken cap warns before the next rebalance flattens. "
@@ -279,6 +281,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Tighten groups Gross / Names / Orders / Deltas. Tighten only; "
             "the form refuses looser values and still posts the policy keys. "
             "Tighten that breaches the live book flattens now. "
+            "Tighten and Start paper flatten the same live book as Book. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap."
         ),
@@ -335,7 +338,8 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "This is the second explicit action. "
             "Start paper after flatten starts the session loop again and does not catch up. "
             "Start paper while halted waits for resume. Resume does not catch up. "
-            "A sleeve overlay that breaches the live book flattens now."
+            "A sleeve overlay that breaches the live book flattens now. "
+            "Tighten and Start paper flatten the same live book as Book."
         ),
     },
     {
@@ -358,6 +362,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "3. Under Tighten change only Gross / Names / Orders / Deltas fields you mean to tighten, then Tighten. "
             "Looser values are refused; PUT keys stay machine names. "
             "Tighten that breaches the live book flattens now. "
+            "Tighten and Start paper flatten the same live book as Book. "
             "A sleeve overlay that breaches the live book flattens now."
         ),
     },

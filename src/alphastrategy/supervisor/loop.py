@@ -152,8 +152,22 @@ class Supervisor:
         with self._lock:
             self._enforce_live_book()
 
-    def _live_book_weights(self, equity: float) -> dict[str, float]:
-        positions = _positions_map(self._broker.list_positions())
+    def _live_book_unlocked(self) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        now = time.monotonic()
+        cached = self._live_book_cache
+        if cached is not None and (
+            cached[3] or (now - cached[0]) < self.LIVE_BOOK_TTL_SEC
+        ):
+            return cached[1], cached[2]
+        account = self._broker.get_account()
+        positions = self._broker.list_positions()
+        self._live_book_cache = (now, account, positions, False)
+        return account, positions
+
+    def _live_book_weights(
+        self, equity: float, raw_positions: list[dict[str, Any]]
+    ) -> dict[str, float]:
+        positions = _positions_map(raw_positions)
         prices = dict(self._snapshot.last_prices)
         if equity > 0 and prices:
             got = {
@@ -167,7 +181,11 @@ class Supervisor:
             return dict(self._snapshot.last_got)
         return dict(self._snapshot.last_combined)
 
-    def _enforce_live_book(self) -> None:
+    def _enforce_live_book(
+        self,
+        account: dict[str, Any] | None = None,
+        positions: list[dict[str, Any]] | None = None,
+    ) -> None:
         if self._broker is None:
             return
         if self._snapshot.state in (
@@ -176,8 +194,10 @@ class Supervisor:
         ):
             return
         try:
-            equity = self._equity()
-            weights = self._live_book_weights(equity)
+            if account is None or positions is None:
+                account, positions = self._live_book_unlocked()
+            equity = float(account.get("equity", 0))
+            weights = self._live_book_weights(equity, positions)
         except Exception as exc:
             self._halt(f"tighten live book: {exc}")
             return
@@ -678,16 +698,7 @@ class Supervisor:
 
     def live_book(self) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         with self._lock:
-            now = time.monotonic()
-            cached = self._live_book_cache
-            if cached is not None and (
-                cached[3] or (now - cached[0]) < self.LIVE_BOOK_TTL_SEC
-            ):
-                return cached[1], cached[2]
-            account = self._broker.get_account()
-            positions = self._broker.list_positions()
-            self._live_book_cache = (now, account, positions, False)
-            return account, positions
+            return self._live_book_unlocked()
 
     def live_book_source(self) -> str:
         with self._lock:
@@ -887,11 +898,13 @@ class Supervisor:
         self._snapshot.state = SupervisorState.REBALANCING
         sleeves = [(alloc, weights) for _bid, alloc, weights in collected]
         combined = combine(sleeves)
-        equity = self._equity()
+        account = self._broker.get_account()
+        equity = float(account.get("equity", 0))
         rebalance_policy = self._rebalance_policy()
         check_book(combined, equity, rebalance_policy)
 
-        positions = _positions_map(self._broker.list_positions())
+        raw_positions = self._broker.list_positions()
+        positions = _positions_map(raw_positions)
         symbols = set(combined) | set(positions)
         prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
         self._snapshot.last_sleeve_weights = {
@@ -903,7 +916,7 @@ class Supervisor:
         }
         self._snapshot.last_combined = dict(combined)
         self._snapshot.last_prices = dict(prices)
-        self._enforce_live_book()
+        self._enforce_live_book(account, raw_positions)
         if self._snapshot.state in (
             SupervisorState.FLATTENING,
             SupervisorState.STOPPED,
