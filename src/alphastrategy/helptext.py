@@ -38,6 +38,7 @@ SECTIONS: list[dict[str, str]] = [
             "Audit and runtime overlays flush to disk with that snapshot family. "
             "import-meta flushes to disk with that snapshot family. "
             "Imported members flush to disk. Staging lives under imported/. "
+            "Stale persist temps and import staging are removed on start. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },

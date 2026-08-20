@@ -11,6 +11,7 @@ from alphastrategy.bundle.schema import load_risk_envelope
 
 from alphastrategy.errors import FlattenRequested, HaltRequested, IllegalWeights
 from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.persist import discard_stale
 from alphastrategy.risk.check import check_book
 from alphastrategy.risk.policy import AccountPolicy, merge_limits, tighten_policy
 from alphastrategy.supervisor import audit
@@ -102,6 +103,7 @@ class Supervisor:
         self._weight_fn = weight_fn
         self._prev_clock: ClockSnapshot | None = None
         self._lock = threading.RLock()
+        discard_stale(home.root)
         self._snapshot = load_state(home.state_path())
         if self._snapshot.state == SupervisorState.STARTING:
             self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION

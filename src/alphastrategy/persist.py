@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -75,3 +76,31 @@ def replace_bytes(path: Path | str, payload: bytes, *, prefix: str = ".tmp.") ->
         if not replaced:
             tmp_path.unlink(missing_ok=True)
         raise
+
+
+_STALE_FILE_GLOBS = (
+    ".state.*.tmp",
+    ".runtime.*.tmp",
+    ".meta.*.tmp",
+    ".member.*.tmp",
+)
+
+
+def discard_stale(root: Path | str) -> None:
+    base = Path(root)
+    if not base.is_dir():
+        return
+    for pattern in _STALE_FILE_GLOBS:
+        for path in base.glob(pattern):
+            if path.is_file():
+                path.unlink(missing_ok=True)
+    imported = base / "imported"
+    if not imported.is_dir():
+        return
+    for pattern in _STALE_FILE_GLOBS:
+        for path in imported.rglob(pattern):
+            if path.is_file():
+                path.unlink(missing_ok=True)
+    for path in list(imported.iterdir()):
+        if path.is_dir() and path.name.startswith(".staging."):
+            shutil.rmtree(path, ignore_errors=True)
