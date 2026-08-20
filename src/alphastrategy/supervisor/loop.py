@@ -157,15 +157,21 @@ class Supervisor:
             if total > 1.0:
                 raise ValueError("allocation sum must be <= 1.0")
             self._snapshot.sleeves[bundle_id] = allocation
+            self._snapshot.stopped = [
+                item for item in self._snapshot.stopped if item != bundle_id
+            ]
             self._audit("paper_start", bundle_id=bundle_id, allocation=allocation)
             self._persist()
 
     def stop_sleeve(self, bundle_id: str) -> None:
         with self._lock:
-            if bundle_id in self._snapshot.sleeves:
-                self._snapshot.sleeves[bundle_id] = 0.0
-                self._audit("paper_stop", bundle_id=bundle_id)
-                self._persist()
+            if bundle_id not in self._snapshot.sleeves:
+                return
+            self._snapshot.sleeves[bundle_id] = 0.0
+            if bundle_id not in self._snapshot.stopped:
+                self._snapshot.stopped.append(bundle_id)
+            self._audit("paper_stop", bundle_id=bundle_id)
+            self._persist()
 
     def kill_sleeve(self, bundle_id: str) -> None:
         with self._lock:
@@ -332,8 +338,8 @@ class Supervisor:
             return dict(self._evaluators[bundle_id])
         raise HaltRequested(f"no evaluator for sleeve {bundle_id}")
 
-    def _collect_sleeves(self) -> list[tuple[float, dict[str, float]]]:
-        sleeves: list[tuple[float, dict[str, float]]] = []
+    def _collect_sleeves(self) -> list[tuple[str, float, dict[str, float]]]:
+        sleeves: list[tuple[str, float, dict[str, float]]] = []
         for bundle_id, allocation in self._snapshot.sleeves.items():
             if allocation <= 0:
                 continue
@@ -341,7 +347,7 @@ class Supervisor:
             self._validate_weights(weights)
             implied = {asset: allocation * weight for asset, weight in weights.items()}
             check_book(implied, 0.0, self._effective_sleeve_policy(bundle_id))
-            sleeves.append((allocation, weights))
+            sleeves.append((bundle_id, allocation, weights))
         return sleeves
 
     def _validate_weights(self, weights: dict[str, float]) -> None:
@@ -416,8 +422,9 @@ class Supervisor:
         return prices
 
     def _rebalance(self, cur: ClockSnapshot, event: str) -> None:
-        sleeves = self._collect_sleeves()
+        collected = self._collect_sleeves()
         self._snapshot.state = SupervisorState.REBALANCING
+        sleeves = [(alloc, weights) for _bid, alloc, weights in collected]
         combined = combine(sleeves)
         equity = self._equity()
         rebalance_policy = self._rebalance_policy()
@@ -426,6 +433,15 @@ class Supervisor:
         positions = _positions_map(self._broker.list_positions())
         symbols = set(combined) | set(positions)
         prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
+        self._snapshot.last_sleeve_weights = {
+            bid: dict(weights) for bid, _alloc, weights in collected
+        }
+        self._snapshot.last_sleeve_contribution = {
+            bid: {asset: alloc * weight for asset, weight in weights.items()}
+            for bid, alloc, weights in collected
+        }
+        self._snapshot.last_combined = dict(combined)
+        self._snapshot.last_prices = dict(prices)
         plans = plan_orders(combined, positions, prices, equity, rebalance_policy)
 
         all_orders_filled = bool(plans)

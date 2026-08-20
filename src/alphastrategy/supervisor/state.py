@@ -24,6 +24,11 @@ class SupervisorSnapshot:
     sleeves: dict[str, float] = field(default_factory=dict)
     halt_reason: str | None = None
     prime_clock_after_resume: bool = False
+    last_combined: dict[str, float] = field(default_factory=dict)
+    last_sleeve_weights: dict[str, dict[str, float]] = field(default_factory=dict)
+    last_sleeve_contribution: dict[str, dict[str, float]] = field(default_factory=dict)
+    last_prices: dict[str, float] = field(default_factory=dict)
+    stopped: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -33,12 +38,35 @@ class SupervisorSnapshot:
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> SupervisorSnapshot:
         state_raw = payload.get("state", SupervisorState.STARTING.value)
+        raw_weights = payload.get("last_sleeve_weights") or {}
+        last_sleeve_weights = {
+            str(bundle_id): {str(asset): float(weight) for asset, weight in weights.items()}
+            for bundle_id, weights in raw_weights.items()
+            if isinstance(weights, dict)
+        }
+        raw_contrib = payload.get("last_sleeve_contribution") or {}
+        last_sleeve_contribution = {
+            str(bundle_id): {str(asset): float(weight) for asset, weight in weights.items()}
+            for bundle_id, weights in raw_contrib.items()
+            if isinstance(weights, dict)
+        }
         return cls(
             state=SupervisorState(state_raw),
             last_rebalance_event=payload.get("last_rebalance_event"),
             sleeves=dict(payload.get("sleeves") or {}),
             halt_reason=payload.get("halt_reason"),
             prime_clock_after_resume=bool(payload.get("prime_clock_after_resume", False)),
+            last_combined={
+                str(asset): float(weight)
+                for asset, weight in (payload.get("last_combined") or {}).items()
+            },
+            last_sleeve_weights=last_sleeve_weights,
+            last_sleeve_contribution=last_sleeve_contribution,
+            last_prices={
+                str(asset): float(price)
+                for asset, price in (payload.get("last_prices") or {}).items()
+            },
+            stopped=[str(bundle_id) for bundle_id in (payload.get("stopped") or [])],
         )
 
 

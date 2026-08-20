@@ -576,3 +576,45 @@ def test_sleeve_overlay_tightens_rebalance_policy(tmp_path: Path):
     assert broker.close_all_called is True
     assert supervisor.state == SupervisorState.STOPPED
     assert broker.orders == []
+
+
+def test_stop_sleeve_is_listed_as_stopped(tmp_path: Path):
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    supervisor.start_sleeve("asb_test", 0.4)
+    supervisor.stop_sleeve("asb_test")
+    assert "asb_test" in supervisor.snapshot.stopped
+    assert supervisor.snapshot.sleeves["asb_test"] == 0.0
+
+
+def test_start_sleeve_clears_stopped(tmp_path: Path):
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    supervisor.start_sleeve("asb_test", 0.4)
+    supervisor.stop_sleeve("asb_test")
+    supervisor.start_sleeve("asb_test", 0.2)
+    assert "asb_test" not in supervisor.snapshot.stopped
+    assert supervisor.snapshot.sleeves["asb_test"] == 0.2
+
+
+def test_rebalance_persists_contribution_and_stop_does_not_zero_it(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    broker.bars["AAPL"] = {"bars": [{"c": 100.0, "t": "2024-01-31"}]}
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    assert supervisor.snapshot.last_combined == {"AAPL": 0.15}
+    assert supervisor.snapshot.last_sleeve_contribution["asb_test"]["AAPL"] == pytest.approx(0.15)
+    assert supervisor.snapshot.last_prices["AAPL"] == pytest.approx(100.0)
+    supervisor.stop_sleeve("asb_test")
+    assert supervisor.snapshot.last_sleeve_contribution["asb_test"]["AAPL"] == pytest.approx(0.15)
