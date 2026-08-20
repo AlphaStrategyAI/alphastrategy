@@ -641,6 +641,26 @@ button.action.account-kill {
   font-size: 0.95rem;
 }
 
+.sleeve-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.sleeve-head h3 {
+  margin: 0;
+}
+
+.sleeve-card .util-track {
+  margin: 0 0 0.6rem;
+}
+
+.status-muted {
+  color: #5c6573;
+}
+
 .shell {
   display: flex;
   flex: 1;

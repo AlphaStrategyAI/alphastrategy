@@ -51,8 +51,21 @@
       const card = document.createElement("div");
       card.className = "sleeve-card panel";
       const alloc = bundles.paper[id] || 0;
+      const st = sleeveState(id, bundles, state.status);
+      const statusClass =
+        st === "paper"
+          ? "status-running"
+          : st === "halted"
+            ? "status-halt"
+            : st === "stopped"
+              ? "status-stopped"
+              : "status-muted";
       card.innerHTML = `
-        <h3>${id}</h3>
+        <div class="sleeve-head">
+          <h3>${id}</h3>
+          <span class="sleeve-state ${statusClass}">${st}</span>
+        </div>
+        <div class="util-track" data-alloc-rail></div>
         <form class="inline sleeve-alloc-form" data-bundle="${id}">
           <label>
             Allocation
@@ -73,6 +86,8 @@
           <button type="button" class="action danger" data-kill="${id}">Kill sleeve</button>
         </div>
       `;
+      const track = card.querySelector("[data-alloc-rail]");
+      paintUtilTrack(track, alloc, 1, "allocation " + fmtPct(alloc));
       container.appendChild(card);
     }
 

@@ -126,6 +126,8 @@ Paper is the hero), **Import .asb**, and **Roster**. Import is not permission
 to trade; start paper on Run.
 Run is four bands: **Start paper**, **Sleeves** (Remaining / Spoken / Active /
 Idle; Remaining is the hero), **After halt**, and **Flatten account**.
+Each sleeve card names imported / paper / halted / stopped; allocation
+is a rail.
 Positions and Sleeves sit side by side on a wide desk. Positions add a
 **Cap** rail against the single-name limit. **Names** and **Orders today**
 show remaining flatten budgets. **Cash** shows invested versus residual

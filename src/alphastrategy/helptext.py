@@ -193,6 +193,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Run is four bands: Start paper, Sleeves, After halt, Flatten account. "
             "Sleeves is four tiles Remaining / Spoken / Active / Idle. Remaining is the hero. "
+            "Each sleeve card names imported, paper, halted, or stopped. Allocation is a rail. "
             "Start paper is a second explicit action. "
             "Start paper while halted waits for resume. Resume does not catch up. "
             "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
