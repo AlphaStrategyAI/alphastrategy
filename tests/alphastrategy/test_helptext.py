@@ -104,6 +104,7 @@ REQUIRED_PHRASES = (
     "status names BOOK heartbeat or glance",
     "Tighten and Start paper flatten the same live book as Book",
     "Tighten PUT reads runtime overlays from the Supervisor",
+    "Caps LIMIT follows the same live book as Tighten",
 )
 
 

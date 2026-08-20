@@ -144,6 +144,32 @@ def test_from_supervisor_uses_spoken_policy() -> None:
     assert out["max_gross"] == 1.0
 
 
+def test_from_supervisor_live_limit_ignores_last_combined() -> None:
+    from alphastrategy.risk.utilization import from_supervisor
+
+    class Snap:
+        orders_today = 0
+        last_combined = {"AAPL": 0.40}
+        last_got = {}
+        last_prices = {}
+
+    class Fake:
+        snapshot = Snap()
+
+        def spoken_policy(self):
+            return AccountPolicy.defaults()
+
+        def live_book(self):
+            return {"equity": 10_000.0, "cash": 10_000.0}, []
+
+        def live_cap_weights(self, equity, positions):
+            del equity, positions
+            return {}
+
+    out = from_supervisor(Fake(), live=True)
+    assert out["live_limit"] is None
+
+
 def test_summarize_live_limit_from_marked_name() -> None:
     out = summarize(
         policy=AccountPolicy.defaults(),
