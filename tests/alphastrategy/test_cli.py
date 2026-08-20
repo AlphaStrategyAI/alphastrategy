@@ -218,6 +218,7 @@ def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys
     assert payload["halted"] is False
     assert payload["flattened"] is False
     assert "last_rebalance_event" in payload
+    assert "last_rebalance_complete" in payload
     assert "last_kill" in payload
     assert payload["last_kill"] is None
     assert "utilization" in payload

@@ -450,6 +450,7 @@ def test_status_includes_last_rebalance_and_countdown(api_stack):
     assert response.status == 200
     body = response.json()
     assert body["last_rebalance_event"] == "2024-01-31:open"
+    assert body["last_rebalance_complete"] is True
     clock = body["clock"]
     cur = ClockSnapshot(
         is_open=bool(clock["is_open"]),

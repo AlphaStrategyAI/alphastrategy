@@ -65,6 +65,8 @@ REQUIRED_PHRASES = (
     "Tighten this sleeve",
     "audit and runtime overlays flush to disk",
     "Tighten this sleeve stays open across the refresh",
+    "Clock Last names the spent window",
+    "even with 0 fills",
 )
 
 

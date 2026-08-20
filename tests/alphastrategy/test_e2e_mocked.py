@@ -179,6 +179,7 @@ def test_operator_desk_portfolio_after_rebalance(tmp_path: Path) -> None:
         assert status["countdown"]["next_rebalance"] in ("open", "close")
         assert "seconds" in status["countdown"]
         assert status["last_rebalance_event"] == "2024-01-31:open"
+        assert status["last_rebalance_complete"] is True
         assert "utilization" in status
         assert "names" in status["utilization"]
         assert "orders_today" in status["utilization"]

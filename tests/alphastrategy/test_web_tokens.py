@@ -564,10 +564,18 @@ def test_js_paints_clock_continuity_tiles(js_text: str) -> None:
     assert "metric-clock-now" in paint
     assert "metric-last-rebalance" in paint
     assert "last_rebalance_event" in paint
+    assert "last_rebalance_complete" in paint
+    assert '"spent"' in paint
+    assert "warn" in paint
     assert "clock-line" not in paint
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_css_last_rebalance_spent_warn_token(css_text: str) -> None:
+    last = re.search(r"#metric-last-rebalance\.warn\s*\{[^}]*\}", css_text)
+    assert last is not None and "#f59e0b" in last.group(0).lower()
 
 
 def test_js_uses_api_policy_labels(js_text: str) -> None:
