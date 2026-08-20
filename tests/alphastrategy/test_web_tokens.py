@@ -402,3 +402,22 @@ def test_js_uses_api_policy_labels(js_text: str) -> None:
     assert "${policyLabel(key)} cannot loosen" in js_text
     assert "${key} cannot loosen" not in js_text
     assert "window.confirm" not in js_text
+
+
+def test_html_screen_help_howto(html_text: str) -> None:
+    assert 'id="help-howto"' in html_text
+    assert 'id="help-runbook"' in html_text
+    assert "Full runbook" in html_text
+    assert 'id="help-body"' in html_text
+    assert 'data-screen="help"' not in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_renders_howto_for_active_screen(js_text: str) -> None:
+    assert 'getElementById("help-howto")' in js_text
+    assert "payload.howtos" in js_text
+    show = js_text[js_text.find("function showScreen") : js_text.find("function setError")]
+    assert "renderHelp" in show
+    assert "window.confirm" not in js_text

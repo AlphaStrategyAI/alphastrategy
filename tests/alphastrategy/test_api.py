@@ -595,6 +595,13 @@ def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
         "cli",
         "walls",
     ]
+    assert [item["id"] for item in payload["howtos"]] == [
+        "how_portfolio",
+        "how_strategies",
+        "how_run",
+        "how_activity",
+        "how_risk",
+    ]
     blob = json_module.dumps(payload)
     assert "secret" not in blob.lower()
     assert "ALPACA" not in blob

@@ -329,6 +329,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         help_body = json.loads(help_resp.read().decode("utf-8"))
         assert help_resp.status == 200
         assert help_body["sections"][2]["id"] == "halt_flatten"
+        assert help_body["howtos"][0]["id"] == "how_portfolio"
         conn.request("GET", "/")
         html_resp = conn.getresponse()
         html = html_resp.read().decode("utf-8")
