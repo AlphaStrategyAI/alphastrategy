@@ -8,6 +8,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 JS_PARTS: tuple[str, ...] = (
     "js/core.js",
+    "js/paint-rails.js",
     "js/paint-portfolio.js",
     "js/paint-strategies.js",
     "js/paint-run.js",

@@ -50,8 +50,8 @@ SECTIONS: list[dict[str, str]] = [
         "body": (
             "Five screens: Portfolio, Strategies, Run, Activity, Risk. "
             "Wanted is the last combined target weight; Got is the current "
-            "position weight. An empty desk says Start this paper desk and "
-            "tells you to import, then start paper. Portfolio home is three "
+            "position weight. An empty Portfolio shows Start this paper desk "
+            "as its first glance band, not a global panel. Portfolio home is three "
             "bands Book / Flatten budgets / Clock. Equity is the hero. "
             "Strategies is three bands Inventory / Import .asb / Roster. "
             "Paper is the hero count. "
@@ -112,7 +112,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "screen": "portfolio",
         "title": "On Portfolio",
         "body": (
-            "Three bands: Book / Flatten budgets / Clock. Equity is the hero. "
+            "Empty Portfolio starts with Start this paper desk, then "
+            "three bands: Book / Flatten budgets / Clock. Equity is the hero. "
             "The Positions Book column is wanted versus got. "
             "Header LIVE is the Supervisor beat, not Session OPEN."
         ),

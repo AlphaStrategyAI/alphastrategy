@@ -654,7 +654,18 @@ button.action.account-kill {
 
 .first-run {
   border-color: #10b981;
-  margin-bottom: 0.75rem;
+}
+
+.first-run .glance-heading {
+  color: #10b981;
+}
+
+.first-run .panel {
+  border-color: #10b981;
+}
+
+.first-run.hidden + .glance-band {
+  margin-top: 0;
 }
 
 .first-run.hidden,
