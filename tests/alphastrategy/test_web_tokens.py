@@ -813,6 +813,9 @@ def test_js_paints_strategy_inventory(js_text: str) -> None:
     assert '"status-halt"' in paint
     assert '"status-stopped"' in paint
     assert "classList.toggle(onClass" in paint
+    assert "imported_at" in paint
+    assert "slice(0, 10)" in paint
+    assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 

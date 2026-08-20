@@ -258,3 +258,13 @@ def test_import_succeeds_for_golden(tmp_path: Path):
     assert (bundle_dir / "strategy.dsl.yaml").is_file()
     assert (bundle_dir / "conformance" / "bars.csv").is_file()
     assert (bundle_dir / "import-meta.json").is_file()
+
+
+def test_import_asb_writes_meta_through_persist() -> None:
+    from alphastrategy.bundle import import_bundle as mod
+
+    src = Path(mod.__file__).read_text(encoding="utf-8")
+    body = src.split("def import_asb", 1)[1]
+    assert "replace_text" in body
+    assert "fsync_dir" in body
+    assert "write_text" not in body

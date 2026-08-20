@@ -292,6 +292,7 @@ def test_get_bundles_lists_imported_and_paper(api_stack):
     body = response.json()
     assert "asb_test" in body["imported"]
     assert body["paper"]["asb_test"] == 0.25
+    assert "imported_at" in body
 
 
 def test_get_portfolio_returns_account_fields(api_client: ApiClient):
@@ -384,6 +385,10 @@ def test_import_golden_asb_via_api(api_stack, tmp_path: Path):
     bundle_id = body["bundle_id"]
     assert bundle_id.startswith("asb_")
     assert home.bundle_dir(bundle_id).is_dir()
+    bundles = client.get("/api/bundles").json()
+    assert bundle_id in bundles["imported"]
+    assert bundle_id in bundles["imported_at"]
+    assert "T" in bundles["imported_at"][bundle_id]
 
 
 def test_get_root_returns_html(api_client: ApiClient):

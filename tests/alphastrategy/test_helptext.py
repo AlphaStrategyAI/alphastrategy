@@ -69,6 +69,8 @@ REQUIRED_PHRASES = (
     "even with 0 fills",
     "Tape Rebalances sub names spent",
     "deviation banner follows Book Drift",
+    "Roster names imported at",
+    "import-meta flushes to disk",
 )
 
 
