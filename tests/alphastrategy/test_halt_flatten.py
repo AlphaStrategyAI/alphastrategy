@@ -1295,6 +1295,79 @@ def test_sleeve_policies_read_runtime_once(tmp_path: Path) -> None:
     assert reads["n"] == 1
 
 
+def test_heartbeat_seeds_live_book_without_extra_broker_reads(tmp_path: Path) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    accounts = {"n": 0}
+    positions = {"n": 0}
+    inner_account = broker.get_account
+    inner_positions = broker.list_positions
+
+    def counted_account() -> dict:
+        accounts["n"] += 1
+        return inner_account()
+
+    def counted_positions() -> list:
+        positions["n"] += 1
+        return inner_positions()
+
+    broker.get_account = counted_account  # type: ignore[method-assign]
+    broker.list_positions = counted_positions  # type: ignore[method-assign]
+    supervisor.tick()
+    after_tick_accounts = accounts["n"]
+    after_tick_positions = positions["n"]
+    supervisor.live_book()
+    assert accounts["n"] == after_tick_accounts
+    assert positions["n"] == after_tick_positions
+    assert after_tick_accounts >= 1
+    assert after_tick_positions >= 1
+
+
+def test_bundle_envelope_parses_once_while_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphastrategy.bundle.schema import load_risk_envelope
+
+    loads = {"n": 0}
+    orig = load_risk_envelope
+
+    def counted(data: bytes) -> dict:
+        loads["n"] += 1
+        return orig(data)
+
+    monkeypatch.setattr("alphastrategy.supervisor.loop.load_risk_envelope", counted)
+    home = AlphaStrategyHome(root=tmp_path)
+    supervisor = _make_supervisor(
+        tmp_path,
+        FakeBroker(),
+        evaluators={"asb_a": {"AAPL": 1.0}, "asb_b": {"MSFT": 1.0}},
+    )
+    (home.bundle_dir("asb_a") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    (home.bundle_dir("asb_b") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    supervisor.start_sleeve("asb_a", 0.1)
+    supervisor.start_sleeve("asb_b", 0.1)
+    after_start = loads["n"]
+    supervisor.sleeve_policies(["asb_a", "asb_b"])
+    supervisor.sleeve_policies(["asb_a", "asb_b"])
+    supervisor.spoken_policy()
+    assert loads["n"] == after_start
+
+
+def test_spoken_policy_sees_envelope_yaml_write(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    home = AlphaStrategyHome(root=tmp_path)
+    envelope = home.bundle_dir("asb_test") / "risk-envelope.yaml"
+    envelope.write_text("max_name_weight: 0.10\n", encoding="utf-8")
+    supervisor.start_sleeve("asb_test", 0.25)
+    assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.10)
+    envelope.write_text("max_name_weight: 0.05\n", encoding="utf-8")
+    assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.05)
+
+
 def _open_then_idle(
     tmp_path: Path,
     *,

@@ -95,6 +95,8 @@ REQUIRED_PHRASES = (
     "Spoken policy is reused until overlays or allocations change",
     "Status, Portfolio, and Risk share one live book glance",
     "Risk overlays load runtime once per glance",
+    "Heartbeat seeds the live book glance",
+    "Sleeve envelopes load once until the file changes",
 )
 
 

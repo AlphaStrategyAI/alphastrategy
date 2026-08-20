@@ -765,6 +765,18 @@ def test_status_portfolio_risk_share_one_live_book(api_stack) -> None:
     assert broker.position_reads == 1
 
 
+def test_tick_seeds_live_book_for_status_and_portfolio(api_stack) -> None:
+    client, _home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 4.0}
+    supervisor.tick()
+    accounts = broker.account_reads
+    positions = broker.position_reads
+    client.get("/api/status")
+    client.get("/api/portfolio")
+    assert broker.account_reads == accounts
+    assert broker.position_reads == positions
+
+
 def test_portfolio_after_account_kill_is_not_stale_live_book(api_stack) -> None:
     client, _home, supervisor, broker = api_stack
     broker.positions = {"AAPL": 15.0}
