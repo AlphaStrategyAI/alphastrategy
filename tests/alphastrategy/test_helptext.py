@@ -107,6 +107,7 @@ REQUIRED_PHRASES = (
     "Caps LIMIT follows the same live book as Tighten",
     "Day PnL is equity minus last close",
     "status names Day PnL",
+    "Positions Day is that name since last close",
 )
 
 

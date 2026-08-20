@@ -403,6 +403,73 @@ def test_get_portfolio_explicit_zero_pnl_is_not_null(api_stack):
     assert body["pnl_source"] == "account"
 
 
+def _positions_by_symbol(positions: list[dict]) -> dict[str, dict]:
+    return {str(row["symbol"]): row for row in positions}
+
+
+def test_get_portfolio_position_day_pnl_null_without_last_close(api_stack):
+    client, home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 15.0}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    close_all_before = broker.close_all_count
+    body = client.get("/api/portfolio").json()
+    row = _positions_by_symbol(body["positions"])["AAPL"]
+    assert row["day_pnl"] is None
+    assert broker.close_all_count == close_all_before
+
+
+def test_get_portfolio_position_day_pnl_from_intraday(api_stack):
+    client, _home, _supervisor, broker = api_stack
+    orig = broker.list_positions
+
+    def with_intraday():
+        rows = orig()
+        for row in rows:
+            row["unrealized_intraday_pl"] = "12.5"
+            row["unrealized_pl"] = "999"
+        return rows
+
+    broker.list_positions = with_intraday  # type: ignore[method-assign]
+    broker.positions = {"AAPL": 15.0}
+    body = client.get("/api/portfolio").json()
+    assert _positions_by_symbol(body["positions"])["AAPL"]["day_pnl"] == 12.5
+
+
+def test_get_portfolio_position_day_pnl_ignores_unrealized_pl(api_stack):
+    client, _home, _supervisor, broker = api_stack
+    orig = broker.list_positions
+
+    def with_lifetime():
+        rows = orig()
+        for row in rows:
+            row["unrealized_pl"] = "999"
+        return rows
+
+    broker.list_positions = with_lifetime  # type: ignore[method-assign]
+    broker.positions = {"AAPL": 15.0}
+    body = client.get("/api/portfolio").json()
+    assert _positions_by_symbol(body["positions"])["AAPL"]["day_pnl"] is None
+
+
+def test_get_portfolio_position_day_pnl_from_lastday_price(api_stack):
+    client, home, supervisor, broker = api_stack
+    orig = broker.list_positions
+
+    def with_last_close():
+        rows = orig()
+        for row in rows:
+            row["lastday_price"] = "100"
+        return rows
+
+    broker.list_positions = with_last_close  # type: ignore[method-assign]
+    broker.positions = {"AAPL": 15.0}
+    supervisor.snapshot.last_prices = {"AAPL": 110.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    body = client.get("/api/portfolio").json()
+    assert _positions_by_symbol(body["positions"])["AAPL"]["day_pnl"] == 150.0
+
+
 def test_get_activity_returns_audit_events(api_stack):
     client, home, _, _ = api_stack
     from alphastrategy.supervisor import audit

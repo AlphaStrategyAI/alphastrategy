@@ -369,7 +369,7 @@ def test_js_session_name_and_alloc_rails(js_text: str) -> None:
     assert "function nameCapBar" in js_text
     assert "function renderSleeveAllocBook" in js_text
     assert "Spoken " in js_text
-    assert "colspan='7'" in js_text
+    assert "colspan='8'" in js_text
     assert "window.confirm" not in js_text
 
 
@@ -627,6 +627,11 @@ def test_html_positions_glance_bands(html_text: str) -> None:
     assert ">Wanted<" in pos
     assert ">At cap<" in pos
     assert 'id="positions-table"' in pos
+    head = pos[pos.find("positions-table") :]
+    assert ">Notional<" in head
+    assert ">Day<" in head
+    assert head.find(">Notional<") < head.find(">Day<")
+    assert head.find(">Day<") < head.find(">Wanted<")
     assert 'id="sleeves-table"' in sleeves
     assert 'id="sleeve-alloc-track"' in sleeves
     assert "book-grid" in port
@@ -1258,6 +1263,32 @@ def test_js_paints_day_pnl_last_close(js_text: str) -> None:
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_paints_positions_day_pnl(js_text: str) -> None:
+    assert "function formatDayPnlCell" in js_text
+    helper = js_text[
+        js_text.find("function formatDayPnlCell") : js_text.find("function wantedGotBar")
+    ]
+    assert "fmtNum" in helper
+    assert "positive" in helper
+    assert "negative" in helper
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "formatDayPnlCell(pos.day_pnl)" in port
+    assert "unrealized_pl" not in port
+    assert "colspan='8'" in port
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_positions_day_signed_tokens(css_text: str) -> None:
+    pos = re.search(r"#positions-table td\.positive\s*\{[^}]*\}", css_text)
+    neg = re.search(r"#positions-table td\.negative\s*\{[^}]*\}", css_text)
+    assert pos is not None and "#10b981" in pos.group(0).lower()
+    assert neg is not None and "#ef4444" in neg.group(0).lower()
 
 
 def test_js_paints_risk_caps_from_spoken(js_text: str) -> None:
