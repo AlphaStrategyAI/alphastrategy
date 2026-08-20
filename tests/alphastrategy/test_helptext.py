@@ -100,6 +100,8 @@ REQUIRED_PHRASES = (
     "A heartbeat live book holds until flatten or place",
     "Runtime overlays load once until the file changes",
     "Book Equity names Beat or Glance",
+    "Book, Beat, and Headroom name Beat or Glance",
+    "status names BOOK heartbeat or glance",
 )
 
 

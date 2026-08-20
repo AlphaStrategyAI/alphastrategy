@@ -227,6 +227,7 @@ def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys
     assert payload["utilization"]["cash_weight"] is None
     assert "heartbeat" in payload
     assert payload["heartbeat"]["interval_seconds"] == 20
+    assert payload["book"]["source"] == "none"
 
 
 def test_status_prints_limit_on_stderr(
@@ -249,6 +250,31 @@ def test_status_prints_limit_on_stderr(
     assert "LIMIT:" in err
     assert "Name cap" in err
     assert "next rebalance will flatten" in err.lower()
+    patch_alpaca.assert_not_called()
+
+
+def test_status_prints_book_on_stderr(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = {
+        "state": "idle_in_session",
+        "clock": {},
+        "halted": False,
+        "flattened": False,
+        "utilization": {},
+        "heartbeat": {"age_seconds": 4, "pulse": "live", "interval_seconds": 20},
+        "book": {"source": "heartbeat"},
+    }
+    monkeypatch.setattr(
+        "alphastrategy.cli.main._control_request",
+        lambda *args, **kwargs: (200, payload),
+    )
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    out = json.loads(captured.out.strip())
+    assert out["book"]["source"] == "heartbeat"
+    assert captured.err.splitlines() == ["BOOK: heartbeat"]
     patch_alpaca.assert_not_called()
 
 

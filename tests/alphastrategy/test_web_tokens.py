@@ -566,7 +566,7 @@ def test_html_glance_bands(html_text: str) -> None:
     assert 'id="glance-book"' in html_text
     assert 'id="glance-risk"' in html_text
     assert 'id="glance-clock"' in html_text
-    assert '<h2 class="glance-heading">Book</h2>' in html_text
+    assert '<h2 class="glance-heading">Book' in html_text
     assert '<h2 class="glance-heading">Flatten budgets</h2>' in html_text
     assert '<h2 class="glance-heading">Clock</h2>' in html_text
     book = html_text[html_text.find('id="glance-book"') : html_text.find('id="glance-risk"')]
@@ -574,6 +574,7 @@ def test_html_glance_bands(html_text: str) -> None:
     clock = html_text[html_text.find('id="glance-clock"') : html_text.find('id="glance-positions"')]
     assert 'id="metric-equity"' in book
     assert 'id="metric-equity-sub"' in book
+    assert 'id="book-source"' in book
     assert 'id="metric-cash"' in book
     assert 'id="metric-pnl"' in book
     assert "hero" in book
@@ -1018,7 +1019,7 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert 'id="risk-tighten"' in html_text
     assert 'id="risk-overlays"' in html_text
     assert '<h2 class="glance-heading">Caps</h2>' in html_text
-    assert '<h2 class="glance-heading">Headroom</h2>' in html_text
+    assert '<h2 class="glance-heading">Headroom' in html_text
     assert '<h2 class="glance-heading">Tighten</h2>' in html_text
     assert '<h2 class="glance-heading">Sleeve overlays</h2>' in html_text
     risk = html_text[html_text.find('id="screen-risk"') :]
@@ -1037,6 +1038,7 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert ">Gross cap<" in caps
     assert ">Name cap<" in caps
     assert 'id="risk-utilization"' in head
+    assert 'id="risk-book-source"' in head
     assert 'id="risk-head-names"' in head
     assert 'id="risk-head-orders"' in head
     assert 'id="risk-head-cash"' in head
@@ -1230,6 +1232,16 @@ def test_js_paints_book_equity_beat_or_glance(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_paints_book_source_headings(js_text: str) -> None:
+    assert "function paintBookSourceHeadings" in js_text
+    assert "book-source" in js_text
+    assert "act-book-source" in js_text
+    assert "risk-book-source" in js_text
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_js_paints_risk_caps_from_spoken(js_text: str) -> None:
     render = js_text[js_text.find("function renderRisk(") : js_text.find("function onRiskAccountSubmit")]
     pre_dirty = render.split("if (riskFormIsDirty())")[0]
@@ -1338,7 +1350,7 @@ def test_html_activity_tape_bands(html_text: str) -> None:
     assert 'id="act-beat"' in html_text
     assert 'id="act-tape"' in html_text
     assert 'id="act-blotter"' in html_text
-    assert '<h2 class="glance-heading">Beat</h2>' in html_text
+    assert '<h2 class="glance-heading">Beat' in html_text
     assert '<h2 class="glance-heading">Tape</h2>' in html_text
     assert '<h2 class="glance-heading">Blotter</h2>' in html_text
     act = html_text[
@@ -1348,6 +1360,7 @@ def test_html_activity_tape_bands(html_text: str) -> None:
     tape = act[act.find('id="act-tape"') : act.find('id="act-blotter"')]
     blotter = act[act.find('id="act-blotter"') :]
     assert 'id="activity-heartbeat"' in beat
+    assert 'id="act-book-source"' in beat
     assert 'id="act-beat-age"' in beat
     assert 'id="act-beat-interval"' in beat
     assert 'id="act-beat-state"' in beat
