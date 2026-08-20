@@ -23,7 +23,8 @@ SECTIONS: list[dict[str, str]] = [
         "body": (
             "The Supervisor is the sole order placer. Sleeve interpreters return "
             "target weights over stdin/stdout JSON and never see keys or the broker. "
-            "Heartbeat every 20 seconds does not place orders. At most two RTH "
+            "Heartbeat every 20 seconds does not place orders. "
+            "Heartbeat refreshes last prices and does not flatten. At most two RTH "
             "rebalances fire: open plus 3 minutes, and 12 minutes before close. "
             "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash. "
             "An incomplete rebalance still writes Wanted / Got, counts those orders, "
@@ -57,6 +58,7 @@ SECTIONS: list[dict[str, str]] = [
             "words (Gross cap, Name cap, Names, Orders today). "
             "Tighten that breaches the live book flattens now. "
             "A sleeve overlay that breaches the live book flattens now. "
+            "Rebalance flattens a live book that already breaches the spoken cap. "
             "Activity flatten rows say limit breach or that cap plus breach. "
             "If the host dies during a sleeve isolate, the desk treats that as "
             "interrupted sleeve isolate: it flattens the whole paper account "
@@ -213,6 +215,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Three bands: Beat / Tape / Blotter. "
             "Beat is four tiles Pulse / Age / Interval / Supervisor. Pulse is the hero. "
+            "Heartbeat refreshes last prices and does not flatten. "
             "Rebalances is the hero count. "
             "Tape Rebalances sub names spent. "
             "Blotter rebalance rows say spent when that event did not finish. "
@@ -244,7 +247,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Tighten groups Gross / Names / Orders / Deltas. Tighten only; "
             "the form refuses looser values and still posts the policy keys. "
             "Tighten that breaches the live book flattens now. "
-            "A sleeve overlay that breaches the live book flattens now."
+            "A sleeve overlay that breaches the live book flattens now. "
+            "Rebalance flattens a live book that already breaches the spoken cap."
         ),
     },
 ]

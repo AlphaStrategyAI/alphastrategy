@@ -183,7 +183,9 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   otherwise it flattens the whole account rather than guess. The CLI
   prints JSON (`isolated` vs `flattened`). A desk banner reports the
   same outcome.
-- Heartbeat every 20s does not place orders. Header **LIVE / STALE /
+- Heartbeat every 20s does not place orders. Heartbeat refreshes last
+  prices and does not flatten. Rebalance flattens a live book that
+  already breaches the spoken cap. Header **LIVE / STALE /
   DEAD** is the Supervisor beat, not RTH session. Header **OPEN / CLOSED**
   is the RTH session. Session OPEN is halt color while Supervisor is
   HALTED. Spoken Supervisor is the runtime state. `status`
