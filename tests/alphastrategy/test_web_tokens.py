@@ -744,6 +744,8 @@ def test_css_activity_book_drill_in(css_text: str) -> None:
 def test_html_help_tasks(html_text: str) -> None:
     assert 'id="help-tasks"' in html_text
     assert 'id="help-howto"' in html_text
+    assert 'id="help-tutorial"' in html_text
+    assert html_text.find('id="help-tutorial"') < html_text.find('id="help-howto"')
     nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
     screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
     assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
@@ -757,3 +759,16 @@ def test_js_renders_help_tasks(js_text: str) -> None:
     assert "item.screens" in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_renders_help_tutorial(js_text: str) -> None:
+    paint = js_text[js_text.find("function renderHelp") : js_text.find("async function loadHelp")]
+    assert "payload.tutorials" in paint
+    assert 'getElementById("help-tutorial")' in paint
+    assert "window.confirm" not in js_text
+
+
+def test_css_help_tutorial_uses_running_token(css_text: str) -> None:
+    block = re.search(r"#help-tutorial h3\s*\{[^}]*\}", css_text)
+    assert block is not None
+    assert "#10b981" in block.group(0).lower()

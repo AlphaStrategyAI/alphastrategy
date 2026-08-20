@@ -43,6 +43,7 @@ REQUIRED_PHRASES = (
     "empty Portfolio",
     "Book Drift",
     "Start paper after flatten",
+    "Your first paper session",
 )
 
 
@@ -99,13 +100,14 @@ def test_help_text_contains_required_phrases() -> None:
 
 
 def test_help_copy_is_this_product() -> None:
-    from alphastrategy.helptext import SCREEN_HOWTOS, TASK_HOWTOS
+    from alphastrategy.helptext import SCREEN_HOWTOS, TASK_HOWTOS, TUTORIALS
 
     blob = (
         help_text().lower()
         + " ".join(section["body"].lower() for section in SECTIONS)
         + " ".join(item["body"].lower() for item in SCREEN_HOWTOS)
         + " ".join(item["body"].lower() for item in TASK_HOWTOS)
+        + " ".join(item["body"].lower() for item in TUTORIALS)
     )
     assert "streamlit" not in blob
     assert "openstrategy" not in blob
@@ -133,3 +135,21 @@ def test_task_howtos_match_jobs() -> None:
         assert item["screens"]
         for screen in item["screens"]:
             assert screen in ("portfolio", "strategies", "run", "activity", "risk")
+
+
+def test_tutorials_come_before_how_to_jobs() -> None:
+    from alphastrategy.helptext import TUTORIALS
+
+    assert tuple(item["id"] for item in TUTORIALS) == ("tutorial_first_session",)
+    payload = help_payload()
+    assert payload["tutorials"] == TUTORIALS
+    item = TUTORIALS[0]
+    assert item["title"] == "Your first paper session"
+    assert not item["title"].startswith("How to")
+    assert "You will see" in item["body"]
+    assert "You finished the lesson" in item["body"]
+    assert "Flatten account" in item["body"]
+    text = help_text()
+    assert text.index("Your first paper session") < text.index(
+        "How to import a qualified .asb"
+    )

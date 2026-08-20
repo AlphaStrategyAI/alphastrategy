@@ -327,6 +327,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert "empty portfolio" in help_body["howtos"][0]["body"].lower()
         assert "Start this paper desk" in help_body["howtos"][0]["body"]
         assert help_body["tasks"][0]["id"] == "task_import"
+        assert help_body["tutorials"][0]["id"] == "tutorial_first_session"
         cockpit = next(s for s in help_body["sections"] if s["id"] == "cockpit")
         assert "not a global panel" in cockpit["body"]
         conn.request("GET", "/")
@@ -335,6 +336,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert html_resp.status == 200
         assert 'id="help-toggle"' in html
         assert 'id="help-tasks"' in html
+        assert 'id="help-tutorial"' in html
         assert 'id="import-error-kind"' in html
         assert 'id="desk-pulse"' in html
         assert 'id="glance-book"' in html
