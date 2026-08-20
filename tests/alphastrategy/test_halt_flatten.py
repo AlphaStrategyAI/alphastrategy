@@ -931,6 +931,8 @@ def test_restart_before_first_fill_spends_session_window(tmp_path: Path):
     assert restarted.snapshot.rebalance_placed == 0
     assert restarted.snapshot.last_rebalance_event == "2024-01-31:open"
     assert restarted.snapshot.last_rebalance_complete is False
+    assert restarted.snapshot.last_combined.get("AAPL")
+    assert restarted.snapshot.last_combined.get("MSFT")
     assert "interrupted rebalancing" in reason
     assert "2024-01-31:open spent" in reason
     events = [
@@ -940,6 +942,7 @@ def test_restart_before_first_fill_spends_session_window(tmp_path: Path):
     rebalances = [event for event in events if event["event"] == "rebalance"]
     assert rebalances[-1]["complete"] is False
     assert rebalances[-1]["orders"] == 0
+    assert any(event["event"] == "execution_deviation" for event in events)
     first = list(broker.orders)
     broker.advance_now(open_time + timedelta(minutes=10))
     restarted.tick()

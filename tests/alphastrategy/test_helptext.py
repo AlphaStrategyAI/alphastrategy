@@ -68,6 +68,7 @@ REQUIRED_PHRASES = (
     "Clock Last names the spent window",
     "even with 0 fills",
     "Tape Rebalances sub names spent",
+    "deviation banner follows Book Drift",
 )
 
 

@@ -1105,6 +1105,26 @@ def test_css_rebalance_spent_warn_token(css_text: str) -> None:
     assert reb is not None and "#f59e0b" in reb.group(0).lower()
 
 
+def test_js_deviation_banner_follows_book_drift(js_text: str) -> None:
+    boot = js_text[
+        js_text.find("function detectDeviation") : js_text.find("async function refresh")
+    ]
+    assert "bookDrift" in boot
+    assert "last_rebalance_complete" in boot
+    assert "last_combined" in boot
+    assert 'ev.event === "resume"' not in boot
+    assert "function bookDrift" in js_text
+    banners = js_text[
+        js_text.find("function renderBanners") : js_text.find("function renderPortfolio")
+    ]
+    assert "deviationActive" in banners
+    assert "DEVIATION: execution drift exceeds tolerance" in banners
+    assert banners.count("const reason") == 1
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_js_paints_activity_beat(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
