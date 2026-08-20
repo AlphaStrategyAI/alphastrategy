@@ -37,6 +37,7 @@ class FakeBroker:
         self.fill_fraction = 1.0
         self.raise_on_get_bars = False
         self.raise_on_get_clock = False
+        self.fail_place_after = None
         self._next_open = next_open or datetime(2024, 1, 31, 14, 30)
         self._next_close = next_close or datetime(2024, 1, 31, 21, 0)
         self._now = now or self._next_open
@@ -65,6 +66,8 @@ class FakeBroker:
         return [{"symbol": symbol, "qty": str(qty)} for symbol, qty in self.positions.items()]
 
     def place_order(self, symbol: str, qty: float, side: str) -> dict:
+        if self.fail_place_after is not None and len(self.orders) >= self.fail_place_after:
+            raise RuntimeError("broker place_order failed")
         self.orders.append((symbol, qty, side))
         if self.fill_orders:
             filled_qty = qty * self.fill_fraction
@@ -679,6 +682,48 @@ def test_rebalance_counts_orders_today_and_audits_wanted_got(tmp_path: Path):
     assert rebalances
     assert "wanted" in rebalances[-1]
     assert "got" in rebalances[-1]
+
+
+def test_rebalance_partial_place_order_failure_halts_without_flatten(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    broker.fail_place_after = 1
+    supervisor = _make_supervisor(
+        tmp_path,
+        broker,
+        evaluators={"asb_test": {"AAPL": 0.5, "MSFT": 0.5}},
+    )
+    supervisor.start_sleeve("asb_test", 0.4)
+    _trigger_open_rebalance(tmp_path, broker, supervisor)
+
+    assert supervisor.state == SupervisorState.HALTED
+    assert broker.close_all_called is False
+    assert len(broker.orders) == 1
+    assert supervisor.snapshot.orders_today == 1
+    assert supervisor.snapshot.last_rebalance_event == "2024-01-31:open"
+    assert supervisor.snapshot.last_got
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    rebalances = [event for event in events if event["event"] == "rebalance"]
+    assert rebalances
+    assert rebalances[-1]["complete"] is False
+    assert rebalances[-1]["orders"] == 1
+    assert "wanted" in rebalances[-1]
+    assert "got" in rebalances[-1]
+    assert any(event["event"] == "execution_deviation" for event in events)
+    first = list(broker.orders)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert broker.orders == first
+    assert supervisor.state == SupervisorState.HALTED
 
 
 def test_daily_order_budget_flattens_without_overflow_batch(tmp_path: Path):

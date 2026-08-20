@@ -52,6 +52,7 @@ REQUIRED_PHRASES = (
     "Names / Orders today / Cash / Target cash",
     "Rows / Wanted / Got / At cap",
     "Session / Now / Next / Last",
+    "incomplete rebalance",
 )
 
 

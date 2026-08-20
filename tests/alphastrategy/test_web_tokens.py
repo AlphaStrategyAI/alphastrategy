@@ -937,6 +937,17 @@ def test_js_paints_activity_tape(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_activity_incomplete_rebalance(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function eventSummary") : js_text.find("function renderActivity")
+    ]
+    assert "complete === false" in paint
+    assert "incomplete" in paint
+    assert "Complete" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_js_paints_activity_beat(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
