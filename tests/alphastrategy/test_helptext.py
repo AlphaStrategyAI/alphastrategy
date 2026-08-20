@@ -81,6 +81,7 @@ REQUIRED_PHRASES = (
     "stale persist temps and import staging are removed on start",
     "Start paper while halted waits for resume",
     "Tighten that breaches the live book flattens now",
+    "Each sleeve card names imported, paper, halted, or stopped",
 )
 
 

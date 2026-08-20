@@ -747,6 +747,31 @@ def test_js_paints_run_capacity(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_run_sleeve_cards_name_state(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRunSleeves") : js_text.find("function renderRunStartHint")
+    ]
+    assert "sleeveState" in paint
+    assert "paintUtilTrack" in paint
+    assert "status-running" in paint
+    assert "status-halt" in paint
+    assert "status-stopped" in paint
+    assert "sleeve-state" in paint
+    assert "util-track" in paint
+    assert "allocation " in paint
+    assert ">Live<" not in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+    assert "sleeve-alloc-form" in paint
+    assert "data-kill-confirm" in paint
+
+
+def test_css_sleeve_head_row(css_text: str) -> None:
+    assert ".sleeve-head" in css_text
+    assert ".sleeve-card .util-track" in css_text
+
+
 def test_html_run_start_and_stop_hints(html_text: str) -> None:
     run = html_text[html_text.find('id="screen-run"') : html_text.find('id="screen-activity"')]
     promote = run[run.find('id="run-promote"') : run.find('id="run-book"')]
