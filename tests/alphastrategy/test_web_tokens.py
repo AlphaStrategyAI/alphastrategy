@@ -425,7 +425,7 @@ def test_html_glance_bands(html_text: str) -> None:
     assert '<h2 class="glance-heading">Clock</h2>' in html_text
     book = html_text[html_text.find('id="glance-book"') : html_text.find('id="glance-risk"')]
     risk = html_text[html_text.find('id="glance-risk"') : html_text.find('id="glance-clock"')]
-    clock = html_text[html_text.find('id="glance-clock"') : html_text.find('id="clock-line"')]
+    clock = html_text[html_text.find('id="glance-clock"') : html_text.find('id="glance-positions"')]
     assert 'id="metric-equity"' in book
     assert 'id="metric-cash"' in book
     assert 'id="metric-pnl"' in book
@@ -435,6 +435,13 @@ def test_html_glance_bands(html_text: str) -> None:
     assert 'id="metric-orders"' in risk
     assert 'id="metric-session"' in clock
     assert 'id="metric-countdown"' in clock
+    assert 'id="metric-clock-now"' in clock
+    assert 'id="metric-last-rebalance"' in clock
+    assert "metrics-4" in clock
+    assert "hero" in clock
+    assert ">Now<" in clock
+    assert ">Last<" in clock
+    assert 'id="clock-line"' not in html_text
     assert 'style="margin-top' not in html_text
     nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
     screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
@@ -496,6 +503,19 @@ def test_js_paints_positions_glance_tiles(js_text: str) -> None:
 def test_css_positions_cap_fail_token(css_text: str) -> None:
     cap = re.search(r"#pos-count-cap\.fail\s*\{[^}]*\}", css_text)
     assert cap is not None and "#ef4444" in cap.group(0).lower()
+
+
+def test_js_paints_clock_continuity_tiles(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderSessionMetrics") : js_text.find("function renderBookDrift")
+    ]
+    assert "metric-clock-now" in paint
+    assert "metric-last-rebalance" in paint
+    assert "last_rebalance_event" in paint
+    assert "clock-line" not in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
 
 
 def test_js_uses_api_policy_labels(js_text: str) -> None:

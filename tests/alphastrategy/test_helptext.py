@@ -51,6 +51,7 @@ REQUIRED_PHRASES = (
     "Gross cap / Name cap / Names / Orders today",
     "Names / Orders today / Cash / Target cash",
     "Rows / Wanted / Got / At cap",
+    "Session / Now / Next / Last",
 )
 
 
