@@ -83,6 +83,28 @@
     }
   }
 
+  function bookDrift(positions, equity) {
+    const rows = positions || [];
+    const cap = Number(equity);
+    let off = 0;
+    let maxGap = 0;
+    if (!rows.length || !(cap > 0)) {
+      return { off: 0, maxGap: 0 };
+    }
+    const minDelta = Math.max(1, 0.001 * cap);
+    for (const pos of rows) {
+      if (pos.wanted == null || pos.wanted === undefined) continue;
+      const got = Number(pos.weight) || 0;
+      const wanted = Number(pos.wanted) || 0;
+      const gap = Math.abs(wanted - got);
+      if (gap * cap >= minDelta) {
+        off += 1;
+        if (gap > maxGap) maxGap = gap;
+      }
+    }
+    return { off, maxGap };
+  }
+
   function renderBookDrift(positions, equity) {
     const el = document.getElementById("metric-drift");
     const sub = document.getElementById("metric-drift-sub");
@@ -99,19 +121,9 @@
       bar.innerHTML = "";
       return;
     }
-    const minDelta = Math.max(1, 0.001 * cap);
-    let off = 0;
-    let maxGap = 0;
-    for (const pos of rows) {
-      if (pos.wanted == null || pos.wanted === undefined) continue;
-      const got = Number(pos.weight) || 0;
-      const wanted = Number(pos.wanted) || 0;
-      const gap = Math.abs(wanted - got);
-      if (gap * cap >= minDelta) {
-        off += 1;
-        if (gap > maxGap) maxGap = gap;
-      }
-    }
+    const drift = bookDrift(positions, equity);
+    const off = drift.off;
+    const maxGap = drift.maxGap;
     el.textContent = String(off);
     el.classList.toggle("fail", off > 0);
     sub.textContent = off ? `max ${fmtPct(maxGap)}` : "—";

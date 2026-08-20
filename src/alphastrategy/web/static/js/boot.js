@@ -1,14 +1,14 @@
-  function detectDeviation(events) {
-    let active = false;
-    for (const ev of events) {
-      if (ev.event === "execution_deviation") {
-        active = true;
-      }
-      if (ev.event === "resume" || ev.event === "flatten" || ev.event === "rebalance") {
-        active = false;
+  function detectDeviation(portfolio, status) {
+    const equity = Number(portfolio && portfolio.equity);
+    const drift = bookDrift(portfolio && portfolio.positions, equity);
+    if (drift.off > 0) return true;
+    if (status && status.last_rebalance_complete === false) {
+      const combined = portfolio && portfolio.last_combined;
+      if (combined && typeof combined === "object" && Object.keys(combined).length) {
+        return true;
       }
     }
-    return active;
+    return false;
   }
 
   async function refresh() {
@@ -25,10 +25,7 @@
       state.bundles = bundles;
       state.activity = activity;
       state.risk = risk;
-      state.deviationActive = detectDeviation(activity);
-      if (portfolio.deviation || portfolio.deviations) {
-        state.deviationActive = true;
-      }
+      state.deviationActive = detectDeviation(portfolio, status);
       const banner = document.getElementById("control-plane-banner");
       banner.classList.add("hidden");
       banner.textContent = "";

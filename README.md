@@ -177,7 +177,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   is the RTH session. Spoken Supervisor is the runtime state. `status`
   includes `heartbeat`.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
-  visible on every screen, not only Portfolio.
+  visible on every screen, not only Portfolio. The deviation banner
+  follows Book Drift and cannot go quiet while Drift is above zero.
 - Activity kill rows say **isolated residual** or **flattened account**.
   `alphastrategy status` includes `last_kill` even if the desk is down.
 - Daily paper orders are capped (default 200). Overflow is a limit
