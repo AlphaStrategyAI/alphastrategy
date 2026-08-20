@@ -221,12 +221,23 @@
       panel.appendChild(track);
       const tight = overlayTighterCount(risk.sleeves[id], account);
       const tightLine = document.createElement("p");
-      tightLine.className = "muted nums";
-      tightLine.textContent = tight ? `${tight} tighter than account` : "Same as account";
+      tightLine.className = "nums tighter-line";
+      if (tight) {
+        tightLine.textContent = `${tight} tighter than account`;
+        tightLine.classList.add("warn");
+      } else {
+        tightLine.textContent = "Same as account";
+      }
       panel.appendChild(tightLine);
       const form = buildRiskInputs(id, risk.sleeves[id], risk.sleeves[id]);
       form.addEventListener("submit", (ev) => onRiskSleeveSubmit(ev, id));
-      panel.appendChild(form);
+      const details = document.createElement("details");
+      details.className = "risk-sleeve-tighten";
+      const summary = document.createElement("summary");
+      summary.textContent = "Tighten this sleeve";
+      details.appendChild(summary);
+      details.appendChild(form);
+      panel.appendChild(details);
       sleevesEl.appendChild(panel);
     }
   }

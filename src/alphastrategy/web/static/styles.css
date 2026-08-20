@@ -829,3 +829,12 @@ button.action:focus-visible,
 #risk-tighten-tight.warn {
   color: #f59e0b;
 }
+
+#risk-sleeves .tighter-line.warn {
+  color: #f59e0b;
+}
+
+.risk-sleeve-tighten summary {
+  cursor: pointer;
+  color: #9ba3b4;
+}
