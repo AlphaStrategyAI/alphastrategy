@@ -116,6 +116,41 @@
     });
   }
 
+  function renderRunStartHint() {
+    const el = document.getElementById("run-start-hint");
+    if (!el) return;
+    const halted =
+      (state.status && state.status.state === "halted") ||
+      Boolean(state.status && state.status.halted);
+    const flattened =
+      Boolean(state.status && state.status.flattened) ||
+      (state.status &&
+        (state.status.state === "flattening" || state.status.state === "stopped"));
+    if (halted) {
+      el.className = "warn";
+      el.textContent =
+        "Start paper while halted waits for resume. Resume does not catch up.";
+      return;
+    }
+    if (flattened) {
+      el.className = "fail";
+      el.textContent =
+        "Start paper after flatten starts the session loop again and does not catch up.";
+      return;
+    }
+    el.className = "muted";
+    el.textContent =
+      "Start paper is a second explicit action. Import is not permission to trade.";
+  }
+
+  function renderRunStopHint() {
+    const el = document.getElementById("run-stop-hint");
+    if (!el) return;
+    el.className = "muted";
+    el.textContent =
+      "Stop zeros that sleeve on the next legal rebalance and does not flatten now.";
+  }
+
   function renderRunRecover() {
     const el = document.getElementById("run-halt-reason");
     if (!el) return;

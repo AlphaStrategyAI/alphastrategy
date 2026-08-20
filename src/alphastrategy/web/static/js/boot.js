@@ -36,6 +36,8 @@
         renderRunSleeves();
       }
       renderRunRecover();
+      renderRunStartHint();
+      renderRunStopHint();
       renderActivity();
       renderRisk();
     } catch (err) {

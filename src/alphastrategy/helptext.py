@@ -193,6 +193,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Run is four bands: Start paper, Sleeves, After halt, Flatten account. "
             "Sleeves is four tiles Remaining / Spoken / Active / Idle. Remaining is the hero. "
             "Start paper is a second explicit action. "
+            "Start paper while halted waits for resume. Resume does not catch up. "
             "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
             "Resume lives under After halt and does not catch up. "
@@ -290,7 +291,8 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "2. Open Run (Alt+3). "
             "3. Under Start paper pick the bundle, set allocation, check Confirm paper start, then Start paper. "
             "This is the second explicit action. "
-            "Start paper after flatten starts the session loop again and does not catch up."
+            "Start paper after flatten starts the session loop again and does not catch up. "
+            "Start paper while halted waits for resume. Resume does not catch up."
         ),
     },
     {

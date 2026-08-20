@@ -266,6 +266,14 @@ main {
   color: #f59e0b;
 }
 
+#run-start-hint.warn {
+  color: #f59e0b;
+}
+
+#run-start-hint.fail {
+  color: #ef4444;
+}
+
 .flatten-zone {
   margin-top: 1.25rem;
 }

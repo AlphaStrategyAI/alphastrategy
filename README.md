@@ -158,7 +158,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
 
 - **Halt** stops new orders and does not flatten. `paper resume` does
   not catch up; the next legal open/close rebalance does. Resume is only
-  after halt. Persist-before-send flushes the snapshot to disk before
+  after halt. Start paper while halted waits for resume. Resume does not
+  catch up. Persist-before-send flushes the snapshot to disk before
   orders so a host kill still sees interrupted rebalancing, flattening,
   or sleeve isolate. Persist-before-send spends the session event even
   with 0 fills. Clock Last names that spent window. Empty Positions names
