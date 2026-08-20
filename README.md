@@ -118,6 +118,8 @@ start paper). Positions include a **Book** bar (wanted vs got). Gross
 shows utilization against the account cap. Risk lists sleeve allocation
 as text. A flattened account shows a red **FLAT** banner; it must not
 look like an idle empty book. `alphastrategy status` includes `utilization`.
+Risk names caps in desk words (**Gross cap**, **Names**, **Orders today**).
+Tighten still posts the policy keys.
 
 ---
 

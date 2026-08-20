@@ -62,6 +62,8 @@ SECTIONS: list[dict[str, str]] = [
             "flatten budgets. Cash shows invested versus residual against the "
             "last combined target. status includes utilization. "
             "Sleeves show spoken share of the paper book. "
+            "Risk names caps in desk words (Gross cap, Names, Orders today). "
+            "Tighten still posts the policy keys. "
             "Risk lists each sleeve allocation as text. A red FLAT banner means "
             "the paper account was flattened. Activity kill rows say isolated "
             "residual or flattened account. status includes last_kill even "

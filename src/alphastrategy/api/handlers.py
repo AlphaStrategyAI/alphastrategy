@@ -16,6 +16,7 @@ from alphastrategy.bundle.schema import load_risk_envelope
 from alphastrategy.errors import ImportRejected
 from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.risk.labels import POLICY_LABELS
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
 from alphastrategy.risk.utilization import from_supervisor
 from alphastrategy.supervisor.heartbeat import describe
@@ -395,6 +396,7 @@ def handle_get_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
             "account": _policy_to_dict(supervisor.policy),
             "sleeves": sleeves,
             "utilization": from_supervisor(supervisor, live=True),
+            "labels": dict(POLICY_LABELS),
         },
     )
 

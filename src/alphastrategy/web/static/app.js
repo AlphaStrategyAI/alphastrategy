@@ -160,9 +160,23 @@
     return "imported";
   }
 
+  function policyLabel(key) {
+    const labels = (state.risk && state.risk.labels) || {};
+    const spoken = labels[key];
+    return spoken || key;
+  }
+
   function riskSummary(policy) {
     if (!policy) return "—";
-    return `gross ${fmtPct(policy.max_gross)} · name ${fmtPct(policy.max_name_weight)}`;
+    return (
+      policyLabel("max_gross") +
+      " " +
+      fmtPct(policy.max_gross) +
+      " · " +
+      policyLabel("max_name_weight") +
+      " " +
+      fmtPct(policy.max_name_weight)
+    );
   }
 
   function importedIds() {
@@ -769,11 +783,11 @@
     for (const key of NUMERIC_CAPS) {
       const row = document.createElement("div");
       const val = policy[key];
-      row.innerHTML = `<span class="muted">${key}</span> <span class="nums">${val}</span>`;
+      row.innerHTML = `<span class="muted">${policyLabel(key)}</span> <span class="nums">${val}</span>`;
       container.appendChild(row);
     }
     const longRow = document.createElement("div");
-    longRow.innerHTML = `<span class="muted">long_only</span> <span class="nums">${policy.long_only}</span>`;
+    longRow.innerHTML = `<span class="muted">${policyLabel("long_only")}</span> <span class="nums">${policy.long_only}</span>`;
     container.appendChild(longRow);
   }
 
@@ -784,7 +798,7 @@
 
     for (const key of NUMERIC_CAPS) {
       const label = document.createElement("label");
-      label.textContent = key;
+      label.textContent = policyLabel(key);
       const input = document.createElement("input");
       input.type = "number";
       input.name = key;
