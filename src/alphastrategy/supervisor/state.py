@@ -67,6 +67,7 @@ class SupervisorSnapshot:
     orders_date: str | None = None
     orders_today: int = 0
     last_got: dict[str, float] = field(default_factory=dict)
+    last_fill_got: dict[str, float] = field(default_factory=dict)
     last_kill: dict[str, Any] | None = None
     last_heartbeat_at: str | None = None
     rebalance_placed: int = 0
@@ -115,6 +116,10 @@ class SupervisorSnapshot:
             last_got={
                 str(asset): float(weight)
                 for asset, weight in (payload.get("last_got") or {}).items()
+            },
+            last_fill_got={
+                str(asset): float(weight)
+                for asset, weight in (payload.get("last_fill_got") or {}).items()
             },
             last_kill=_kill_from_payload(payload.get("last_kill")),
             last_heartbeat_at=(

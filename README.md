@@ -135,7 +135,7 @@ against the last combined target. Sleeves show how much of the paper book
 is spoken for. An empty Portfolio shows **Start this paper desk** as the
 first glance band, then Book / Flatten budgets / Clock. Positions include
 wanted names with no fill and a **Book** bar (wanted vs got). **Book Drift**
-counts names off the last combined target. Gross
+follows the last fill, not last prices. Gross
 shows utilization against the spoken flatten cap. Sleeve overlays is
 **Spoken / Overlays / Tighter / Idle** (Spoken is the hero). Allocation
 is a rail, not only text. Each overlay card is allocation rail and

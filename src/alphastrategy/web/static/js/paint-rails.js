@@ -1,10 +1,12 @@
-  function wantedGotBar(wanted, got, cap) {
+  function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);
     const scale = Math.max(Number(cap) || 0.2, w, g, 0.01);
     const wPct = Math.min(100, (w / scale) * 100);
     const gPct = Math.min(100, (g / scale) * 100);
-    const drift = Math.abs(w - g) > 0.001 ? " drift" : "";
+    const fillW =
+      fill == null || fill === undefined ? g : Math.max(0, Number(fill) || 0);
+    const drift = Math.abs(w - fillW) > 0.001 ? " drift" : "";
     return (
       `<div class="wg-cell"><div class="wg-track${drift}" aria-label="wanted ${fmtPct(w)} got ${fmtPct(g)}">` +
       `<span class="wg-got" style="width:${gPct}%"></span>` +

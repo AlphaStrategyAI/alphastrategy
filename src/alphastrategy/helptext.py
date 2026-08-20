@@ -88,6 +88,7 @@ SECTIONS: list[dict[str, str]] = [
             "Positions is Rows / Wanted / Got / At cap. Equity is the hero. "
             "Clock is Session / Now / Next / Last. "
             "Book Drift is names off the last combined target. "
+            "Book Drift follows the last fill, not last prices. "
             "The deviation banner follows Book Drift and cannot go quiet while Drift is above zero. "
             "A spent window keeps it. "
             "Positions include wanted names with no fill. "
@@ -162,6 +163,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Empty Portfolio starts with Start this paper desk, then "
             "Book / Flatten budgets / Clock, then Positions / Sleeves. Equity is the hero. "
             "Book Drift is names off the last combined target. "
+            "Book Drift follows the last fill, not last prices. "
             "The deviation banner follows Book Drift and cannot go quiet while Drift is above zero. "
             "A spent window keeps it. "
             "Positions is four tiles Rows / Wanted / Got / At cap. Wanted is the hero. "
@@ -335,6 +337,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
         "title": "How to read wanted versus got",
         "body": (
             "1. On Portfolio, Positions Wanted versus Got is last combined target versus current weight. "
+            "Got is the current mark. Book Drift follows the last fill, not last prices. "
             "2. On Activity, expand a rebalance blotter row for the Wanted / Got table, not a JSON dump."
         ),
     },

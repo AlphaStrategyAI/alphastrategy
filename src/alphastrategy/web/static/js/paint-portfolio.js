@@ -123,7 +123,9 @@
       if (pos.wanted == null || pos.wanted === undefined) continue;
       const got = Number(pos.weight) || 0;
       const wanted = Number(pos.wanted) || 0;
-      const gap = Math.abs(wanted - got);
+      const fill =
+        pos.fill == null || pos.fill === undefined ? got : Number(pos.fill) || 0;
+      const gap = Math.abs(wanted - fill);
       if (gap * cap >= minDelta) {
         off += 1;
         if (gap > maxGap) maxGap = gap;
@@ -285,7 +287,7 @@
         tr.innerHTML =
           `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td>` +
           `<td class="nums">${notional}</td><td class="nums">${wanted}</td>` +
-          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap)}</td>` +
+          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap, pos.fill)}</td>` +
           `<td>${nameCapBar(pos.weight, cap)}</td>`;
         posBody.appendChild(tr);
       }

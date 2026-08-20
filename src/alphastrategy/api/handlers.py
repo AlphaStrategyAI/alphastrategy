@@ -62,8 +62,10 @@ def _enrich_positions(
     equity: float,
     prices: dict[str, float],
     last_combined: dict[str, float] | None = None,
+    last_fill_got: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     combined = last_combined or {}
+    filled = last_fill_got or {}
     out: list[dict[str, Any]] = []
     for pos in positions:
         item = dict(pos)
@@ -76,6 +78,8 @@ def _enrich_positions(
             item["weight"] = (notional / equity) if equity else 0.0
         if symbol in combined:
             item["wanted"] = combined[symbol]
+        if symbol in filled:
+            item["fill"] = float(filled[symbol])
         out.append(item)
     seen = {str(item.get("symbol", "")) for item in out}
     for symbol, weight in sorted(combined.items()):
@@ -84,15 +88,16 @@ def _enrich_positions(
         wanted = float(weight)
         if abs(wanted) <= 0:
             continue
-        out.append(
-            {
-                "symbol": symbol,
-                "qty": 0.0,
-                "notional": 0.0,
-                "weight": 0.0,
-                "wanted": wanted,
-            }
-        )
+        row: dict[str, Any] = {
+            "symbol": symbol,
+            "qty": 0.0,
+            "notional": 0.0,
+            "weight": 0.0,
+            "wanted": wanted,
+        }
+        if symbol in filled:
+            row["fill"] = float(filled[symbol])
+        out.append(row)
     return out
 
 
@@ -299,6 +304,7 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
         equity,
         snapshot.last_prices,
         snapshot.last_combined,
+        snapshot.last_fill_got,
     )
     payload: dict[str, Any] = {
         "equity": equity,

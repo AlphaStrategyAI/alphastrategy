@@ -703,6 +703,7 @@ class Supervisor:
             if symbol in prices and equity > 0
         }
         self._snapshot.last_got = dict(got)
+        self._snapshot.last_fill_got = dict(got)
         for deviation in deviations_after(combined, got, equity, prices):
             self._audit("execution_deviation", **deviation)
         return got
@@ -858,6 +859,7 @@ class Supervisor:
         self._snapshot.halt_reason = None
         self._snapshot.last_combined = {}
         self._snapshot.last_got = {}
+        self._snapshot.last_fill_got = {}
         self._snapshot.last_sleeve_weights = {}
         self._snapshot.last_sleeve_contribution = {}
         self._snapshot.last_prices = {}
