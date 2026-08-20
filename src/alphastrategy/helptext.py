@@ -129,7 +129,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
             "Resume lives under After halt and does not catch up. "
-            "Account kill lives under Flatten account and requires typing FLATTEN."
+            "Account kill lives under Flatten account and requires typing FLATTEN. "
+            "Each Run band shows its own error."
         ),
     },
     {

@@ -105,6 +105,20 @@
     el.textContent = message;
   }
 
+  function setRunError(band, message) {
+    const ids = {
+      promote: "run-error",
+      sleeves: "run-sleeve-error",
+      recover: "run-recover-error",
+      flatten: "run-flatten-error",
+    };
+    for (const [key, id] of Object.entries(ids)) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      setError(el, key === band ? message : "");
+    }
+  }
+
   function showImportRejection(body) {
     const box = document.getElementById("import-error");
     const ok = document.getElementById("import-ok");
@@ -654,23 +668,22 @@
     container.querySelectorAll(".sleeve-alloc-form").forEach((form) => {
       form.addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        const errEl = document.getElementById("run-error");
         const bundleId = form.dataset.bundle;
         const allocation = Number(form.querySelector('[name="allocation"]').value);
         const confirmed = form.querySelector('[name="confirm"]').checked;
         if (!confirmed) {
-          setError(errEl, "Confirm paper allocation required");
+          setRunError("sleeves", "Confirm paper allocation required");
           return;
         }
         try {
           await api("POST", "/api/paper/start", { bundle_id: bundleId, allocation });
-          setError(errEl, "");
+          setRunError("sleeves", "");
           const allocInput = form.querySelector('[name="allocation"]');
           form.querySelector('[name="confirm"]').checked = false;
           allocInput.dataset.current = allocInput.value;
           await refresh();
         } catch (err) {
-          setError(errEl, err.message);
+          setRunError("sleeves", err.message);
         }
       });
     });
@@ -683,7 +696,7 @@
         const bundleId = btn.dataset.kill;
         const box = container.querySelector(`[data-kill-confirm="${bundleId}"]`);
         if (!box || !box.checked) {
-          setError(document.getElementById("run-error"), "Confirm sleeve kill");
+          setRunError("sleeves", "Confirm sleeve kill");
           return;
         }
         box.checked = false;
@@ -941,24 +954,22 @@
   }
 
   async function stopSleeve(bundleId) {
-    const errEl = document.getElementById("run-error");
     try {
       await api("POST", "/api/paper/stop", { bundle_id: bundleId });
-      setError(errEl, "");
+      setRunError("sleeves", "");
       await refresh();
     } catch (err) {
-      setError(errEl, err.message);
+      setRunError("sleeves", err.message);
     }
   }
 
   async function killSleeve(bundleId) {
-    const errEl = document.getElementById("run-error");
     try {
       await api("POST", "/api/paper/kill", { bundle_id: bundleId });
-      setError(errEl, "");
+      setRunError("sleeves", "");
       await refresh();
     } catch (err) {
-      setError(errEl, err.message);
+      setRunError("sleeves", err.message);
     }
   }
 
@@ -998,21 +1009,20 @@
 
   async function onStartSubmit(ev) {
     ev.preventDefault();
-    const errEl = document.getElementById("run-error");
     const bundleId = document.getElementById("start-bundle").value;
     const allocation = Number(document.getElementById("start-allocation").value);
     const confirmed = document.getElementById("start-confirm").checked;
     if (!confirmed) {
-      setError(errEl, "Confirm paper start required");
+      setRunError("promote", "Confirm paper start required");
       return;
     }
     try {
       await api("POST", "/api/paper/start", { bundle_id: bundleId, allocation });
-      setError(errEl, "");
+      setRunError("promote", "");
       document.getElementById("start-confirm").checked = false;
       await refresh();
     } catch (err) {
-      setError(errEl, err.message);
+      setRunError("promote", err.message);
     }
   }
 
@@ -1094,32 +1104,30 @@
   document.getElementById("start-form").addEventListener("submit", onStartSubmit);
 
   document.getElementById("account-kill").addEventListener("click", async () => {
-    const errEl = document.getElementById("run-error");
     const confirmed = document.getElementById("account-kill-confirm").checked;
     const phrase = document.getElementById("account-kill-phrase").value;
     if (!confirmed || phrase !== "FLATTEN") {
-      setError(errEl, "Type FLATTEN and confirm to flatten the whole paper account");
+      setRunError("flatten", "Type FLATTEN and confirm to flatten the whole paper account");
       return;
     }
     try {
       await api("POST", "/api/paper/kill", {});
-      setError(errEl, "");
+      setRunError("flatten", "");
       document.getElementById("account-kill-confirm").checked = false;
       document.getElementById("account-kill-phrase").value = "";
       await refresh();
     } catch (err) {
-      setError(errEl, err.message);
+      setRunError("flatten", err.message);
     }
   });
 
   document.getElementById("account-resume").addEventListener("click", async () => {
-    const errEl = document.getElementById("run-error");
     try {
       await api("POST", "/api/paper/resume", {});
-      setError(errEl, "");
+      setRunError("recover", "");
       await refresh();
     } catch (err) {
-      setError(errEl, err.message);
+      setRunError("recover", err.message);
     }
   });
 

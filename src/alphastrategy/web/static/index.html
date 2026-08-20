@@ -181,12 +181,14 @@
       </div>
       <div id="run-book" class="glance-band">
         <h2 class="glance-heading">Sleeves</h2>
+        <div id="run-sleeve-error" class="error-box hidden"></div>
         <div id="run-sleeves"></div>
       </div>
       <div id="run-recover" class="glance-band recover-zone">
         <h2 class="glance-heading">After halt</h2>
         <div class="panel">
           <button type="button" id="account-resume" class="action warn">Resume after halt</button>
+          <div id="run-recover-error" class="error-box hidden"></div>
         </div>
       </div>
       <div id="run-flatten" class="glance-band flatten-zone">
@@ -201,6 +203,7 @@
             <input type="text" id="account-kill-phrase" autocomplete="off" placeholder="FLATTEN">
           </label>
           <button type="button" id="account-kill" class="action danger account-kill">Kill account — flatten all</button>
+          <div id="run-flatten-error" class="error-box hidden"></div>
         </div>
       </div>
     </section>
