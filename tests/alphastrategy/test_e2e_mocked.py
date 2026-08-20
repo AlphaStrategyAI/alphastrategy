@@ -330,11 +330,13 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert help_resp.status == 200
         assert help_body["sections"][2]["id"] == "halt_flatten"
         assert help_body["howtos"][0]["id"] == "how_portfolio"
+        assert help_body["tasks"][0]["id"] == "task_import"
         conn.request("GET", "/")
         html_resp = conn.getresponse()
         html = html_resp.read().decode("utf-8")
         assert html_resp.status == 200
         assert 'id="help-toggle"' in html
+        assert 'id="help-tasks"' in html
         assert 'id="import-error-kind"' in html
         assert 'id="desk-pulse"' in html
         assert 'id="glance-book"' in html

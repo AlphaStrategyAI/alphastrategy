@@ -605,6 +605,13 @@ def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
         "how_activity",
         "how_risk",
     ]
+    assert [item["id"] for item in payload["tasks"]] == [
+        "task_import",
+        "task_start",
+        "task_flatten",
+        "task_tighten",
+        "task_wanted",
+    ]
     blob = json_module.dumps(payload)
     assert "secret" not in blob.lower()
     assert "ALPACA" not in blob

@@ -703,3 +703,21 @@ def test_css_activity_book_drill_in(css_text: str) -> None:
     detail = re.search(r"\.activity-detail\s*\{[^}]*\}", css_text, re.DOTALL)
     assert detail is not None
     assert "pre-wrap" not in detail.group(0)
+
+
+def test_html_help_tasks(html_text: str) -> None:
+    assert 'id="help-tasks"' in html_text
+    assert 'id="help-howto"' in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+    assert "help" not in screens
+
+
+def test_js_renders_help_tasks(js_text: str) -> None:
+    paint = js_text[js_text.find("function renderHelp") : js_text.find("async function loadHelp")]
+    assert "payload.tasks" in paint
+    assert 'getElementById("help-tasks")' in paint
+    assert "item.screens" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text

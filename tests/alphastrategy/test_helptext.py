@@ -39,6 +39,7 @@ REQUIRED_PHRASES = (
     "Caps / Headroom / Tighten",
     "Beat / Tape / Blotter",
     "not a JSON dump",
+    "How to import a qualified .asb",
 )
 
 
@@ -95,13 +96,37 @@ def test_help_text_contains_required_phrases() -> None:
 
 
 def test_help_copy_is_this_product() -> None:
-    from alphastrategy.helptext import SCREEN_HOWTOS
+    from alphastrategy.helptext import SCREEN_HOWTOS, TASK_HOWTOS
 
     blob = (
         help_text().lower()
         + " ".join(section["body"].lower() for section in SECTIONS)
         + " ".join(item["body"].lower() for item in SCREEN_HOWTOS)
+        + " ".join(item["body"].lower() for item in TASK_HOWTOS)
     )
     assert "streamlit" not in blob
     assert "openstrategy" not in blob
     assert "live trading" not in blob
+
+
+def test_task_howtos_match_jobs() -> None:
+    from alphastrategy.helptext import TASK_HOWTOS
+
+    assert tuple(item["id"] for item in TASK_HOWTOS) == (
+        "task_import",
+        "task_start",
+        "task_flatten",
+        "task_tighten",
+        "task_wanted",
+    )
+    payload = help_payload()
+    assert payload["tasks"] == TASK_HOWTOS
+    assert payload["howtos"][0]["id"] == "how_portfolio"
+    text = help_text()
+    assert text.index("How to import a qualified .asb") < text.index("On Portfolio")
+    for item in TASK_HOWTOS:
+        assert item["title"].startswith("How to")
+        assert item["body"].strip()
+        assert item["screens"]
+        for screen in item["screens"]:
+            assert screen in ("portfolio", "strategies", "run", "activity", "risk")
