@@ -53,6 +53,8 @@ SECTIONS: list[dict[str, str]] = [
             "position weight. An empty desk says Start this paper desk and "
             "tells you to import, then start paper. Portfolio home is three "
             "bands Book / Flatten budgets / Clock. Equity is the hero. "
+            "Strategies is three bands Inventory / Import .asb / Roster. "
+            "Paper is the hero count. "
             "Positions and Sleeves sit side by side on a wide desk. "
             "The Positions Book column is wanted versus got. Gross utilization "
             "is against "
@@ -116,6 +118,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "screen": "strategies",
         "title": "On Strategies",
         "body": (
+            "Three bands: Inventory / Import .asb / Roster. Paper is the hero count. "
+            "The four tiles are imported, paper, halted, and stopped. "
             "Upload a qualified .asb. Import is not permission to trade. "
             "Failures name the gate (hash, schema, conformance) and a next action. "
             "Start paper on Run."

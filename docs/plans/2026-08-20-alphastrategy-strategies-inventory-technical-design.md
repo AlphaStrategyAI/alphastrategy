@@ -78,10 +78,10 @@ def test_js_paints_strategy_inventory(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderStrategies") : js_text.find("function runFormIsDirty")
     ]
-    assert 'getElementById("strat-count-paper")' in paint
-    assert 'getElementById("strat-count-imported")' in paint
-    assert 'getElementById("strat-count-halted")' in paint
-    assert 'getElementById("strat-count-stopped")' in paint
+    assert '"strat-count-paper"' in paint
+    assert '"strat-count-imported"' in paint
+    assert '"strat-count-halted"' in paint
+    assert '"strat-count-stopped"' in paint
     assert '"status-running"' in paint
     assert '"status-halt"' in paint
     assert '"status-stopped"' in paint

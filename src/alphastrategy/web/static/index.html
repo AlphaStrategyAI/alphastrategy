@@ -127,33 +127,58 @@
     </section>
 
     <section id="screen-strategies" class="screen" aria-label="Strategies">
-      <div class="panel">
-        <h2>Import bundle</h2>
-        <form id="import-form">
-          <input type="file" id="import-file" accept=".asb" required>
-          <button type="submit" class="action primary">Upload .asb</button>
-        </form>
-        <div id="import-error" class="error-box hidden" role="alert">
-          <div id="import-error-kind" class="error-kind"></div>
-          <strong id="import-error-title"></strong>
-          <div id="import-error-detail"></div>
-          <div id="import-error-next" class="error-next"></div>
+      <div id="strat-inventory" class="glance-band">
+        <h2 class="glance-heading">Inventory</h2>
+        <div class="metrics metrics-4 nums">
+          <div class="metric">
+            <div class="metric-label">Imported</div>
+            <div id="strat-count-imported" class="metric-value">—</div>
+          </div>
+          <div class="metric hero">
+            <div class="metric-label">Paper</div>
+            <div id="strat-count-paper" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Halted</div>
+            <div id="strat-count-halted" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Stopped</div>
+            <div id="strat-count-stopped" class="metric-value">—</div>
+          </div>
         </div>
-        <div id="import-ok" class="ok-box hidden" role="status"></div>
       </div>
-      <div class="panel stack">
-        <h2>Imported strategies</h2>
-        <table id="strategies-table">
-          <thead>
-            <tr>
-              <th>Bundle</th>
-              <th>State</th>
-              <th>Allocation</th>
-              <th>Risk</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div id="strat-import" class="glance-band">
+        <h2 class="glance-heading">Import .asb</h2>
+        <div class="panel">
+          <form id="import-form">
+            <input type="file" id="import-file" accept=".asb" required>
+            <button type="submit" class="action primary">Upload .asb</button>
+          </form>
+          <div id="import-error" class="error-box hidden" role="alert">
+            <div id="import-error-kind" class="error-kind"></div>
+            <strong id="import-error-title"></strong>
+            <div id="import-error-detail"></div>
+            <div id="import-error-next" class="error-next"></div>
+          </div>
+          <div id="import-ok" class="ok-box hidden" role="status"></div>
+        </div>
+      </div>
+      <div id="strat-roster" class="glance-band">
+        <h2 class="glance-heading">Roster</h2>
+        <div class="panel">
+          <table id="strategies-table">
+            <thead>
+              <tr>
+                <th>Bundle</th>
+                <th>State</th>
+                <th>Allocation</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </section>
 

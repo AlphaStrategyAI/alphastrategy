@@ -112,6 +112,9 @@ The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 Portfolio is three bands: **Book** (Equity is the hero, with Cash and
 Day PnL), **Flatten budgets** (Gross, Names, Orders today), and
 **Clock** (**Session** OPEN/CLOSED and **Next rebalance** countdown).
+Strategies is three bands: **Inventory** (Imported / Paper / Halted / Stopped;
+Paper is the hero), **Import .asb**, and **Roster**. Import is not permission
+to trade; start paper on Run.
 Positions and Sleeves sit side by side on a wide desk. Positions add a
 **Cap** rail against the single-name limit. **Names** and **Orders today**
 show remaining flatten budgets. **Cash** shows invested versus residual
