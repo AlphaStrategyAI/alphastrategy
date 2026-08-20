@@ -21,6 +21,32 @@
     container.innerHTML = "";
 
     const ids = [...new Set([...bundles.imported, ...Object.keys(bundles.paper)])].sort();
+    let spoken = 0;
+    let live = 0;
+    let idle = 0;
+    for (const id of ids) {
+      const alloc = Number(bundles.paper[id]) || 0;
+      spoken += alloc;
+      if (alloc > 0) live += 1;
+      else idle += 1;
+    }
+    const remaining = Math.max(0, 1 - spoken);
+    const remEl = document.getElementById("run-remaining");
+    if (remEl) {
+      remEl.textContent = fmtPct(remaining);
+      remEl.classList.toggle("warn", spoken >= 0.9 && spoken < 1);
+      remEl.classList.toggle("fail", spoken >= 1);
+    }
+    const spokenEl = document.getElementById("run-spoken");
+    if (spokenEl) spokenEl.textContent = fmtPct(spoken);
+    const liveEl = document.getElementById("run-count-live");
+    if (liveEl) liveEl.textContent = String(live);
+    const idleEl = document.getElementById("run-count-idle");
+    if (idleEl) idleEl.textContent = String(idle);
+    if (!ids.length) {
+      container.innerHTML = "<p class='muted'>No sleeves yet. Import a qualified .asb, then start paper.</p>";
+      return;
+    }
     for (const id of ids) {
       const card = document.createElement("div");
       card.className = "sleeve-card panel";

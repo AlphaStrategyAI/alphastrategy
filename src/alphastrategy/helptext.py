@@ -69,6 +69,7 @@ SECTIONS: list[dict[str, str]] = [
             "flatten budgets. Cash shows invested versus residual against the "
             "last combined target. status includes utilization. "
             "Sleeves show spoken share of the paper book. "
+            "Run Sleeves is Remaining / Spoken / Live / Idle. "
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
             "Risk is four bands Caps / Headroom / Tighten plus Sleeve overlays. "
             "Tighten still posts the policy keys. "
@@ -145,6 +146,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "title": "On Run",
         "body": (
             "Run is four bands: Start paper, Sleeves, After halt, Flatten account. "
+            "Sleeves is four tiles Remaining / Spoken / Live / Idle. Remaining is the hero. "
             "Start paper is a second explicit action. "
             "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "

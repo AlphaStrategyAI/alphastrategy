@@ -794,3 +794,11 @@ button.action:focus-visible,
 #metric-session.open {
   color: #10b981;
 }
+
+#run-remaining.warn {
+  color: #f59e0b;
+}
+
+#run-remaining.fail {
+  color: #ef4444;
+}

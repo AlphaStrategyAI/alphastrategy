@@ -119,6 +119,8 @@ and **Drift**), **Flatten budgets** (Gross, Names, Orders today), and
 Strategies is three bands: **Inventory** (Imported / Paper / Halted / Stopped;
 Paper is the hero), **Import .asb**, and **Roster**. Import is not permission
 to trade; start paper on Run.
+Run is four bands: **Start paper**, **Sleeves** (Remaining / Spoken / Live /
+Idle; Remaining is the hero), **After halt**, and **Flatten account**.
 Positions and Sleeves sit side by side on a wide desk. Positions add a
 **Cap** rail against the single-name limit. **Names** and **Orders today**
 show remaining flatten budgets. **Cash** shows invested versus residual
