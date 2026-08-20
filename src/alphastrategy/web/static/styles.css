@@ -121,12 +121,18 @@ header {
   color: #10b981;
 }
 
-#activity-heartbeat.stale,
+#activity-heartbeat.stale {
+  color: #f59e0b;
+}
+
 #act-beat-state.halt {
   color: #f59e0b;
 }
 
-#activity-heartbeat.dead,
+#activity-heartbeat.dead {
+  color: #ef4444;
+}
+
 #act-beat-state.fail {
   color: #ef4444;
 }
