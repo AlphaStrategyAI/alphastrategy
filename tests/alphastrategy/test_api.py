@@ -570,6 +570,15 @@ def test_status_and_risk_include_utilization(api_stack) -> None:
     assert risk["utilization"]["orders_today"] == 7
 
 
+def test_get_risk_includes_spoken_labels(api_client: ApiClient) -> None:
+    from alphastrategy.risk.labels import POLICY_LABELS
+
+    risk = api_client.get("/api/risk").json()
+    assert risk["labels"] == POLICY_LABELS
+    assert "max_gross" in risk["account"]
+    assert risk["labels"]["max_gross"] == "Gross cap"
+
+
 def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
     from alphastrategy.helptext import help_payload
 

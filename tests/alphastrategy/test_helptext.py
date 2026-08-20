@@ -30,6 +30,7 @@ REQUIRED_PHRASES = (
     "Supervisor beat",
     "Book / Flatten budgets / Clock",
     "Positions Book column",
+    "Gross cap",
 )
 
 

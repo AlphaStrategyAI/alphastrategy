@@ -393,3 +393,10 @@ def test_css_glance_bands(css_text: str) -> None:
     assert "max-width: 639px" in css_text
     assert "min-width: 800px" in css_text
     assert ".metric.hero .metric-value" in css_text
+
+
+def test_js_uses_api_policy_labels(js_text: str) -> None:
+    assert "function policyLabel" in js_text
+    assert "risk.labels" in js_text
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text

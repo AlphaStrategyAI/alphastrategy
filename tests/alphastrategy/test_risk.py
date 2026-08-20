@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import fields, replace
 
 import pytest
 
@@ -158,3 +158,20 @@ def test_summarize_zero_equity_cash_weight_is_zero() -> None:
     )
     assert out["cash_weight"] == 0.0
     assert out["invested_weight"] == 0.0
+
+
+def test_policy_labels_cover_account_policy_fields() -> None:
+    from alphastrategy.risk.labels import POLICY_LABELS, label_for
+
+    keys = {item.name for item in fields(AccountPolicy)}
+    assert set(POLICY_LABELS) == keys
+    assert label_for("max_gross") == "Gross cap"
+    assert label_for("max_name_weight") == "Name cap"
+    assert label_for("max_names") == "Names"
+    assert label_for("max_order_notional_frac") == "Order size"
+    assert label_for("max_orders_per_rebalance") == "Orders / rebalance"
+    assert label_for("max_orders_per_day") == "Orders today"
+    assert label_for("min_delta_dollar") == "Min delta $"
+    assert label_for("min_delta_frac") == "Min delta % of equity"
+    assert label_for("long_only") == "Long only"
+    assert label_for("not_a_cap") == "not_a_cap"
