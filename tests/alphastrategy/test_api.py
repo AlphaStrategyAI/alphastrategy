@@ -495,6 +495,20 @@ def test_portfolio_includes_contribution_and_position_weight(api_stack):
     assert pos["wanted"] == pytest.approx(0.4)
 
 
+def test_portfolio_includes_wanted_name_with_no_fill(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_combined = {"AAPL": 0.4, "MSFT": 0.2}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0, "MSFT": 200.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {"AAPL": 10.0}
+    broker.equity = 10_000.0
+    body = client.get("/api/portfolio").json()
+    msft = next(item for item in body["positions"] if item["symbol"] == "MSFT")
+    assert float(msft["qty"]) == 0.0
+    assert msft["wanted"] == pytest.approx(0.2)
+    assert msft["weight"] == pytest.approx(0.0)
+
+
 def test_bundles_lists_stopped(api_stack):
     client, _home, supervisor, _broker = api_stack
     supervisor.start_sleeve("asb_x", 0.25)

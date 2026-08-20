@@ -306,6 +306,9 @@ def test_e2e_account_flatten_sets_status_flattened(tmp_path: Path) -> None:
         status = json.loads(conn.getresponse().read().decode("utf-8"))
         assert status["flattened"] is True
         assert status["state"] == "stopped"
+        conn.request("GET", "/api/portfolio")
+        portfolio = json.loads(conn.getresponse().read().decode("utf-8"))
+        assert portfolio["last_combined"] == {}
         conn.request("GET", "/")
         html = conn.getresponse().read().decode("utf-8")
         assert 'id="flatten-banner"' in html
@@ -348,6 +351,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
         assert 'id="act-tape"' in html
+        assert 'id="metric-drift"' in html
         port = html[html.find('id="screen-portfolio"') : html.find('id="screen-strategies"')]
         assert 'id="first-run"' in port
         assert '<h2 class="glance-heading">Start this paper desk</h2>' in port

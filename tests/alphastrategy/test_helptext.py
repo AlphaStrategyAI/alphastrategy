@@ -41,6 +41,8 @@ REQUIRED_PHRASES = (
     "not a JSON dump",
     "How to import a qualified .asb",
     "empty Portfolio",
+    "Book Drift",
+    "Start paper after flatten",
 )
 
 

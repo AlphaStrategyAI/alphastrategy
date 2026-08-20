@@ -762,6 +762,45 @@ def test_kill_account_returns_account_outcome(tmp_path: Path):
     assert outcome.bundle_id is None
 
 
+def test_flatten_clears_last_book_and_zeros_sleeves(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.positions["AAPL"] = 10.0
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    supervisor.snapshot.last_combined = {"AAPL": 0.15}
+    supervisor.snapshot.last_got = {"AAPL": 0.10}
+    supervisor.kill_account()
+    snap = supervisor.snapshot
+    assert snap.state == SupervisorState.STOPPED
+    assert snap.last_combined == {}
+    assert snap.last_got == {}
+    assert snap.last_sleeve_weights == {}
+    assert snap.last_sleeve_contribution == {}
+    assert snap.last_prices == {}
+    assert snap.sleeves.get("asb_test", 0) == 0.0
+    assert "asb_test" in snap.stopped
+
+
+def test_start_sleeve_after_flatten_leaves_stopped_without_catchup(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=True,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    supervisor.kill_account()
+    assert supervisor.state == SupervisorState.STOPPED
+    orders_after_kill = list(broker.orders)
+    supervisor.start_sleeve("asb_test", 0.15)
+    assert supervisor.state == SupervisorState.IDLE_IN_SESSION
+    supervisor.tick()
+    assert broker.orders == orders_after_kill
+
+
 def test_tick_stamps_heartbeat_when_halted(tmp_path: Path) -> None:
     supervisor = _make_supervisor(tmp_path, FakeBroker())
     supervisor._snapshot.state = SupervisorState.HALTED

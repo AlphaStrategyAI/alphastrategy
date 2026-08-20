@@ -226,6 +226,12 @@ def test_html_first_run_and_book_column(html_text: str) -> None:
     assert 'data-go-screen="run"' in html_text
     assert ">Book<" in html_text
     assert 'id="metric-gross-bar"' in html_text
+    assert 'id="metric-drift"' in html_text
+    book = html_text[
+        html_text.find('id="glance-book"') : html_text.find('id="glance-risk"')
+    ]
+    assert 'id="metric-drift"' in book
+    assert "metrics-4" in book
 
 
 def test_css_first_glance_tracks_use_locked_tokens(css_text: str) -> None:
@@ -236,6 +242,12 @@ def test_css_first_glance_tracks_use_locked_tokens(css_text: str) -> None:
     first = re.search(r"\.first-run\s*\{[^}]*\}", css_text)
     assert first is not None
     assert "#10b981" in first.group(0).lower()
+
+
+def test_js_renders_book_drift(js_text: str) -> None:
+    assert "function renderBookDrift" in js_text
+    assert "metric-drift" in js_text
+    assert "window.confirm" not in js_text
 
 
 def test_js_first_glance_behaviors(js_text: str) -> None:
