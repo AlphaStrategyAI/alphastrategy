@@ -289,11 +289,11 @@ def test_import_stages_on_imported_filesystem(
 ) -> None:
     import tempfile
 
-    seen: dict[str, object] = {}
+    calls: list[dict[str, object]] = []
     real = tempfile.mkdtemp
 
     def spy(*args: object, **kwargs: object) -> str:
-        seen["kwargs"] = kwargs
+        calls.append(dict(kwargs))
         return real(*args, **kwargs)
 
     monkeypatch.setattr(tempfile, "mkdtemp", spy)
@@ -301,7 +301,9 @@ def test_import_stages_on_imported_filesystem(
     dest.write_bytes(build_golden_asb())
     home = _home(tmp_path)
     bundle_id = import_asb(dest, home)
-    kwargs = seen["kwargs"]
+    staging_calls = [c for c in calls if c.get("prefix") == ".staging."]
+    assert staging_calls
+    kwargs = staging_calls[0]
     assert isinstance(kwargs, dict)
     assert Path(str(kwargs["dir"])) == home.imported_dir()
     assert kwargs["prefix"] == ".staging."

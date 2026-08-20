@@ -162,7 +162,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   with 0 fills. Clock Last names that spent window. Empty Positions names
   a spent Last. Help includes How to read a spent window. Audit and runtime
   overlays flush to disk with that snapshot family. import-meta flushes
-  to disk with that family. Roster names imported at.
+  to disk with that family. Imported members flush to disk. Staging lives
+  under imported/. Roster names imported at.
 - **Account kill** flattens the whole paper account, clears the last book,
   and zeros live sleeves. **Start paper after flatten** starts the session
   loop again and does not catch up. On the Web, flatten lives

@@ -37,6 +37,7 @@ SECTIONS: list[dict[str, str]] = [
             "Clock Last names the spent window. "
             "Audit and runtime overlays flush to disk with that snapshot family. "
             "import-meta flushes to disk with that snapshot family. "
+            "Imported members flush to disk. Staging lives under imported/. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },

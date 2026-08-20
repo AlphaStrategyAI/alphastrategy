@@ -51,3 +51,27 @@ def append_text(path: Path | str, payload: str) -> None:
     finally:
         os.close(fd)
     fsync_dir(dest.parent)
+
+
+def replace_bytes(path: Path | str, payload: bytes, *, prefix: str = ".tmp.") -> None:
+    dest = Path(path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=dest.parent,
+        prefix=prefix,
+        suffix=".tmp",
+    )
+    tmp_path = Path(tmp_name)
+    replaced = False
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, dest)
+        replaced = True
+        fsync_dir(dest.parent)
+    except Exception:
+        if not replaced:
+            tmp_path.unlink(missing_ok=True)
+        raise

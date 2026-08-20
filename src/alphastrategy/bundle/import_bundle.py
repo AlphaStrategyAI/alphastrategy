@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import os
 import shutil
 import tempfile
 from datetime import datetime, timezone
@@ -24,7 +25,7 @@ from alphastrategy.bundle.schema import (
 from alphastrategy.dsl.sandbox import run_sandbox, weights_match
 from alphastrategy.errors import HaltRequested, ImportRejected
 from alphastrategy.home import AlphaStrategyHome
-from alphastrategy.persist import fsync_dir, replace_text
+from alphastrategy.persist import fsync_dir, replace_bytes, replace_text
 
 
 def _bars_from_csv(data: bytes) -> dict:
@@ -89,14 +90,17 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
     if bundle_dir.exists():
         raise ImportRejected(f"bundle already imported: {bundle_id}", kind="duplicate")
 
-    staging_parent = Path(tempfile.mkdtemp())
+    imported = home.imported_dir()
+    imported.mkdir(parents=True, exist_ok=True)
+    staging_parent = Path(tempfile.mkdtemp(prefix=".staging.", dir=imported))
     staging = staging_parent / bundle_id
     staging.mkdir(parents=True, exist_ok=False)
     try:
         for name, data in sorted(members.items()):
             dest = staging / name
             dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(data)
+            replace_bytes(dest, data, prefix=".member.")
+        fsync_dir(staging)
 
         _run_conformance(staging, members)
 
@@ -109,9 +113,8 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
             json.dumps(meta, indent=2) + "\n",
             prefix=".meta.",
         )
-        bundle_dir.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(staging), str(bundle_dir))
-        fsync_dir(bundle_dir.parent)
+        os.replace(staging, bundle_dir)
+        fsync_dir(imported)
     except Exception:
         shutil.rmtree(staging_parent, ignore_errors=True)
         if bundle_dir.exists():
