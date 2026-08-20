@@ -28,7 +28,8 @@ alphaloop FOUND candidate
 5. Promote a bundle to a paper sleeve when you are ready to trade.
 
 Import is not permission to trade. Starting a paper sleeve is a
-separate, explicit human action.
+separate, explicit human action. Import failures name the gate
+(hash, schema, conformance) and a next action.
 
 Docs map: [docs/index.md](docs/index.md). Runtime explanation:
 [docs/explanation/architecture.md](docs/explanation/architecture.md).

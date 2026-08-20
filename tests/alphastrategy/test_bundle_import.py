@@ -5,6 +5,7 @@ import pytest
 from alphastrategy.errors import ImportRejected
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.bundle.import_bundle import import_asb
+from alphastrategy.bundle.reject import payload
 from tests.alphastrategy.fixtures.make_asb import (
     build_golden_asb,
     mutate_member,
@@ -27,6 +28,33 @@ def test_import_rejects_hash_mismatch(tmp_path: Path):
         assert False, "should have rejected"
     except ImportRejected as e:
         assert "hash" in str(e).lower()
+        assert payload(e)["kind"] == "hash"
+
+
+def test_payload_classifies_import_gates() -> None:
+    cases = [
+        ("content hash mismatch: expected a, got b", "hash", "re-export"),
+        ("research_outcome must be FOUND, got 'NO_EVIDENCE'", "lineage", "found"),
+        ("evidence/summary.yaml passes_all must be true", "evidence", "passes_all"),
+        ("conformance weights mismatch", "conformance", "frozen bars"),
+        ("unsupported version pair: x, y", "schema", "us-equity-daily"),
+        ("bundle already imported: asb_x", "duplicate", "already"),
+        ("illegal member: evil.py", "archive", "no extra files"),
+    ]
+    for message, kind, needle in cases:
+        body = payload(ImportRejected(message))
+        assert body["kind"] == kind, message
+        assert body["error"] == message
+        assert body["title"]
+        assert needle in (body["title"] + " " + body["next"]).lower()
+
+
+def test_payload_classifies_bad_zip() -> None:
+    import zipfile
+
+    body = payload(zipfile.BadZipFile("File is not a zip file"))
+    assert body["kind"] == "archive"
+    assert body["error"]
 
 
 def test_import_rejects_not_found_outcome(tmp_path: Path):

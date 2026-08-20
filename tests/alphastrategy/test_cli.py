@@ -91,6 +91,18 @@ def test_cli_import_golden_asb(cli_home: Path) -> None:
     assert (home.bundle_dir(bundle_id) / "strategy.dsl.yaml").is_file()
 
 
+def test_cli_import_rejected_prints_kind(cli_home: Path, tmp_path: Path, capsys) -> None:
+    from tests.alphastrategy.fixtures.make_asb import build_golden_asb, mutate_member
+
+    dest = tmp_path / "tampered.asb"
+    dest.write_bytes(mutate_member(build_golden_asb(), "strategy.dsl.yaml", b"steps: []\n"))
+    rc = main(["import", str(dest)])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "hash" in err.lower()
+    assert "Re-export" in err
+
+
 def test_paper_start_rejects_live_flag(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
     rc = main(
         [

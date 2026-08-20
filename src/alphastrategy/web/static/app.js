@@ -100,6 +100,34 @@
     el.textContent = message;
   }
 
+  function showImportRejection(body) {
+    const box = document.getElementById("import-error");
+    const ok = document.getElementById("import-ok");
+    if (ok) {
+      ok.classList.add("hidden");
+      ok.textContent = "";
+    }
+    if (!box) return;
+    box.classList.remove("hidden");
+    const kind = document.getElementById("import-error-kind");
+    const title = document.getElementById("import-error-title");
+    const detail = document.getElementById("import-error-detail");
+    const next = document.getElementById("import-error-next");
+    if (kind) kind.textContent = (body && body.kind) || "unknown";
+    if (title) title.textContent = (body && body.title) || "Import rejected";
+    if (detail) detail.textContent = (body && body.error) || "";
+    if (next) next.textContent = (body && body.next) || "";
+  }
+
+  function showImportOk(bundleId) {
+    const box = document.getElementById("import-error");
+    if (box) box.classList.add("hidden");
+    const ok = document.getElementById("import-ok");
+    if (!ok) return;
+    ok.classList.remove("hidden");
+    ok.textContent = `Imported ${bundleId}. Import is not permission to trade.`;
+  }
+
   function grossExposure(portfolio) {
     const equity = Number(portfolio.equity) || 0;
     if (!equity) return 0;
@@ -883,7 +911,6 @@
 
   async function onImportSubmit(ev) {
     ev.preventDefault();
-    const errEl = document.getElementById("import-error");
     const fileInput = document.getElementById("import-file");
     if (!fileInput.files.length) return;
 
@@ -900,13 +927,19 @@
         payload = { error: text };
       }
       if (!response.ok) {
-        throw new Error(payload.error || `HTTP ${response.status}`);
+        showImportRejection(payload && typeof payload === "object" ? payload : { error: text });
+        return;
       }
-      setError(errEl, "");
+      showImportOk(payload.bundle_id);
       fileInput.value = "";
       await refresh();
     } catch (err) {
-      setError(errEl, err.message);
+      showImportRejection({
+        kind: "unknown",
+        title: "Import rejected",
+        error: err.message,
+        next: "Fix the .asb or re-export from alphaloop.",
+      });
     }
   }
 

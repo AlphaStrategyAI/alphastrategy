@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from alphastrategy.bundle.import_bundle import import_asb
+from alphastrategy.bundle.reject import payload
 from alphastrategy.bundle.schema import load_risk_envelope
 from alphastrategy.errors import ImportRejected
 from alphastrategy.helptext import help_payload
@@ -316,9 +317,9 @@ def handle_post_import(handler: Any, home: AlphaStrategyHome, supervisor: Superv
         audit.append(home.audit_path(), {"event": "import", "bundle_id": bundle_id})
         _json_response(handler, 200, {"bundle_id": bundle_id})
     except ImportRejected as exc:
-        _error(handler, 400, str(exc))
+        _json_response(handler, 400, payload(exc))
     except Exception as exc:
-        _error(handler, 400, str(exc))
+        _json_response(handler, 400, payload(exc))
     finally:
         tmp_path.unlink(missing_ok=True)
 

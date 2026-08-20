@@ -13,7 +13,8 @@ SECTIONS: list[dict[str, str]] = [
             "alphastrategy is a local Alpaca paper execution desk. "
             "alphaloop searches and stress-tests candidates; this product runs "
             "qualified .asb bundles. Import is not permission to trade. Starting "
-            "a paper sleeve is a second explicit human action."
+            "a paper sleeve is a second explicit human action. Import failures "
+            "name the gate (hash, schema, conformance) and a next action."
         ),
     },
     {

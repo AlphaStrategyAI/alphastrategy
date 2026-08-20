@@ -289,8 +289,32 @@ button.action.account-kill {
   font-size: 0.85rem;
 }
 
-.error-box.hidden {
+.error-box.hidden,
+.ok-box.hidden {
   display: none;
+}
+
+.error-kind {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ba3b4;
+  margin-bottom: 0.25rem;
+}
+
+.error-next {
+  margin-top: 0.4rem;
+  color: #e5e9f0;
+}
+
+.ok-box {
+  margin-top: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid #10b981;
+  color: #10b981;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.08);
+  font-size: 0.85rem;
 }
 
 .activity-list {

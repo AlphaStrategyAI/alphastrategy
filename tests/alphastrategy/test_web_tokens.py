@@ -310,3 +310,21 @@ def test_js_remaining_budget_painters(js_text: str) -> None:
     assert "function renderCashComposition" in js_text
     assert "function paintUtilTrack" in js_text
     assert "window.confirm" not in js_text
+
+
+def test_html_import_gate_copy(html_text: str) -> None:
+    assert 'id="import-error-kind"' in html_text
+    assert 'id="import-error-title"' in html_text
+    assert 'id="import-error-detail"' in html_text
+    assert 'id="import-error-next"' in html_text
+    assert 'id="import-ok"' in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_import_gate_painters(js_text: str) -> None:
+    assert "function showImportRejection" in js_text
+    assert "function showImportOk" in js_text
+    assert "Import is not permission to trade" in js_text
+    assert "window.confirm" not in js_text

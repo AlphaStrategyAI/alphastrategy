@@ -114,7 +114,13 @@
           <input type="file" id="import-file" accept=".asb" required>
           <button type="submit" class="action primary">Upload .asb</button>
         </form>
-        <div id="import-error" class="error-box hidden"></div>
+        <div id="import-error" class="error-box hidden" role="alert">
+          <div id="import-error-kind" class="error-kind"></div>
+          <strong id="import-error-title"></strong>
+          <div id="import-error-detail"></div>
+          <div id="import-error-next" class="error-next"></div>
+        </div>
+        <div id="import-ok" class="ok-box hidden" role="status"></div>
       </div>
       <div class="panel" style="margin-top: 0.75rem;">
         <h2>Imported strategies</h2>

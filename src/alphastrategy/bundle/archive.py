@@ -21,12 +21,16 @@ def is_allowed_member(name: str) -> bool:
 
 def read_asb(path: Path) -> dict[str, bytes]:
     members: dict[str, bytes] = {}
-    with zipfile.ZipFile(path) as zf:
+    try:
+        archive = zipfile.ZipFile(path)
+    except zipfile.BadZipFile as exc:
+        raise ImportRejected(f"not a zip archive: {exc}", kind="archive") from exc
+    with archive as zf:
         for info in zf.infolist():
             if info.is_dir():
                 continue
             name = info.filename
             if not is_allowed_member(name):
-                raise ImportRejected(f"illegal member: {name}")
+                raise ImportRejected(f"illegal member: {name}", kind="archive")
             members[name] = zf.read(name)
     return members

@@ -16,8 +16,9 @@ import yaml
 
 from alphastrategy.api.app import make_server, start_heartbeat
 from alphastrategy.bundle.import_bundle import import_asb
-from alphastrategy.errors import HaltRequested, ImportRejected
+from alphastrategy.bundle.reject import payload
 from alphastrategy.cli.confirm import confirm_account_kill
+from alphastrategy.errors import HaltRequested, ImportRejected
 from alphastrategy.helptext import help_text
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.dsl.sandbox import run_sandbox
@@ -194,10 +195,14 @@ def _cmd_import(home: AlphaStrategyHome, path: Path) -> int:
         print(bundle_id)
         return 0
     except ImportRejected as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        body = payload(exc)
+        print(f"error: {body['kind']}: {body['error']}", file=sys.stderr)
+        print(body["next"], file=sys.stderr)
         return 1
     except Exception as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        body = payload(exc)
+        print(f"error: {body['kind']}: {body['error']}", file=sys.stderr)
+        print(body["next"], file=sys.stderr)
         return 1
 
 

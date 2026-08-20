@@ -187,6 +187,23 @@ def test_import_bad_zip_returns_400(api_client: ApiClient, tmp_path: Path):
     body = response.json()
     assert "error" in body
     assert body["error"]
+    assert body["kind"] == "archive"
+    assert body["title"]
+    assert body["next"]
+
+
+def test_import_hash_mismatch_returns_kind(api_client: ApiClient, tmp_path: Path) -> None:
+    from tests.alphastrategy.fixtures.make_asb import build_golden_asb, mutate_member
+
+    dest = tmp_path / "tampered.asb"
+    dest.write_bytes(mutate_member(build_golden_asb(), "strategy.dsl.yaml", b"steps: []\n"))
+    response = api_client.post_file("/api/import", dest)
+    assert response.status == 400
+    body = response.json()
+    assert body["kind"] == "hash"
+    assert "hash" in body["error"].lower()
+    assert body["title"]
+    assert "Re-export" in body["next"]
 
 
 def test_start_rejects_allocation_sum_over_one(api_client: ApiClient):

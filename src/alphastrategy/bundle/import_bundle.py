@@ -29,7 +29,7 @@ from alphastrategy.home import AlphaStrategyHome
 def _bars_from_csv(data: bytes) -> dict:
     reader = csv.DictReader(io.StringIO(data.decode()))
     if not reader.fieldnames or "date" not in reader.fieldnames:
-        raise ImportRejected("conformance/bars.csv missing date column")
+        raise ImportRejected("conformance/bars.csv missing date column", kind="conformance")
     symbols = [c for c in reader.fieldnames if c != "date"]
     rows = list(reader)
     bars: dict = {"date": [row["date"] for row in rows]}
@@ -44,9 +44,9 @@ def _run_conformance(staging: Path, members: dict[str, bytes]) -> None:
     try:
         got = run_sandbox(staging, bars, expected.effective_at)
     except HaltRequested as exc:
-        raise ImportRejected(f"conformance sandbox failed: {exc}") from exc
+        raise ImportRejected(f"conformance sandbox failed: {exc}", kind="conformance") from exc
     if not weights_match(got, expected.weights):
-        raise ImportRejected("conformance weights mismatch")
+        raise ImportRejected("conformance weights mismatch", kind="conformance")
 
 
 def import_asb(path: Path, home: AlphaStrategyHome) -> str:
@@ -62,12 +62,14 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
     computed_hash = content_hash(members)
     if manifest.content_hash != computed_hash:
         raise ImportRejected(
-            f"content hash mismatch: expected {manifest.content_hash}, got {computed_hash}"
+            f"content hash mismatch: expected {manifest.content_hash}, got {computed_hash}",
+            kind="hash",
         )
     expected_id = bundle_id_from_hash(computed_hash)
     if manifest.bundle_id != expected_id:
         raise ImportRejected(
-            f"bundle_id mismatch: expected {expected_id}, got {manifest.bundle_id}"
+            f"bundle_id mismatch: expected {expected_id}, got {manifest.bundle_id}",
+            kind="hash",
         )
 
     load_parameters(members["parameters.yaml"])
@@ -76,14 +78,15 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
     if strategy_dsl.dsl_version != manifest.dsl_version:
         raise ImportRejected(
             "strategy.dsl.yaml dsl_version does not match bundle.yaml: "
-            f"{strategy_dsl.dsl_version} != {manifest.dsl_version}"
+            f"{strategy_dsl.dsl_version} != {manifest.dsl_version}",
+            kind="schema",
         )
     load_conformance_expected(members["conformance/expected_weights.yaml"])
 
     bundle_id = manifest.bundle_id
     bundle_dir = home.bundle_dir(bundle_id)
     if bundle_dir.exists():
-        raise ImportRejected(f"bundle already imported: {bundle_id}")
+        raise ImportRejected(f"bundle already imported: {bundle_id}", kind="duplicate")
 
     staging_parent = Path(tempfile.mkdtemp())
     staging = staging_parent / bundle_id

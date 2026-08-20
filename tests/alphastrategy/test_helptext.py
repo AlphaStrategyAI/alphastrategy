@@ -26,6 +26,7 @@ REQUIRED_PHRASES = (
     "Next rebalance",
     "Orders today",
     "utilization",
+    "next action",
 )
 
 
