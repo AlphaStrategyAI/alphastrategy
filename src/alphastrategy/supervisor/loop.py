@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -89,6 +90,8 @@ def _positions_map(positions: list[dict]) -> dict[str, float]:
 
 
 class Supervisor:
+    LIVE_BOOK_TTL_SEC = 1.0
+
     def __init__(
         self,
         home: AlphaStrategyHome,
@@ -112,6 +115,8 @@ class Supervisor:
         self._recover_interrupted_flatten()
         self._recover_interrupted_isolate()
         self._spoken_cache: tuple[tuple, AccountPolicy] | None = None
+        self._live_book_cache: tuple[float, dict[str, Any], list[dict[str, Any]]] | None = None
+        self._runtime_doc_cache: tuple[tuple[int, int], dict[str, Any]] | None = None
 
     @property
     def state(self) -> SupervisorState:
@@ -595,10 +600,17 @@ class Supervisor:
 
     def _read_runtime(self) -> dict[str, Any]:
         path = self._home.runtime_path()
+        stamp = self._file_stamp(path)
+        cached = self._runtime_doc_cache
+        if cached is not None and cached[0] == stamp:
+            return cached[1]
         if not path.is_file():
-            return {}
-        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        return doc if isinstance(doc, dict) else {}
+            doc: dict[str, Any] = {}
+        else:
+            loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+            doc = loaded if isinstance(loaded, dict) else {}
+        self._runtime_doc_cache = (stamp, doc)
+        return doc
 
     def _bundle_envelope(self, bundle_id: str) -> dict[str, Any]:
         envelope_path = self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"
@@ -642,6 +654,28 @@ class Supervisor:
             allocated,
             self._policy,
         )
+
+    def live_book(self) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        with self._lock:
+            now = time.monotonic()
+            cached = self._live_book_cache
+            if cached is not None and (now - cached[0]) < self.LIVE_BOOK_TTL_SEC:
+                return cached[1], cached[2]
+            account = self._broker.get_account()
+            positions = self._broker.list_positions()
+            self._live_book_cache = (now, account, positions)
+            return account, positions
+
+    def sleeve_policies(self, bundle_ids: list[str]) -> dict[str, AccountPolicy]:
+        with self._lock:
+            runtime = self._read_runtime()
+            return {
+                bundle_id: self._effective_sleeve_policy(bundle_id, runtime)
+                for bundle_id in bundle_ids
+            }
+
+    def _invalidate_live_book(self) -> None:
+        self._live_book_cache = None
 
     def spoken_policy(self) -> AccountPolicy:
         with self._lock:
@@ -713,6 +747,7 @@ class Supervisor:
             try:
                 self._broker.place_order(plan.symbol, plan.qty, plan.side)
             except Exception as exc:
+                self._invalidate_live_book()
                 return placed, exc
             self._audit(
                 "order",
@@ -726,6 +761,7 @@ class Supervisor:
             if self._snapshot.state == SupervisorState.REBALANCING:
                 self._snapshot.rebalance_placed = placed
             self._persist()
+        self._invalidate_live_book()
         return placed, None
 
     def _snapshot_got(
@@ -880,6 +916,7 @@ class Supervisor:
         self._persist()
 
     def _flatten_account(self, *, reason: str = "account") -> None:
+        self._invalidate_live_book()
         self._snapshot.isolate_in_flight = None
         self._snapshot.state = SupervisorState.FLATTENING
         self._persist()

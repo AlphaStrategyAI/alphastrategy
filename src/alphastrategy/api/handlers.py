@@ -182,18 +182,6 @@ def _bundle_envelope(home: AlphaStrategyHome, bundle_id: str) -> dict[str, Any]:
     return load_risk_envelope(envelope_path.read_bytes())
 
 
-def _effective_sleeve_policy(
-    home: AlphaStrategyHome,
-    supervisor: Supervisor,
-    bundle_id: str,
-) -> AccountPolicy:
-    runtime = _load_runtime(home)
-    sleeve_overlays = runtime.get("sleeve_overlays", {})
-    overlay = sleeve_overlays.get(bundle_id) if isinstance(sleeve_overlays, dict) else None
-    envelope = _bundle_envelope(home, bundle_id)
-    return merge_limits(envelope, supervisor.policy, overlay)
-
-
 def _read_audit_events(home: AlphaStrategyHome, limit: int = 50) -> list[dict[str, Any]]:
     path = home.audit_path()
     if not path.is_file():
@@ -295,12 +283,12 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
 
 
 def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
-    account = supervisor.broker.get_account()
+    account, raw_positions = supervisor.live_book()
     equity = float(account.get("equity", 0))
     cash = float(account.get("cash", equity))
     snapshot = supervisor.snapshot
     positions = _enrich_positions(
-        supervisor.broker.list_positions(),
+        raw_positions,
         equity,
         snapshot.last_prices,
         snapshot.last_combined,
@@ -431,8 +419,8 @@ def handle_get_activity(handler: Any, home: AlphaStrategyHome, supervisor: Super
 def handle_get_risk(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
     imported = _list_imported_bundles(home)
     sleeves = {
-        bundle_id: _policy_to_dict(_effective_sleeve_policy(home, supervisor, bundle_id))
-        for bundle_id in imported
+        bundle_id: _policy_to_dict(policy)
+        for bundle_id, policy in supervisor.sleeve_policies(imported).items()
     }
     _json_response(
         handler,

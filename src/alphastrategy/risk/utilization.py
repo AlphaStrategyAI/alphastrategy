@@ -76,10 +76,9 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
     positions = None
     if live:
         try:
-            account = supervisor.broker.get_account()
+            account, positions = supervisor.live_book()
             equity = float(account.get("equity", 0))
             cash = float(account.get("cash", equity))
-            positions = supervisor.broker.list_positions()
         except Exception:
             equity = None
             cash = None
