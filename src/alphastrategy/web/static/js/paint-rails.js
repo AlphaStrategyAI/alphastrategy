@@ -39,6 +39,13 @@
     }
   }
 
+  function formatDayPnlCell(raw) {
+    const n = Number(raw);
+    const has = raw != null && raw !== "" && Number.isFinite(n);
+    const cls = has && n > 0 ? " positive" : has && n < 0 ? " negative" : "";
+    return `<td class="nums${cls}">${has ? fmtNum(n, 2) : "—"}</td>`;
+  }
+
   function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);

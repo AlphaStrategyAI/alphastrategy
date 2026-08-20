@@ -107,7 +107,9 @@ SECTIONS: list[dict[str, str]] = [
             "Strategies is three bands Inventory / Import .asb / Roster. "
             "Paper is the hero count. "
             "Positions and Sleeves sit side by side on a wide desk. "
-            "The Positions Book column is wanted versus got. Gross utilization "
+            "The Positions Book column is wanted versus got. "
+            "Positions Day is that name since last close. "
+            "Gross utilization "
             "is against the spoken flatten cap. Session and Next rebalance are the Clock tiles. "
             "Cap is name weight versus the spoken single-name limit. Names and Orders today are remaining "
             "flatten budgets. Cash shows invested versus residual against the "
@@ -188,6 +190,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "The deviation banner follows Book Drift and cannot go quiet while Drift is above zero. "
             "A spent window keeps it. "
             "Positions is four tiles Rows / Wanted / Got / At cap. Wanted is the hero. "
+            "Positions Day is that name since last close. "
             "Clock is four tiles Session / Now / Next / Last. Next is the hero. "
             "Clock Last names the spent window when that event did not finish. "
             "Clock Next is held while Supervisor is HALTED. "
@@ -384,6 +387,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
         "body": (
             "1. On Portfolio, Positions Wanted versus Got is last combined target versus current weight. "
             "Got is the current mark. Book Drift follows the last fill, not last prices. "
+            "Positions Day is that name since last close. "
             "2. On Activity, expand a rebalance blotter row for the Wanted / Got table, not a JSON dump."
         ),
     },

@@ -370,6 +370,14 @@ main {
   color: #ef4444;
 }
 
+#positions-table td.positive {
+  color: #10b981;
+}
+
+#positions-table td.negative {
+  color: #ef4444;
+}
+
 .panel {
   background: #11151d;
   border: 1px solid #2a3142;

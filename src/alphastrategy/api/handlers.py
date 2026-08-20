@@ -46,6 +46,30 @@ def _account_day_pnl(account: dict[str, Any]) -> tuple[float | None, str | None]
     return equity - last_equity, "last_close"
 
 
+def _position_day_pnl(
+    item: dict[str, Any],
+    *,
+    qty: float,
+    prices: dict[str, float],
+) -> float | None:
+    for key in ("unrealized_intraday_pl", "day_pnl"):
+        if key not in item:
+            continue
+        parsed = _optional_float(item.get(key))
+        if parsed is not None:
+            return parsed
+    if qty == 0:
+        return None
+    last_close = _optional_float(item.get("lastday_price"))
+    symbol = str(item.get("symbol", ""))
+    price = prices.get(symbol)
+    if price is None:
+        price = _optional_float(item.get("current_price"))
+    if last_close is None or price is None:
+        return None
+    return qty * (price - last_close)
+
+
 def _parse_iso(value: Any) -> datetime:
     if isinstance(value, datetime):
         return value
@@ -99,6 +123,7 @@ def _enrich_positions(
             item["wanted"] = combined[symbol]
         if symbol in filled:
             item["fill"] = float(filled[symbol])
+        item["day_pnl"] = _position_day_pnl(item, qty=qty, prices=prices)
         out.append(item)
     seen = {str(item.get("symbol", "")) for item in out}
     for symbol, weight in sorted(combined.items()):
@@ -116,6 +141,7 @@ def _enrich_positions(
         }
         if symbol in filled:
             row["fill"] = float(filled[symbol])
+        row["day_pnl"] = None
         out.append(row)
     return out
 
