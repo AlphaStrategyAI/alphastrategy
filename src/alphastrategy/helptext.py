@@ -38,6 +38,9 @@ SECTIONS: list[dict[str, str]] = [
             "isolated sleeve residual) toward flat. Stop zeros a sleeve on the "
             "next legal rebalance and does not flatten now. Resume after halt "
             "does not catch up; the next legal open or close rebalance does. "
+            "Flatten clears the last book and zeros live sleeves. "
+            "Start paper after flatten starts the session loop again and "
+            "does not catch up. Resume is only after halt. "
             "Account kill on the Web requires typing FLATTEN. CLI account kill "
             "requires typing FLATTEN on a TTY, or --force when stdin is not a TTY. "
             "Sleeve kill reports whether isolation succeeded or the whole paper "
@@ -53,6 +56,8 @@ SECTIONS: list[dict[str, str]] = [
             "position weight. An empty Portfolio shows Start this paper desk "
             "as its first glance band, not a global panel. Portfolio home is three "
             "bands Book / Flatten budgets / Clock. Equity is the hero. "
+            "Book Drift is names off the last combined target. "
+            "Positions include wanted names with no fill. "
             "Strategies is three bands Inventory / Import .asb / Roster. "
             "Paper is the hero count. "
             "Positions and Sleeves sit side by side on a wide desk. "
@@ -114,6 +119,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Empty Portfolio starts with Start this paper desk, then "
             "three bands: Book / Flatten budgets / Clock. Equity is the hero. "
+            "Book Drift is names off the last combined target. "
+            "Positions include wanted names with no fill. "
             "The Positions Book column is wanted versus got. "
             "Header LIVE is the Supervisor beat, not Session OPEN."
         ),
@@ -190,7 +197,8 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "1. Import first if Inventory is empty. "
             "2. Open Run (Alt+3). "
             "3. Under Start paper pick the bundle, set allocation, check Confirm paper start, then Start paper. "
-            "This is the second explicit action."
+            "This is the second explicit action. "
+            "Start paper after flatten starts the session loop again and does not catch up."
         ),
     },
     {

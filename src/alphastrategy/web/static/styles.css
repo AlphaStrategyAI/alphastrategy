@@ -261,6 +261,10 @@ main {
   font-size: 1.85rem;
 }
 
+#metric-drift.fail {
+  color: #ef4444;
+}
+
 .stack {
   margin-top: 0.75rem;
 }

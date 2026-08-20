@@ -76,6 +76,22 @@ def _enrich_positions(
         if symbol in combined:
             item["wanted"] = combined[symbol]
         out.append(item)
+    seen = {str(item.get("symbol", "")) for item in out}
+    for symbol, weight in sorted(combined.items()):
+        if symbol in seen:
+            continue
+        wanted = float(weight)
+        if abs(wanted) <= 0:
+            continue
+        out.append(
+            {
+                "symbol": symbol,
+                "qty": 0.0,
+                "notional": 0.0,
+                "weight": 0.0,
+                "wanted": wanted,
+            }
+        )
     return out
 
 

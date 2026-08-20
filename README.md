@@ -110,8 +110,8 @@ Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 (every 20s, no orders), not RTH Session OPEN/CLOSED.
 
-Portfolio is three bands: **Book** (Equity is the hero, with Cash and
-Day PnL), **Flatten budgets** (Gross, Names, Orders today), and
+Portfolio is three bands: **Book** (Equity is the hero, with Cash, Day PnL,
+and **Drift**), **Flatten budgets** (Gross, Names, Orders today), and
 **Clock** (**Session** OPEN/CLOSED and **Next rebalance** countdown).
 Strategies is three bands: **Inventory** (Imported / Paper / Halted / Stopped;
 Paper is the hero), **Import .asb**, and **Roster**. Import is not permission
@@ -121,8 +121,9 @@ Positions and Sleeves sit side by side on a wide desk. Positions add a
 show remaining flatten budgets. **Cash** shows invested versus residual
 against the last combined target. Sleeves show how much of the paper book
 is spoken for. An empty Portfolio shows **Start this paper desk** as the
-first glance band, then Book / Flatten budgets / Clock. Positions include a
-**Book** bar (wanted vs got). Gross
+first glance band, then Book / Flatten budgets / Clock. Positions include
+wanted names with no fill and a **Book** bar (wanted vs got). **Book Drift**
+counts names off the last combined target. Gross
 shows utilization against the account cap. Risk lists sleeve allocation
 as text. A flattened account shows a red **FLAT** banner; it must not
 look like an idle empty book. `alphastrategy status` includes `utilization`.
@@ -138,8 +139,11 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
 ## Operator
 
 - **Halt** stops new orders and does not flatten. `paper resume` does
-  not catch up; the next legal open/close rebalance does.
-- **Account kill** flattens the whole paper account. On the Web it lives
+  not catch up; the next legal open/close rebalance does. Resume is only
+  after halt.
+- **Account kill** flattens the whole paper account, clears the last book,
+  and zeros live sleeves. **Start paper after flatten** starts the session
+  loop again and does not catch up. On the Web, flatten lives
   under **Flatten account** (type `FLATTEN` and confirm). **Resume after
   halt** lives under **After halt**, not beside flatten. CLI:
   `alphastrategy paper kill` (omit `--bundle`) types `FLATTEN` on a TTY,

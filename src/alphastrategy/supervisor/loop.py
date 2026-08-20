@@ -163,6 +163,19 @@ class Supervisor:
             total = other_total + allocation
             if total > 1.0:
                 raise ValueError("allocation sum must be <= 1.0")
+            if self._snapshot.state == SupervisorState.STOPPED:
+                self._snapshot.prime_clock_after_resume = True
+                try:
+                    clock_raw = self._broker.get_clock()
+                    cur = _clock_snapshot(clock_raw)
+                    self._prev_clock = cur
+                    self._snapshot.state = (
+                        SupervisorState.IDLE_IN_SESSION
+                        if cur.is_open
+                        else SupervisorState.IDLE_OUT_OF_SESSION
+                    )
+                except Exception:
+                    self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
             self._snapshot.sleeves[bundle_id] = allocation
             self._snapshot.stopped = [
                 item for item in self._snapshot.stopped if item != bundle_id
@@ -633,4 +646,14 @@ class Supervisor:
             return
         self._snapshot.state = SupervisorState.STOPPED
         self._snapshot.halt_reason = None
+        self._snapshot.last_combined = {}
+        self._snapshot.last_got = {}
+        self._snapshot.last_sleeve_weights = {}
+        self._snapshot.last_sleeve_contribution = {}
+        self._snapshot.last_prices = {}
+        for bundle_id in list(self._snapshot.sleeves):
+            self._snapshot.sleeves[bundle_id] = 0.0
+            if bundle_id not in self._snapshot.stopped:
+                self._snapshot.stopped.append(bundle_id)
         self._audit("flatten", scope="account")
+        self._persist()

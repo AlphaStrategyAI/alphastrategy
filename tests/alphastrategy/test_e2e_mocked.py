@@ -13,7 +13,7 @@ from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.loop import Supervisor
-from alphastrategy.supervisor.state import SupervisorSnapshot, SupervisorState, save_state
+from alphastrategy.supervisor.state import SupervisorState
 
 from tests.alphastrategy.test_halt_flatten import FakeBroker
 
@@ -89,18 +89,9 @@ def test_v1_done_path(tmp_path: Path) -> None:
     stopped_supervisor.tick()
     assert broker.close_all_count == flatten_close_all_count
 
-    snapshot = stopped_supervisor.snapshot
-    save_state(
-        home.state_path(),
-        SupervisorSnapshot(
-            state=SupervisorState.IDLE_IN_SESSION,
-            last_rebalance_event=snapshot.last_rebalance_event,
-            sleeves=dict(snapshot.sleeves),
-            halt_reason=None,
-        ),
-    )
-
     halted_supervisor = _make_supervisor(home, broker)
+    halted_supervisor.start_sleeve(bundle_id, 0.4)
+    assert halted_supervisor.state == SupervisorState.IDLE_IN_SESSION
     broker.raise_on_get_bars = True
     broker.set_session_open(
         open_time=open_time,

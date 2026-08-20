@@ -36,6 +36,46 @@
     clockLine.textContent = `now ${clock.timestamp || "—"}`;
   }
 
+  function renderBookDrift(positions, equity) {
+    const el = document.getElementById("metric-drift");
+    const sub = document.getElementById("metric-drift-sub");
+    const bar = document.getElementById("metric-drift-bar");
+    if (!el || !sub || !bar) return;
+    const rows = positions || [];
+    const cap = Number(equity);
+    if (!rows.length || !(cap > 0)) {
+      el.textContent = "—";
+      el.classList.remove("fail");
+      sub.textContent = "—";
+      bar.classList.add("hidden");
+      bar.setAttribute("aria-hidden", "true");
+      bar.innerHTML = "";
+      return;
+    }
+    const minDelta = Math.max(1, 0.001 * cap);
+    let off = 0;
+    let maxGap = 0;
+    for (const pos of rows) {
+      if (pos.wanted == null || pos.wanted === undefined) continue;
+      const got = Number(pos.weight) || 0;
+      const wanted = Number(pos.wanted) || 0;
+      const gap = Math.abs(wanted - got);
+      if (gap * cap >= minDelta) {
+        off += 1;
+        if (gap > maxGap) maxGap = gap;
+      }
+    }
+    el.textContent = String(off);
+    el.classList.toggle("fail", off > 0);
+    sub.textContent = off ? `max ${fmtPct(maxGap)}` : "—";
+    paintUtilTrack(
+      bar,
+      off,
+      Math.max(rows.length, 1),
+      `drift ${off} of ${rows.length}`
+    );
+  }
+
   function renderBanners() {
     const haltEl = document.getElementById("halt-banner");
     const flattenEl = document.getElementById("flatten-banner");
@@ -120,6 +160,7 @@
     const posBody = document.querySelector("#positions-table tbody");
     posBody.innerHTML = "";
     const positions = portfolio.positions || [];
+    renderBookDrift(positions, equity);
     if (!positions.length) {
       let empty = "No positions yet. Import a .asb to begin.";
       if (importedIds().length) {
