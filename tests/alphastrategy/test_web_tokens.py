@@ -399,4 +399,6 @@ def test_js_uses_api_policy_labels(js_text: str) -> None:
     assert "function policyLabel" in js_text
     assert "risk.labels" in js_text
     assert "Gross cap" not in js_text
+    assert "${policyLabel(key)} cannot loosen" in js_text
+    assert "${key} cannot loosen" not in js_text
     assert "window.confirm" not in js_text

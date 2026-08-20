@@ -824,15 +824,15 @@
       const base = Number(current[key]);
       if (key === "min_delta_dollar" || key === "min_delta_frac") {
         if (proposed < base) {
-          return `${key} cannot loosen below ${base}`;
+          return `${policyLabel(key)} cannot loosen below ${base}`;
         }
       } else if (key === "max_names" || key === "max_orders_per_rebalance" || key === "max_orders_per_day") {
         if (proposed > base) {
-          return `${key} cannot loosen above ${base}`;
+          return `${policyLabel(key)} cannot loosen above ${base}`;
         }
       } else {
         if (proposed > base) {
-          return `${key} cannot loosen above ${base}`;
+          return `${policyLabel(key)} cannot loosen above ${base}`;
         }
       }
     }
