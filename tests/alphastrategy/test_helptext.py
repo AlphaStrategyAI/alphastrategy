@@ -33,6 +33,7 @@ REQUIRED_PHRASES = (
     "Gross cap",
     "On Portfolio",
     "Flatten account",
+    "own error",
 )
 
 

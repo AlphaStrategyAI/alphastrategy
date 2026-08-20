@@ -461,3 +461,37 @@ def test_css_run_kill_switch_zones(css_text: str) -> None:
     assert ".recover-zone" in css_text
     assert ".flatten-zone .panel" in css_text
     assert ".flatten-zone .glance-heading" in css_text
+
+
+def test_html_run_band_errors(html_text: str) -> None:
+    run = html_text[html_text.find('id="screen-run"') : html_text.find('id="screen-activity"')]
+    promote = run[run.find('id="run-promote"') : run.find('id="run-book"')]
+    book = run[run.find('id="run-book"') : run.find('id="run-recover"')]
+    recover = run[run.find('id="run-recover"') : run.find('id="run-flatten"')]
+    flatten = run[run.find('id="run-flatten"') :]
+    assert 'id="run-error"' in promote
+    assert 'id="run-sleeve-error"' in book
+    assert 'id="run-recover-error"' in recover
+    assert 'id="run-flatten-error"' in flatten
+    assert 'id="run-flatten-error"' not in promote
+    assert 'id="run-error"' not in flatten
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_set_run_error_by_band(js_text: str) -> None:
+    assert "function setRunError" in js_text
+    kill = js_text[
+        js_text.find('getElementById("account-kill")') : js_text.find(
+            'getElementById("account-resume")'
+        )
+    ]
+    assert 'setRunError("flatten"' in kill
+    resume = js_text[
+        js_text.find('getElementById("account-resume")') : js_text.find("function activeScreen")
+    ]
+    assert 'setRunError("recover"' in resume
+    assert 'setRunError("sleeves"' in js_text
+    assert 'setRunError("promote"' in js_text
+    assert "window.confirm" not in js_text
