@@ -48,6 +48,7 @@ REQUIRED_PHRASES = (
     "Pulse, Session, and Supervisor",
     "Remaining / Spoken / Active / Idle",
     "Spoken / Overlays / Tighter / Idle",
+    "Gross cap / Name cap / Names / Orders today",
 )
 
 

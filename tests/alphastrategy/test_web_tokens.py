@@ -696,6 +696,15 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     tighten = risk[risk.find('id="risk-tighten"') : risk.find('id="risk-overlays"')]
     overlays = risk[risk.find('id="risk-overlays"') :]
     assert 'id="risk-account-caps"' in caps
+    assert 'id="risk-cap-gross"' in caps
+    assert 'id="risk-cap-name"' in caps
+    assert 'id="risk-cap-names"' in caps
+    assert 'id="risk-cap-orders"' in caps
+    assert 'id="risk-cap-long"' in caps
+    assert "metrics-4" in caps
+    assert "hero" in caps
+    assert ">Gross cap<" in caps
+    assert ">Name cap<" in caps
     assert 'id="risk-utilization"' in head
     assert 'id="risk-account-form"' in tighten
     assert 'id="risk-error"' in tighten
@@ -745,6 +754,24 @@ def test_css_risk_overlay_tokens(css_text: str) -> None:
     assert warn is not None and "#f59e0b" in warn.group(0).lower()
     assert fail is not None and "#ef4444" in fail.group(0).lower()
     assert tight is not None and "#f59e0b" in tight.group(0).lower()
+
+
+def test_js_paints_risk_caps_tiles(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRiskCaps") : js_text.find("function buildRiskInputs")
+    ]
+    assert "risk-cap-gross" in paint
+    assert "risk-cap-name" in paint
+    assert "risk-cap-names" in paint
+    assert "risk-cap-orders" in paint
+    assert "risk-cap-long" in paint
+    assert "max_gross" in paint
+    assert "max_name_weight" in paint
+    assert "max_orders_per_day" in paint
+    assert "fmtPct" in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
 
 
 def test_js_risk_tighten_groups(js_text: str) -> None:
