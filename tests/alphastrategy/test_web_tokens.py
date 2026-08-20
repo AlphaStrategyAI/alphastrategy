@@ -680,3 +680,26 @@ def test_js_paints_activity_tape(js_text: str) -> None:
     assert 'event === "flatten"' in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_activity_drill_in_is_book_not_json(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function eventSummary") : js_text.find("RISK_TIGHTEN_GROUPS")
+    ]
+    assert "function bookTable" in paint
+    assert "function eventDetail" in paint
+    assert "activity-book" in paint
+    assert "activity-fields" in paint
+    assert "<th>Wanted</th>" in paint
+    assert "<th>Got</th>" in paint
+    assert "JSON.stringify(payload" not in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_activity_book_drill_in(css_text: str) -> None:
+    assert ".activity-book" in css_text
+    assert ".activity-fields" in css_text
+    detail = re.search(r"\.activity-detail\s*\{[^}]*\}", css_text, re.DOTALL)
+    assert detail is not None
+    assert "pre-wrap" not in detail.group(0)

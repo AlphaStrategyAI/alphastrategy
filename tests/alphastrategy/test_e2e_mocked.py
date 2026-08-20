@@ -342,6 +342,12 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
         assert 'id="act-tape"' in html
+        conn.request("GET", "/app.js")
+        js_resp = conn.getresponse()
+        js_body = js_resp.read().decode("utf-8")
+        assert js_resp.status == 200
+        assert "function bookTable" in js_body
+        assert "JSON.stringify(payload" not in js_body
         conn.request("GET", "/api/risk")
         risk_resp = conn.getresponse()
         risk_body = json.loads(risk_resp.read().decode("utf-8"))

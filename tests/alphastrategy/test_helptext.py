@@ -38,6 +38,7 @@ REQUIRED_PHRASES = (
     "Inventory / Import .asb / Roster",
     "Caps / Headroom / Tighten",
     "Beat / Tape / Blotter",
+    "not a JSON dump",
 )
 
 
