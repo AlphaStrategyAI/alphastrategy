@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import cgi
 import json
+import re
 import tempfile
 from dataclasses import asdict
 from datetime import datetime
@@ -157,34 +157,64 @@ def _read_audit_events(home: AlphaStrategyHome, limit: int = 50) -> list[dict[st
     return [json.loads(line) for line in lines[-limit:]]
 
 
-def _extract_upload(handler: Any) -> tuple[str, bytes]:
-    content_type = handler.headers.get("Content-Type", "")
+def parse_multipart_file(content_type: str, body: bytes) -> tuple[str, bytes]:
     if "multipart/form-data" not in content_type:
         raise ValueError("expected multipart file upload")
-    length = int(handler.headers.get("Content-Length", "0"))
-    env = {
-        "REQUEST_METHOD": "POST",
-        "CONTENT_TYPE": content_type,
-        "CONTENT_LENGTH": str(length),
-    }
-    form = cgi.FieldStorage(
-        fp=handler.rfile,
-        headers=handler.headers,
-        environ=env,
-        keep_blank_values=True,
-    )
-    if "file" in form:
-        field = form["file"]
-    else:
-        keys = [key for key in form.keys() if key]
-        if not keys:
-            raise ValueError("missing upload field")
-        field = form[keys[0]]
-    if not getattr(field, "file", None):
+    match = re.search(r"boundary=([^;]+)", content_type, flags=re.IGNORECASE)
+    if not match:
+        raise ValueError("missing multipart boundary")
+    boundary = match.group(1).strip().strip('"')
+    delim = b"--" + boundary.encode("ascii", errors="replace")
+    preferred: tuple[str, bytes] | None = None
+    fallback: tuple[str, bytes] | None = None
+    for raw in body.split(delim):
+        if not raw or raw in (b"--", b"--\r\n", b"--\n"):
+            continue
+        if raw.startswith(b"--"):
+            continue
+        if raw.startswith(b"\r\n"):
+            raw = raw[2:]
+        elif raw.startswith(b"\n"):
+            raw = raw[1:]
+        header_end = raw.find(b"\r\n\r\n")
+        sep_len = 4
+        if header_end < 0:
+            header_end = raw.find(b"\n\n")
+            sep_len = 2
+        if header_end < 0:
+            continue
+        header_text = raw[:header_end].decode("utf-8", errors="replace")
+        data = raw[header_end + sep_len :]
+        if data.endswith(b"\r\n"):
+            data = data[:-2]
+        elif data.endswith(b"\n"):
+            data = data[:-1]
+        disposition = ""
+        for line in header_text.splitlines():
+            if line.lower().startswith("content-disposition:"):
+                disposition = line
+                break
+        name_match = re.search(r'name="([^"]*)"', disposition)
+        file_match = re.search(r'filename="([^"]*)"', disposition)
+        if file_match is None:
+            continue
+        filename = file_match.group(1) or "upload.asb"
+        candidate = (filename, data)
+        if name_match and name_match.group(1) == "file":
+            preferred = candidate
+        elif fallback is None:
+            fallback = candidate
+    chosen = preferred or fallback
+    if chosen is None:
         raise ValueError("missing upload file")
-    filename = field.filename or "upload.asb"
-    data = field.file.read()
-    return filename, data
+    return chosen
+
+
+def _extract_upload(handler: Any) -> tuple[str, bytes]:
+    content_type = handler.headers.get("Content-Type", "")
+    length = int(handler.headers.get("Content-Length", "0"))
+    body = handler.rfile.read(length) if length else b""
+    return parse_multipart_file(content_type, body)
 
 
 def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
