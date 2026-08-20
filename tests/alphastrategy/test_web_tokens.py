@@ -193,3 +193,10 @@ def test_js_sleeve_kill_does_not_require_flatten_phrase(js_text: str) -> None:
     kill_fn = js_text.split("async function killSleeve")[1].split("async function onImportSubmit")[0]
     assert "FLATTEN" not in kill_fn
     assert "data-kill-confirm" in js_text
+
+
+def test_js_activity_kill_summary_distinguishes_isolated(js_text: str) -> None:
+    kill_branch = js_text.split('case "kill":')[1].split('case "flatten":')[0]
+    assert "isolated residual" in kill_branch
+    assert "flattened account" in kill_branch
+    assert "ev.isolated" in kill_branch

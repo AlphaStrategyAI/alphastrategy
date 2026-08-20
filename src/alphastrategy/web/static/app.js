@@ -413,8 +413,17 @@
       case "paper_start":
       case "paper_stop":
       case "import":
-      case "kill":
         return ev.bundle_id || ev.scope || "";
+      case "kill": {
+        const id = ev.bundle_id || "";
+        if (ev.isolated === true) {
+          return `isolated residual ${id}`.trim();
+        }
+        if (ev.isolated === false || ev.scope === "account") {
+          return `flattened account ${id}`.trim();
+        }
+        return id || ev.scope || "";
+      }
       case "flatten":
         return ev.scope || "account";
       default:
