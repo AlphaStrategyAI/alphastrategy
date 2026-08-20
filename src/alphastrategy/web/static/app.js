@@ -36,6 +36,27 @@
     return fmtNum(Number(value) * 100, 1) + "%";
   }
 
+  function fmtCountdown(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const mm = String(m).padStart(2, "0");
+    const ss = String(sec).padStart(2, "0");
+    if (h > 0) return `${h}:${mm}:${ss}`;
+    return `${mm}:${ss}`;
+  }
+
+  function fmtContribution(map) {
+    if (!map || typeof map !== "object") return "—";
+    const keys = Object.keys(map);
+    if (!keys.length) return "—";
+    return keys
+      .sort()
+      .map((asset) => `${asset} ${fmtPct(map[asset])}`)
+      .join(" · ");
+  }
+
   async function api(method, path, body) {
     const opts = { method, headers: {} };
     if (body !== undefined) {
@@ -93,7 +114,17 @@
   }
 
   function sleeveState(bundleId, bundles, status) {
+    const stoppedList = (bundles && bundles.stopped) || [];
     const alloc = bundles.paper[bundleId];
+    const sleeves = (state.portfolio && state.portfolio.sleeves) || {};
+    if (stoppedList.indexOf(bundleId) >= 0) return "stopped";
+    if (
+      status &&
+      status.state === "stopped" &&
+      (alloc > 0 || Object.prototype.hasOwnProperty.call(sleeves, bundleId))
+    ) {
+      return "stopped";
+    }
     if (alloc && alloc > 0) {
       if (status && status.halted) return "halted";
       return "paper";
@@ -148,11 +179,16 @@
     document.getElementById("metric-gross").textContent = fmtPct(grossExposure(portfolio));
 
     const clock = state.status && state.status.clock;
+    const countdown = state.status && state.status.countdown;
     const clockLine = document.getElementById("clock-line");
     if (clock && !clock.error) {
       const open = clock.is_open ? "OPEN" : "CLOSED";
-      const next = clock.is_open ? clock.next_close : clock.next_open;
-      clockLine.textContent = `Market ${open} · next event ${next || "—"} · now ${clock.timestamp || "—"}`;
+      let line = `Market ${open}`;
+      if (countdown) {
+        line += ` · next ${countdown.next_rebalance} rebalance ${fmtCountdown(countdown.seconds)} at ${countdown.at || "—"}`;
+      }
+      line += ` · now ${clock.timestamp || "—"}`;
+      clockLine.textContent = line;
     } else {
       clockLine.textContent = "Clock unavailable";
     }
@@ -161,11 +197,13 @@
     posBody.innerHTML = "";
     const positions = portfolio.positions || [];
     if (!positions.length) {
-      posBody.innerHTML = "<tr><td colspan='2' class='muted'>No positions</td></tr>";
+      posBody.innerHTML = "<tr><td colspan='4' class='muted'>No positions</td></tr>";
     } else {
       for (const pos of positions) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td>`;
+        const notional = pos.notional == null ? "—" : fmtNum(pos.notional, 2);
+        const weight = pos.weight == null ? "—" : fmtPct(pos.weight);
+        tr.innerHTML = `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td><td class="nums">${notional}</td><td class="nums">${weight}</td>`;
         posBody.appendChild(tr);
       }
     }
@@ -173,13 +211,14 @@
     const sleeveBody = document.querySelector("#sleeves-table tbody");
     sleeveBody.innerHTML = "";
     const sleeves = portfolio.sleeves || {};
+    const contrib = portfolio.sleeve_contribution || {};
     const ids = Object.keys(sleeves).sort();
     if (!ids.length) {
-      sleeveBody.innerHTML = "<tr><td colspan='2' class='muted'>No sleeves</td></tr>";
+      sleeveBody.innerHTML = "<tr><td colspan='3' class='muted'>No sleeves</td></tr>";
     } else {
       for (const id of ids) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${id}</td><td class="nums">${fmtPct(sleeves[id])}</td>`;
+        tr.innerHTML = `<td>${id}</td><td class="nums">${fmtPct(sleeves[id])}</td><td class="nums">${fmtContribution(contrib[id])}</td>`;
         sleeveBody.appendChild(tr);
       }
     }
@@ -203,10 +242,12 @@
       const st = sleeveState(id, bundles, state.status);
       const alloc = bundles.paper[id] || 0;
       const policy = risk.sleeves[id];
+      const statusClass =
+        st === "paper" ? "running" : st === "halted" ? "halt" : st === "stopped" ? "stopped" : "muted";
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${id}</td>
-        <td class="status-${st === "paper" ? "running" : st === "halted" ? "halt" : "muted"}">${st}</td>
+        <td class="status-${statusClass}">${st}</td>
         <td class="nums">${fmtPct(alloc)}</td>
         <td class="muted">${riskSummary(policy)}</td>
       `;
@@ -256,6 +297,28 @@
     });
   }
 
+  function eventSummary(ev) {
+    switch (ev.event) {
+      case "order":
+        return `${ev.side || ""} ${ev.qty || ""} ${ev.symbol || ""}`.trim();
+      case "halt":
+        return ev.reason || "halt";
+      case "rebalance":
+        return `${ev.session_event || ""} · ${ev.orders == null ? "" : ev.orders + " orders"}`.trim();
+      case "execution_deviation":
+        return `${ev.asset || ""} wanted ${ev.wanted} got ${ev.got}`;
+      case "paper_start":
+      case "paper_stop":
+      case "import":
+      case "kill":
+        return ev.bundle_id || ev.scope || "";
+      case "flatten":
+        return ev.scope || "account";
+      default:
+        return ev.event || "event";
+    }
+  }
+
   function renderActivity() {
     const list = document.getElementById("activity-list");
     list.innerHTML = "";
@@ -266,11 +329,31 @@
     }
     for (const ev of events.slice().reverse()) {
       const li = document.createElement("li");
+      li.tabIndex = 0;
       const ts = ev.ts || ev.timestamp || "";
+      const summary = document.createElement("div");
+      summary.className = "activity-summary";
+      summary.textContent = `${ts} ${ev.event || "event"} ${eventSummary(ev)}`;
+      const detail = document.createElement("pre");
+      detail.className = "activity-detail";
       const payload = { ...ev };
       delete payload.ts;
       delete payload.timestamp;
-      li.textContent = `${ts} ${ev.event || "event"} ${JSON.stringify(payload)}`;
+      delete payload.event;
+      detail.textContent = JSON.stringify(payload, null, 2);
+      li.appendChild(summary);
+      li.appendChild(detail);
+      li.addEventListener("click", () => {
+        const open = li.classList.contains("expanded");
+        list.querySelectorAll("li.expanded").forEach((row) => row.classList.remove("expanded"));
+        if (!open) li.classList.add("expanded");
+      });
+      li.addEventListener("keydown", (ke) => {
+        if (ke.key === "Enter" || ke.key === " ") {
+          ke.preventDefault();
+          li.click();
+        }
+      });
       list.appendChild(li);
     }
   }
@@ -340,9 +423,25 @@
     return null;
   }
 
+  function riskFormIsDirty() {
+    const forms = document.querySelectorAll("#screen-risk form");
+    for (const form of forms) {
+      if (form.contains(document.activeElement)) return true;
+      const inputs = form.querySelectorAll("input");
+      for (const input of inputs) {
+        if (input.type === "checkbox") continue;
+        if (input.value) return true;
+      }
+    }
+    return false;
+  }
+
   function renderRisk() {
     const risk = state.risk || { account: {}, sleeves: {} };
     renderRiskCaps(document.getElementById("risk-account-caps"), risk.account);
+    if (riskFormIsDirty()) {
+      return;
+    }
 
     const accountForm = document.getElementById("risk-account-form");
     accountForm.innerHTML = "";
@@ -400,13 +499,18 @@
       if (portfolio.deviation || portfolio.deviations) {
         state.deviationActive = true;
       }
+      const banner = document.getElementById("control-plane-banner");
+      banner.classList.add("hidden");
+      banner.textContent = "";
       renderPortfolio();
       renderStrategies();
       renderRunSleeves();
       renderActivity();
       renderRisk();
     } catch (err) {
-      console.error(err);
+      const banner = document.getElementById("control-plane-banner");
+      banner.classList.remove("hidden");
+      banner.textContent = `CONTROL PLANE: refresh failed — ${err.message}`;
     }
   }
 
@@ -554,9 +658,17 @@
 
   document.getElementById("account-kill").addEventListener("click", async () => {
     const errEl = document.getElementById("run-error");
+    const confirmed = document.getElementById("account-kill-confirm").checked;
+    const phrase = document.getElementById("account-kill-phrase").value;
+    if (!confirmed || phrase !== "FLATTEN") {
+      setError(errEl, "Type FLATTEN and confirm to flatten the whole paper account");
+      return;
+    }
     try {
       await api("POST", "/api/paper/kill", {});
       setError(errEl, "");
+      document.getElementById("account-kill-confirm").checked = false;
+      document.getElementById("account-kill-phrase").value = "";
       await refresh();
     } catch (err) {
       setError(errEl, err.message);

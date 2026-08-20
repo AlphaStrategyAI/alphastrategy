@@ -291,6 +291,23 @@ button.action.account-kill {
   padding: 0.5rem 0;
   border-bottom: 1px solid #2a3142;
   font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.activity-detail {
+  display: none;
+  white-space: pre-wrap;
+  color: #9ba3b4;
+  margin: 0.35rem 0 0;
+  font: inherit;
+}
+
+.activity-list li.expanded .activity-detail {
+  display: block;
+}
+
+.status-stopped {
+  color: #9ba3b4;
 }
 
 .risk-account-bar {

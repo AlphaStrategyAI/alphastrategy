@@ -22,6 +22,7 @@
     <section id="screen-portfolio" class="screen active" aria-label="Portfolio">
       <div id="halt-banner" class="banner halt hidden" role="alert"></div>
       <div id="deviation-banner" class="banner fail hidden" role="alert"></div>
+      <div id="control-plane-banner" class="banner fail hidden" role="alert"></div>
 
       <div class="metrics nums">
         <div class="metric">
@@ -49,7 +50,7 @@
           <h2>Positions</h2>
           <table id="positions-table">
             <thead>
-              <tr><th>Symbol</th><th>Qty</th></tr>
+              <tr><th>Symbol</th><th>Qty</th><th>Notional</th><th>Weight</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -58,7 +59,7 @@
           <h2>Sleeves</h2>
           <table id="sleeves-table">
             <thead>
-              <tr><th>Bundle</th><th>Allocation</th></tr>
+              <tr><th>Bundle</th><th>Allocation</th><th>Contribution</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -116,6 +117,14 @@
 
       <div class="panel" style="margin-top: 0.75rem;">
         <h2>Account</h2>
+        <label class="confirm-row">
+          <input type="checkbox" id="account-kill-confirm">
+          I understand this flattens the whole paper account
+        </label>
+        <label>
+          Type FLATTEN
+          <input type="text" id="account-kill-phrase" autocomplete="off" placeholder="FLATTEN">
+        </label>
         <button type="button" id="account-kill" class="action danger account-kill">Kill account — flatten all</button>
         <button type="button" id="account-resume" class="action warn">Resume after halt</button>
       </div>

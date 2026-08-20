@@ -48,6 +48,11 @@ def css_text() -> str:
     return CSS_PATH.read_text(encoding="utf-8")
 
 
+@pytest.fixture
+def js_text() -> str:
+    return JS_PATH.read_text(encoding="utf-8")
+
+
 def test_static_files_exist() -> None:
     assert HTML_PATH.is_file()
     assert CSS_PATH.is_file()
@@ -84,3 +89,23 @@ def test_html_has_no_live_controls(html_text: str) -> None:
 
 def test_html_has_no_live_toggle_label(html_text: str) -> None:
     assert not re.search(r">\s*Live\s*<", html_text)
+
+
+def test_html_has_control_plane_banner(html_text: str) -> None:
+    assert 'id="control-plane-banner"' in html_text
+    assert 'id="account-kill-phrase"' in html_text
+    assert 'id="account-kill-confirm"' in html_text
+    assert "Contribution" in html_text
+    assert "Notional" in html_text
+    assert "Weight" in html_text
+
+
+def test_js_renders_countdown_and_stopped(js_text: str) -> None:
+    assert "countdown" in js_text
+    assert "fmtCountdown" in js_text
+    assert "sleeve_contribution" in js_text
+    assert "stopped" in js_text
+    assert "FLATTEN" in js_text
+    assert "control-plane-banner" in js_text
+    assert "riskFormIsDirty" in js_text
+    assert "expanded" in js_text
