@@ -70,7 +70,9 @@ SECTIONS: list[dict[str, str]] = [
             "when the control plane is down. Activity empty copy names the two "
             "legal rebalances. Header LIVE is the Supervisor beat, not Session. "
             "Alt+1 through Alt+5 switch screens. "
-            "F1 toggles Help. Help is this aside, not a sixth screen."
+            "F1 is how-to for the current screen. The six runbook sections "
+            "match alphastrategy help. "
+            "Help is this aside, not a sixth screen."
         ),
     },
     {
@@ -96,12 +98,75 @@ SECTIONS: list[dict[str, str]] = [
 ]
 
 
+SCREEN_HOWTOS: list[dict[str, str]] = [
+    {
+        "id": "how_portfolio",
+        "screen": "portfolio",
+        "title": "On Portfolio",
+        "body": (
+            "Three bands: Book / Flatten budgets / Clock. Equity is the hero. "
+            "The Positions Book column is wanted versus got. "
+            "Header LIVE is the Supervisor beat, not Session OPEN."
+        ),
+    },
+    {
+        "id": "how_strategies",
+        "screen": "strategies",
+        "title": "On Strategies",
+        "body": (
+            "Upload a qualified .asb. Import is not permission to trade. "
+            "Failures name the gate (hash, schema, conformance) and a next action. "
+            "Start paper on Run."
+        ),
+    },
+    {
+        "id": "how_run",
+        "screen": "run",
+        "title": "On Run",
+        "body": (
+            "Start paper is a second explicit action. "
+            "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
+            "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
+            "Account kill requires typing FLATTEN. Resume after halt does not catch up."
+        ),
+    },
+    {
+        "id": "how_activity",
+        "screen": "activity",
+        "title": "On Activity",
+        "body": (
+            "Time-ordered audit. Empty copy names the two legal rebalances. "
+            "Kill rows say isolated residual or flattened account. "
+            "Expand a row for the payload."
+        ),
+    },
+    {
+        "id": "how_risk",
+        "screen": "risk",
+        "title": "On Risk",
+        "body": (
+            "Account caps stay visible. Caps use desk words "
+            "(Gross cap, Names, Orders today). Tighten only; "
+            "the form refuses looser values and still posts the policy keys."
+        ),
+    },
+]
+
+
 def help_payload() -> dict[str, Any]:
-    return {"title": HELP_TITLE, "sections": [dict(section) for section in SECTIONS]}
+    return {
+        "title": HELP_TITLE,
+        "sections": [dict(section) for section in SECTIONS],
+        "howtos": [dict(item) for item in SCREEN_HOWTOS],
+    }
 
 
 def help_text() -> str:
     lines = [HELP_TITLE, ""]
+    for item in SCREEN_HOWTOS:
+        lines.append(item["title"])
+        lines.append(item["body"])
+        lines.append("")
     for section in SECTIONS:
         lines.append(section["title"])
         lines.append(section["body"])

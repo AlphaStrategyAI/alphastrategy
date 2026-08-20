@@ -88,7 +88,13 @@ def test_help_text_contains_required_phrases() -> None:
 
 
 def test_help_copy_is_this_product() -> None:
-    blob = help_text().lower() + " ".join(section["body"].lower() for section in SECTIONS)
+    from alphastrategy.helptext import SCREEN_HOWTOS
+
+    blob = (
+        help_text().lower()
+        + " ".join(section["body"].lower() for section in SECTIONS)
+        + " ".join(item["body"].lower() for item in SCREEN_HOWTOS)
+    )
     assert "streamlit" not in blob
     assert "openstrategy" not in blob
     assert "live trading" not in blob

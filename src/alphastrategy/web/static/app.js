@@ -21,6 +21,8 @@
     deviationActive: false,
   };
 
+  const helpState = { loaded: false, payload: null };
+
   function fmtNum(value, digits) {
     if (value === null || value === undefined || Number.isNaN(Number(value))) {
       return "—";
@@ -88,6 +90,9 @@
     document.querySelectorAll("#nav button").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.screen === name);
     });
+    if (helpState.payload) {
+      renderHelp(helpState.payload);
+    }
   }
 
   function setError(el, message) {
@@ -1118,23 +1123,38 @@
     }
   });
 
-  const helpState = { loaded: false };
+  function activeScreen() {
+    const btn = document.querySelector("#nav button.active");
+    return (btn && btn.dataset.screen) || "portfolio";
+  }
 
   function renderHelp(payload) {
+    helpState.payload = payload || helpState.payload;
+    const howtoRoot = document.getElementById("help-howto");
     const body = document.getElementById("help-body");
+    if (!howtoRoot || !body || !helpState.payload) return;
+    const screen = activeScreen();
+    const howtos = helpState.payload.howtos || [];
+    const howto = howtos.find((item) => item.screen === screen) || howtos[0] || {};
+    howtoRoot.innerHTML = "";
+    const h = document.createElement("h3");
+    h.textContent = howto.title || "";
+    const p = document.createElement("p");
+    p.textContent = howto.body || "";
+    howtoRoot.appendChild(h);
+    howtoRoot.appendChild(p);
     body.innerHTML = "";
     const title = document.createElement("p");
     title.className = "muted";
-    title.textContent = payload.title || "Operator help";
+    title.textContent = helpState.payload.title || "Operator help";
     body.appendChild(title);
-    const sections = payload.sections || [];
-    for (const section of sections) {
-      const h = document.createElement("h3");
-      h.textContent = section.title || "";
-      const p = document.createElement("p");
-      p.textContent = section.body || "";
-      body.appendChild(h);
-      body.appendChild(p);
+    for (const section of helpState.payload.sections || []) {
+      const sh = document.createElement("h3");
+      sh.textContent = section.title || "";
+      const sp = document.createElement("p");
+      sp.textContent = section.body || "";
+      body.appendChild(sh);
+      body.appendChild(sp);
     }
   }
 

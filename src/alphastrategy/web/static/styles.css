@@ -563,6 +563,20 @@ button.action.account-kill {
   font-size: 0.85rem;
 }
 
+#help-runbook {
+  margin-top: 0.75rem;
+}
+
+#help-runbook summary {
+  color: #9ba3b4;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+#help-howto h3 {
+  margin-top: 0;
+}
+
 .first-run {
   border-color: #10b981;
   margin-bottom: 0.75rem;

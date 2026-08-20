@@ -101,7 +101,8 @@ orders through Alpaca. Strategy code never sees broker credentials.
 `http://127.0.0.1:7460` (localhost only in v1). The Quiet cockpit
 shows portfolio state, running sleeves, activity, and risk — not
 backtests or strategy editing. **Help** (header control, not a sixth
-screen) loads the same operator runbook as `alphastrategy help`.
+screen) loads a how-to for the **current screen**. **Full runbook** is
+the same six sections as `alphastrategy help`.
 Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 (every 20s, no orders), not RTH Session OPEN/CLOSED.
