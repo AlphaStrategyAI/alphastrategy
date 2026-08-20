@@ -1212,6 +1212,125 @@ def test_start_sleeve_without_overlay_does_not_flatten_live_book_inside_name_cap
     assert broker.close_all_count == 0
 
 
+def _open_then_idle(
+    tmp_path: Path,
+    *,
+    allocation: float = 0.15,
+) -> tuple[datetime, datetime, FakeBroker, Supervisor]:
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+        equity=10_000.0,
+    )
+    broker.bars["AAPL"] = {"bars": [{"c": 100.0, "t": "2024-01-31"}]}
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", allocation)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    return open_time, session_close, broker, supervisor
+
+
+def _audit_events(tmp_path: Path) -> list[dict]:
+    path = tmp_path / "audit.jsonl"
+    if not path.is_file():
+        return []
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def test_heartbeat_refreshes_last_prices_without_flattening(tmp_path: Path) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    assert broker.positions.get("AAPL") == pytest.approx(15.0)
+    assert supervisor.snapshot.last_prices["AAPL"] == pytest.approx(100.0)
+    broker.bars["AAPL"] = {"bars": [{"c": 150.0, "t": "2024-01-31"}]}
+    before_dev = sum(
+        1 for ev in _audit_events(tmp_path) if ev.get("event") == "execution_deviation"
+    )
+    close_all_before = broker.close_all_count
+    orders_before = list(broker.orders)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.snapshot.last_prices["AAPL"] == pytest.approx(150.0)
+    assert supervisor.snapshot.last_got["AAPL"] == pytest.approx(0.225)
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state == SupervisorState.IDLE_IN_SESSION
+    assert broker.orders == orders_before
+    assert supervisor.snapshot.last_rebalance_event == "2024-01-31:open"
+    after_dev = sum(
+        1 for ev in _audit_events(tmp_path) if ev.get("event") == "execution_deviation"
+    )
+    assert after_dev == before_dev
+    disk = _read_state(tmp_path)
+    assert disk["last_prices"]["AAPL"] == pytest.approx(150.0)
+    assert disk["last_got"]["AAPL"] == pytest.approx(0.225)
+
+
+def test_heartbeat_prices_held_names_after_stop_without_flattening(
+    tmp_path: Path,
+) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    supervisor.stop_sleeve("asb_test")
+    assert supervisor.snapshot.sleeves["asb_test"] == 0.0
+    assert broker.positions.get("AAPL") == pytest.approx(15.0)
+    broker.bars["AAPL"] = {"bars": [{"c": 150.0, "t": "2024-01-31"}]}
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.snapshot.last_prices["AAPL"] == pytest.approx(150.0)
+    assert supervisor.snapshot.last_got["AAPL"] == pytest.approx(0.225)
+    assert broker.close_all_count == 0
+    assert supervisor.state == SupervisorState.IDLE_IN_SESSION
+    assert supervisor.snapshot.last_rebalance_event == "2024-01-31:open"
+
+
+def test_heartbeat_does_not_flatten_when_live_name_breaches_cap(
+    tmp_path: Path,
+) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    broker.bars["AAPL"] = {"bars": [{"c": 150.0, "t": "2024-01-31"}]}
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert broker.close_all_count == 0
+    assert supervisor.state != SupervisorState.STOPPED
+
+
+def test_close_rebalance_flattens_live_book_after_price_rally(
+    tmp_path: Path,
+) -> None:
+    _open_time, session_close, broker, supervisor = _open_then_idle(tmp_path)
+    orders_after_open = list(broker.orders)
+    broker.bars["AAPL"] = {"bars": [{"c": 150.0, "t": "2024-01-31"}]}
+    broker.advance_now(session_close - timedelta(minutes=10))
+    supervisor.tick()
+    assert broker.close_all_count == 1
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.orders == orders_after_open
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_name_weight"
+    assert supervisor.snapshot.last_kill["flattened"] is True
+    assert supervisor.snapshot.last_rebalance_event == "2024-01-31:open"
+    events = _audit_events(tmp_path)
+    flattens = [ev for ev in events if ev.get("event") == "flatten"]
+    assert flattens
+    assert flattens[-1]["reason"] == "max_name_weight"
+    closes = [
+        ev
+        for ev in events
+        if ev.get("event") == "rebalance" and ev.get("session_event") == "close"
+    ]
+    assert closes == []
+
+
 def test_tick_stamps_heartbeat_when_halted(tmp_path: Path) -> None:
     supervisor = _make_supervisor(tmp_path, FakeBroker())
     supervisor._snapshot.state = SupervisorState.HALTED

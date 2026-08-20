@@ -84,6 +84,8 @@ REQUIRED_PHRASES = (
     "Each sleeve card names imported, paper, halted, or stopped",
     "A sleeve overlay that breaches the live book flattens now",
     "Caps is the spoken book",
+    "Heartbeat refreshes last prices and does not flatten",
+    "Rebalance flattens a live book that already breaches the spoken cap",
 )
 
 
