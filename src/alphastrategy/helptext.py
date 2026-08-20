@@ -36,7 +36,9 @@ SECTIONS: list[dict[str, str]] = [
             "isolated sleeve residual) toward flat. Stop zeros a sleeve on the "
             "next legal rebalance and does not flatten now. Resume after halt "
             "does not catch up; the next legal open or close rebalance does. "
-            "Account kill on the Web requires typing FLATTEN."
+            "Account kill on the Web requires typing FLATTEN. "
+            "Sleeve kill reports whether isolation succeeded or the whole paper "
+            "account was flattened. Desk banners stay visible on every screen."
         ),
     },
     {

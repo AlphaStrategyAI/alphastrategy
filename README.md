@@ -118,7 +118,11 @@ an idle empty book.
   `--bundle`).
 - **Sleeve kill** (`paper kill --bundle <id>`) trades to the residual
   book when last targets and an open session make isolation clean;
-  otherwise it flattens the whole account rather than guess.
+  otherwise it flattens the whole account rather than guess. The CLI
+  prints JSON (`isolated` vs `flattened`). A desk banner reports the
+  same outcome.
+- Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
+  visible on every screen, not only Portfolio.
 - Daily paper orders are capped (default 200). Overflow is a limit
   flatten, not a partial batch.
 - Same runbook: `alphastrategy help`, `GET /api/help`, cockpit Help.

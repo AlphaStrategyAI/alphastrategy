@@ -255,9 +255,19 @@ def test_e2e_isolated_sleeve_kill(tmp_path: Path) -> None:
         )
         response = conn.getresponse()
         assert response.status == 200
-        response.read()
+        kill_body = json.loads(response.read().decode("utf-8"))
+        assert kill_body["isolated"] is True
+        assert kill_body["flattened"] is False
+        assert kill_body["reason"] == "isolated"
         assert broker.close_all_count == 0
         assert supervisor.state != SupervisorState.STOPPED
+        conn.request("GET", "/api/status")
+        status = json.loads(conn.getresponse().read().decode("utf-8"))
+        assert status["last_kill"]["reason"] == "isolated"
+        conn.request("GET", "/")
+        html = conn.getresponse().read().decode("utf-8")
+        assert 'id="desk-banners"' in html
+        assert 'id="kill-outcome-banner"' in html
         conn.request("GET", "/api/bundles")
         bundles = json.loads(conn.getresponse().read().decode("utf-8"))
         assert "asb_a" in bundles["stopped"]
