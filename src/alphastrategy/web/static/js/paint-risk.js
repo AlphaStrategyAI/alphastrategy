@@ -167,6 +167,7 @@
   }
 
   function riskFormIsDirty() {
+    if (document.querySelector("#screen-risk details[open]")) return true;
     const forms = document.querySelectorAll("#screen-risk form");
     for (const form of forms) {
       if (form.contains(document.activeElement)) return true;

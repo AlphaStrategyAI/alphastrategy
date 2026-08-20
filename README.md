@@ -134,7 +134,8 @@ counts names off the last combined target. Gross
 shows utilization against the account cap. Sleeve overlays is
 **Spoken / Overlays / Tighter / Idle** (Spoken is the hero). Allocation
 is a rail, not only text. Each overlay card is allocation rail and
-tighter count; **Tighten this sleeve** holds the form. A flattened account shows a red **FLAT** banner; it must not
+tighter count; **Tighten this sleeve** holds the form. **Tighten this
+sleeve stays open across the refresh** until you close it. A flattened account shows a red **FLAT** banner; it must not
 look like an idle empty book. `alphastrategy status` includes `utilization`.
 Risk names caps in desk words (**Gross cap**, **Names**, **Orders today**).
 Tighten still posts the policy keys.
