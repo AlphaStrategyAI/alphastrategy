@@ -8,17 +8,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from alphastrategy.bundle.import_bundle import import_asb
 from alphastrategy.bundle.reject import payload
-from alphastrategy.bundle.schema import load_risk_envelope
 from alphastrategy.errors import ImportRejected
 from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
-from alphastrategy.persist import replace_text
 from alphastrategy.risk.labels import POLICY_LABELS
-from alphastrategy.risk.policy import AccountPolicy, merge_limits
+from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.risk.utilization import from_supervisor
 from alphastrategy.supervisor.heartbeat import describe
 from alphastrategy.supervisor import audit
@@ -125,21 +121,8 @@ def _read_json_body(handler: Any) -> dict[str, Any]:
     return payload
 
 
-def _load_runtime(home: AlphaStrategyHome) -> dict[str, Any]:
-    path = home.runtime_path()
-    if not path.exists():
-        return {}
-    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return doc if isinstance(doc, dict) else {}
-
-
-def _save_runtime(home: AlphaStrategyHome, runtime: dict[str, Any]) -> None:
-    path = home.runtime_path()
-    replace_text(path, yaml.safe_dump(runtime, sort_keys=True), prefix=".runtime.")
-
-
 def _apply_startup_runtime(home: AlphaStrategyHome, supervisor: Supervisor) -> None:
-    runtime = _load_runtime(home)
+    runtime = supervisor._read_runtime()
     overlay = runtime.get("account_overlay")
     if isinstance(overlay, dict) and overlay:
         supervisor.set_policy(overlay)
@@ -173,13 +156,6 @@ def _imported_at_map(home: AlphaStrategyHome) -> dict[str, str]:
         if isinstance(doc, dict) and doc.get("imported_at"):
             out[bundle_id] = str(doc["imported_at"])
     return out
-
-
-def _bundle_envelope(home: AlphaStrategyHome, bundle_id: str) -> dict[str, Any]:
-    envelope_path = home.bundle_dir(bundle_id) / "risk-envelope.yaml"
-    if not envelope_path.is_file():
-        return {}
-    return load_risk_envelope(envelope_path.read_bytes())
 
 
 def _read_audit_events(home: AlphaStrategyHome, limit: int = 50) -> list[dict[str, Any]]:
@@ -439,63 +415,10 @@ def handle_get_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
 
 
 def handle_put_risk(handler: Any, home: AlphaStrategyHome, supervisor: Supervisor) -> None:
+    del home
     try:
         body = _read_json_body(handler)
-        runtime = _load_runtime(home)
-        account_overlay = runtime.get("account_overlay", {})
-        if not isinstance(account_overlay, dict):
-            account_overlay = {}
-        sleeve_overlays = runtime.get("sleeve_overlays", {})
-        if not isinstance(sleeve_overlays, dict):
-            sleeve_overlays = {}
-
-        account_patch = body.get("account")
-        if account_patch is not None and not isinstance(account_patch, dict):
-            raise ValueError("account must be an object")
-
-        sleeves_patch = body.get("sleeves")
-        if sleeves_patch is not None and not isinstance(sleeves_patch, dict):
-            raise ValueError("sleeves must be an object")
-
-        planned_account_overlay = dict(account_overlay)
-        planned_sleeve_overlays = {
-            bundle_id: dict(overlay)
-            for bundle_id, overlay in sleeve_overlays.items()
-            if isinstance(overlay, dict)
-        }
-
-        projected_policy = supervisor.policy
-        if account_patch is not None:
-            projected_policy = merge_limits({}, supervisor.policy, account_patch)
-            planned_account_overlay.update(account_patch)
-
-        if sleeves_patch is not None:
-            for bundle_id, patch in sleeves_patch.items():
-                if not isinstance(patch, dict):
-                    raise ValueError(f"sleeve overlay for {bundle_id} must be an object")
-                envelope = _bundle_envelope(home, bundle_id)
-                stored = planned_sleeve_overlays.get(bundle_id, {})
-                current_effective = merge_limits(envelope, projected_policy, stored)
-                merge_limits({}, current_effective, patch)
-                stored.update(patch)
-                planned_sleeve_overlays[bundle_id] = stored
-
-        if account_patch is not None:
-            supervisor.set_policy(account_patch)
-            runtime["account_overlay"] = planned_account_overlay
-
-        if sleeves_patch is not None:
-            runtime["sleeve_overlays"] = planned_sleeve_overlays
-
-        if account_patch is not None or sleeves_patch is not None:
-            _save_runtime(home, runtime)
-            if sleeves_patch is not None:
-                supervisor.enforce_live_book()
-
-        flattened = supervisor.state in (
-            SupervisorState.FLATTENING,
-            SupervisorState.STOPPED,
-        )
+        flattened = supervisor.apply_risk(body.get("account"), body.get("sleeves"))
         _json_response(handler, 200, {"ok": True, "flattened": flattened})
     except ImportRejected as exc:
         _error(handler, 400, str(exc))

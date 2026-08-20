@@ -195,6 +195,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Tighten and Start paper flatten the same live book as Book.
   Sleeve envelopes load once until the file changes.
   Runtime overlays load once until the file changes.
+  Tighten PUT reads runtime overlays from the Supervisor.
   Book Equity names Beat or Glance.
   Book, Beat, and Headroom name Beat or Glance. Rebalance flattens a live book that
   already breaches the spoken cap. Header **LIVE / STALE /

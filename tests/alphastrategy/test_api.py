@@ -365,28 +365,33 @@ def test_put_risk_overlay_does_not_reload_envelope_in_handlers(
     api_stack, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from alphastrategy.api import handlers as handlers_mod
+    from alphastrategy.bundle.schema import load_risk_envelope
+    from alphastrategy.supervisor import loop as loop_mod
 
+    assert not hasattr(handlers_mod, "load_risk_envelope")
     client, home, supervisor, _broker = api_stack
     bundle_dir = home.imported_dir() / "asb_x"
     (bundle_dir / "risk-envelope.yaml").write_text(
         "max_name_weight: 0.20\n", encoding="utf-8"
     )
     loads = {"n": 0}
-    orig = handlers_mod.load_risk_envelope
+    orig = load_risk_envelope
 
     def counted(raw: bytes):
         loads["n"] += 1
         return orig(raw)
 
-    monkeypatch.setattr(handlers_mod, "load_risk_envelope", counted)
+    monkeypatch.setattr(loop_mod, "load_risk_envelope", counted)
     supervisor.sleeve_policies(["asb_x"])
+    after = loads["n"]
+    assert after >= 1
     response = client.put(
         "/api/risk",
         json={"sleeves": {"asb_x": {"max_name_weight": 0.15}}},
     )
     assert response.status == 200
     assert response.json()["ok"] is True
-    assert loads["n"] == 0
+    assert loads["n"] == after
 
 
 def test_put_risk_flattens_when_live_book_breaches(api_stack):

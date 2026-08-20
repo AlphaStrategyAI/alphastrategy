@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import math
 import threading
@@ -14,7 +15,7 @@ from alphastrategy.bundle.schema import load_risk_envelope
 
 from alphastrategy.errors import FlattenRequested, HaltRequested, IllegalWeights
 from alphastrategy.home import AlphaStrategyHome
-from alphastrategy.persist import discard_stale
+from alphastrategy.persist import discard_stale, replace_text
 from alphastrategy.risk.check import check_book
 from alphastrategy.risk.policy import AccountPolicy, merge_limits, tighten_policy
 from alphastrategy.supervisor import audit
@@ -644,6 +645,68 @@ class Supervisor:
             doc = loaded if isinstance(loaded, dict) else {}
         self._runtime_doc_cache = (digest, doc)
         return doc
+
+    def _write_runtime(self, runtime: dict[str, Any]) -> None:
+        path = self._home.runtime_path()
+        replace_text(
+            path,
+            yaml.safe_dump(runtime, sort_keys=True),
+            prefix=".runtime.",
+        )
+
+    def apply_risk(
+        self,
+        account_patch: dict[str, Any] | None,
+        sleeves_patch: dict[str, Any] | None,
+    ) -> bool:
+        with self._lock:
+            if account_patch is not None and not isinstance(account_patch, dict):
+                raise ValueError("account must be an object")
+            if sleeves_patch is not None and not isinstance(sleeves_patch, dict):
+                raise ValueError("sleeves must be an object")
+            runtime = copy.deepcopy(self._read_runtime())
+            account_overlay = runtime.get("account_overlay", {})
+            if not isinstance(account_overlay, dict):
+                account_overlay = {}
+            sleeve_overlays = runtime.get("sleeve_overlays", {})
+            if not isinstance(sleeve_overlays, dict):
+                sleeve_overlays = {}
+            planned_account_overlay = dict(account_overlay)
+            planned_sleeve_overlays = {
+                bundle_id: dict(overlay)
+                for bundle_id, overlay in sleeve_overlays.items()
+                if isinstance(overlay, dict)
+            }
+            projected_policy = self._policy
+            if account_patch is not None:
+                projected_policy = merge_limits({}, self._policy, account_patch)
+                planned_account_overlay.update(account_patch)
+            if sleeves_patch is not None:
+                for bundle_id, patch in sleeves_patch.items():
+                    if not isinstance(patch, dict):
+                        raise ValueError(
+                            f"sleeve overlay for {bundle_id} must be an object"
+                        )
+                    envelope = self._bundle_envelope(bundle_id)
+                    stored = planned_sleeve_overlays.get(bundle_id, {})
+                    current_effective = merge_limits(envelope, projected_policy, stored)
+                    merge_limits({}, current_effective, patch)
+                    stored.update(patch)
+                    planned_sleeve_overlays[bundle_id] = stored
+            if account_patch is not None:
+                self._policy = merge_limits({}, self._policy, account_patch)
+                self._enforce_live_book()
+                runtime["account_overlay"] = planned_account_overlay
+            if sleeves_patch is not None:
+                runtime["sleeve_overlays"] = planned_sleeve_overlays
+            if account_patch is not None or sleeves_patch is not None:
+                self._write_runtime(runtime)
+                if sleeves_patch is not None:
+                    self._enforce_live_book()
+            return self._snapshot.state in (
+                SupervisorState.FLATTENING,
+                SupervisorState.STOPPED,
+            )
 
     def _file_digest(self, path: Path) -> str:
         if not path.is_file():

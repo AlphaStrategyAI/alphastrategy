@@ -29,6 +29,7 @@ SECTIONS: list[dict[str, str]] = [
             "A heartbeat live book holds until flatten or place. "
             "Tighten and Start paper flatten the same live book as Book. "
             "Runtime overlays load once until the file changes. "
+            "Tighten PUT reads runtime overlays from the Supervisor. "
             "At most two RTH rebalances fire: open plus 3 minutes, and 12 minutes before close. "
             "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash. "
             "An incomplete rebalance still writes Wanted / Got, counts those orders, "
@@ -62,6 +63,7 @@ SECTIONS: list[dict[str, str]] = [
             "words (Gross cap, Name cap, Names, Orders today). "
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
+            "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap. "
             "A live book through the spoken cap warns before the next rebalance flattens. "
@@ -268,6 +270,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Risk overlays load runtime once per glance. "
             "Sleeve envelopes load once until the file changes. "
             "Runtime overlays load once until the file changes. "
+            "Tighten PUT reads runtime overlays from the Supervisor. "
             "Headroom is four tiles Names / Orders today / Cash / Target cash. Names is the hero. "
             "Book, Beat, and Headroom name Beat or Glance. "
             "Tighten is four tiles Tight / Delta $ / Delta % / Fields. Tight is the hero. "
@@ -363,6 +366,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "Looser values are refused; PUT keys stay machine names. "
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
+            "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now."
         ),
     },
