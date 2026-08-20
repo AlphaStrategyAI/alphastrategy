@@ -427,6 +427,34 @@ def test_start_flattens_when_idle_overlay_breaches_live_book(api_stack):
     assert broker.close_all_count == 1
 
 
+def test_get_risk_spoken_follows_allocated_overlay(api_stack):
+    client, home, supervisor, _broker = api_stack
+    bundle_dir = home.imported_dir() / "asb_x"
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+    overlay = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_x": {"max_name_weight": 0.05, "max_names": 10}}},
+    )
+    assert overlay.status == 200
+    idle = client.get("/api/risk").json()
+    assert idle["account"]["max_name_weight"] == 0.20
+    assert idle["spoken"]["max_name_weight"] == 0.20
+    assert idle["utilization"]["max_name_weight"] == 0.20
+    assert idle["spoken"]["max_names"] == 50
+    start = client.post("/api/paper/start", json={"bundle_id": "asb_x", "allocation": 0.25})
+    assert start.status == 200
+    spoken = client.get("/api/risk").json()
+    assert spoken["account"]["max_name_weight"] == 0.20
+    assert spoken["account"]["max_names"] == 50
+    assert spoken["spoken"]["max_name_weight"] == 0.05
+    assert spoken["spoken"]["max_names"] == 10
+    assert spoken["utilization"]["max_name_weight"] == 0.05
+    assert spoken["utilization"]["max_names"] == 10
+    status = client.get("/api/status").json()
+    assert status["utilization"]["max_name_weight"] == 0.05
+    assert status["utilization"]["max_names"] == 10
+
+
 def test_put_risk_rejects_loosening(api_client: ApiClient):
     response = api_client.put("/api/risk", json={"account": {"max_name_weight": 0.25}})
     assert response.status == 400

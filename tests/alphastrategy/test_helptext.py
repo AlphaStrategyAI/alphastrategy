@@ -83,6 +83,7 @@ REQUIRED_PHRASES = (
     "Tighten that breaches the live book flattens now",
     "Each sleeve card names imported, paper, halted, or stopped",
     "A sleeve overlay that breaches the live book flattens now",
+    "Caps is the spoken book",
 )
 
 

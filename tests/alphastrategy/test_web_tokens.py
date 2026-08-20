@@ -1185,6 +1185,41 @@ def test_js_paints_risk_caps_tiles(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_paints_risk_caps_from_spoken(js_text: str) -> None:
+    render = js_text[js_text.find("function renderRisk(") : js_text.find("function onRiskAccountSubmit")]
+    pre_dirty = render.split("if (riskFormIsDirty())")[0]
+    assert "spoken" in pre_dirty
+    assert "renderRiskCaps" in pre_dirty
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_gross_and_name_rails_use_spoken_caps(js_text: str) -> None:
+    rails = js_text[
+        js_text.find("function renderGrossUtilization") : js_text.find(
+            "function renderRemainingBudgets"
+        )
+    ]
+    assert "utilization()" in rails
+    assert "max_gross" in rails
+    assert "state.risk.account.max_gross" not in rails
+    port = js_text[js_text.find("const posBody") : js_text.find("function pulseLabel")]
+    glance = js_text[
+        js_text.find("function renderPositionsGlance") : js_text.find("function renderBanners")
+    ]
+    assert "spokenPolicy()" in port or "utilization().max_name_weight" in port
+    assert "spokenPolicy()" in glance or "utilization().max_name_weight" in glance
+    assert "state.risk.account.max_name_weight" not in port
+    assert "state.risk.account.max_name_weight" not in glance
+    assert "Gross cap" not in js_text
+
+
+def test_css_risk_cap_spoken_warn_token(css_text: str) -> None:
+    name = re.search(r"#risk-cap-name\.warn\s*\{[^}]*\}", css_text)
+    assert name is not None and "#f59e0b" in name.group(0).lower()
+
+
 def test_js_paints_risk_headroom_tiles(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderRiskUtilization") : js_text.find("function nameCapBar")

@@ -120,6 +120,28 @@ def test_summarize_counts_live_nonzero_positions() -> None:
     assert out["invested_weight"] == pytest.approx(0.6)
     assert out["target_cash_weight"] == pytest.approx(0.4)
     assert out["max_gross"] == 1.0
+    assert out["max_name_weight"] == 0.20
+
+
+def test_from_supervisor_uses_spoken_policy() -> None:
+    from alphastrategy.risk.utilization import from_supervisor
+
+    class Snap:
+        orders_today = 0
+        last_combined = {}
+        last_got = {}
+
+    class Fake:
+        policy = AccountPolicy.defaults()
+        snapshot = Snap()
+
+        def spoken_policy(self):
+            return replace(AccountPolicy.defaults(), max_name_weight=0.05, max_names=10)
+
+    out = from_supervisor(Fake(), live=False)
+    assert out["max_name_weight"] == 0.05
+    assert out["max_names"] == 10
+    assert out["max_gross"] == 1.0
 
 
 def test_summarize_falls_back_to_last_got_when_no_positions() -> None:
