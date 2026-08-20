@@ -206,6 +206,8 @@ def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys
     assert payload["halted"] is False
     assert payload["flattened"] is False
     assert "last_rebalance_event" in payload
+    assert "last_kill" in payload
+    assert payload["last_kill"] is None
 
 
 def test_weight_fn_uses_last_fetched_bar_and_long_lookback(tmp_path: Path) -> None:
@@ -551,4 +553,18 @@ def test_cli_account_kill_control_plane_with_force_flattens(
     payload = json.loads(capsys.readouterr().out.strip())
     assert payload["reason"] == "account"
     assert supervisor.snapshot.last_kill["reason"] == "account"
+
+
+def test_offline_status_includes_last_kill_after_account_kill(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    _create_imported_bundle(cli_home)
+    assert main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"]) == 0
+    assert main(["paper", "kill", "--force"]) == 0
+    capsys.readouterr()
+    rc = main(["status"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["last_kill"]["reason"] == "account"
+    assert payload["last_kill"]["flattened"] is True
 

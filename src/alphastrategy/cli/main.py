@@ -246,6 +246,7 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         "last_rebalance_event": snapshot.last_rebalance_event,
         "flattened": snapshot.state
         in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
+        "last_kill": snapshot.last_kill,
     }
     print(json.dumps(payload, separators=(",", ":")))
     return 0
