@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (this cycle chose executing-plans). Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Paint Run Sleeves as Remaining / Spoken / Live / Idle glance tiles and name the empty sleeve list.
+**Goal:** Paint Run Sleeves as Remaining / Spoken / Active / Idle glance tiles and name the empty sleeve list.
 
 **Architecture:** HTML metrics inside `#run-book`. `renderRunSleeves` fills four mounts from existing `state.bundles`. No API change. Kill-switch band order unchanged.
 
@@ -32,7 +32,7 @@ In `test_html_run_kill_switch_zones`, after `assert 'id="run-sleeves"' in book`,
 ```python
     assert 'id="run-remaining"' in book
     assert 'id="run-spoken"' in book
-    assert 'id="run-count-live"' in book
+    assert 'id="run-count-active"' in book
     assert 'id="run-count-idle"' in book
     assert "metrics-4" in book
     assert "hero" in book
@@ -48,7 +48,7 @@ def test_js_paints_run_capacity(js_text: str) -> None:
     ]
     assert "run-remaining" in paint
     assert "run-spoken" in paint
-    assert "run-count-live" in paint
+    assert "run-count-active" in paint
     assert "run-count-idle" in paint
     assert "No sleeves yet" in paint
     assert "window.confirm" not in js_text
@@ -62,7 +62,7 @@ def test_css_run_remaining_tokens(css_text: str) -> None:
     assert fail is not None and "#ef4444" in fail.group(0).lower()
 ```
 
-`REQUIRED_PHRASES` add `"Remaining / Spoken / Live / Idle"`.
+`REQUIRED_PHRASES` add `"Remaining / Spoken / Active / Idle"`.
 
 e2e `test_control_plane_serves_help`: `assert 'id="run-remaining"' in html`.
 
@@ -76,9 +76,9 @@ e2e `test_control_plane_serves_help`: `assert 'id="run-remaining"' in html`.
 
 - [ ] **Step 4: CSS** — separate `#run-remaining.warn` and `#run-remaining.fail` blocks.
 
-- [ ] **Step 5: JS** — In `renderRunSleeves`, fill Remaining / Spoken / Live / Idle from `bundles`. Empty list copy exact. Keep dirty-form skip and sleeve card controls.
+- [ ] **Step 5: JS** — In `renderRunSleeves`, fill Remaining / Spoken / Active / Idle from `bundles`. Empty list copy exact. Keep dirty-form skip and sleeve card controls.
 
-- [ ] **Step 6: Help + README** — `how_run` still four bands; Sleeves is Remaining / Spoken / Live / Idle; Remaining is the hero. Cockpit/README the same.
+- [ ] **Step 6: Help + README** — `how_run` still four bands; Sleeves is Remaining / Spoken / Active / Idle; Remaining is the hero. Cockpit/README the same.
 
 - [ ] **Step 7: Full suite PASS. Commit.**
 

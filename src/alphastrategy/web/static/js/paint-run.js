@@ -39,7 +39,7 @@
     }
     const spokenEl = document.getElementById("run-spoken");
     if (spokenEl) spokenEl.textContent = fmtPct(spoken);
-    const liveEl = document.getElementById("run-count-live");
+    const liveEl = document.getElementById("run-count-active");
     if (liveEl) liveEl.textContent = String(live);
     const idleEl = document.getElementById("run-count-idle");
     if (idleEl) idleEl.textContent = String(idle);

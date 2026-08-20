@@ -46,7 +46,7 @@ REQUIRED_PHRASES = (
     "Your first paper session",
     "Pulse / Age / Interval / Supervisor",
     "Pulse, Session, and Supervisor",
-    "Remaining / Spoken / Live / Idle",
+    "Remaining / Spoken / Active / Idle",
 )
 
 

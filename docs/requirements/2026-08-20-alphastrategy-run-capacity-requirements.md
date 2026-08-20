@@ -8,7 +8,7 @@
 
 Paper only. Five screens. Quiet cockpit **tokens unchanged**. No sixth nav tab. No live. No WebSockets. No chart library. Keep the four Run bands and existing control ids. Do not revive `static/app.js`.
 
-This cycle makes Run **Sleeves** use the same glance grammar as Inventory / Beat: Remaining, Spoken, Live, and Idle as tiles — not a blank card stack — and names the empty book.
+This cycle makes Run **Sleeves** use the same glance grammar as Inventory / Beat: Remaining, Spoken, Active, and Idle as tiles — not a blank card stack — and names the empty book. Do **not** label a tile `Live` (paper wall: no live-toggle label).
 
 ## 1. Why this increment exists
 
@@ -17,9 +17,9 @@ Goal check against current main (`e987d01`):
 | Goal slice | v1 / later contract | Current desk |
 | --- | --- | --- |
 | 风险可控 | §5 `Σ allocation_i <= 1`. Residual is cash. | Portfolio Sleeves has a spoken-for rail. Run is where the operator **sets** allocation, and it does not show remaining book. |
-| 凭直觉交互 | Recognition over recall. NN/g empty states name what belongs here. | Empty `#run-sleeves` is a void. The start form is above; the operator cannot see Live vs Idle vs leftover capacity. |
+| 凭直觉交互 | Recognition over recall. NN/g empty states name what belongs here. | Empty `#run-sleeves` is a void. The start form is above; the operator cannot see Active vs Idle vs leftover capacity. |
 | 界面令人眼前一亮 | Strategies Inventory, Activity Beat, Book are `metrics-4` | Sleeves is only cards (or nothing). Last core action screen without glance tiles. |
-| 易于使用 | `how_run` names four bands | Does not say Sleeves is Remaining / Spoken / Live / Idle. |
+| 易于使用 | `how_run` names four bands | Does not say Sleeves is Remaining / Spoken / Active / Idle. |
 | 可靠 | Header now shows Session and Supervisor on every screen | Run still cannot answer “how much book is left before Start paper.” |
 
 Research applied:
@@ -45,8 +45,8 @@ Inside `#run-book`, after the Sleeves heading and **before** `#run-sleeve-error`
             <div id="run-spoken" class="metric-value">—</div>
           </div>
           <div class="metric">
-            <div class="metric-label">Live</div>
-            <div id="run-count-live" class="metric-value">—</div>
+            <div class="metric-label">Active</div>
+            <div id="run-count-active" class="metric-value">—</div>
           </div>
           <div class="metric">
             <div class="metric-label">Idle</div>
@@ -61,7 +61,7 @@ Paint from existing `state.bundles` in `renderRunSleeves` (no API change):
 | --- | --- | --- |
 | Remaining | `fmtPct(max(0, 1 − spoken))` | Hero. Class `warn` when spoken ≥ 0.9 and < 1. Class `fail` when spoken ≥ 1 |
 | Spoken | `fmtPct(Σ paper allocation)` | Sum of `bundles.paper` values |
-| Live | count of ids with allocation > 0 | |
+| Active | count of ids with allocation > 0 | Label is **Active**, never Live |
 | Idle | count of ids with allocation 0 (imported or paper-zero) | Includes never-started and stopped-at-zero |
 
 Empty `#run-sleeves` (no bundle ids): `No sleeves yet. Import a qualified .asb, then start paper.`
@@ -82,7 +82,7 @@ Keep sleeve cards, Stop / Kill, and dirty-form skip unchanged.
 
 ## 4. Help / README
 
-`how_run`: still four bands. Sleeves is four tiles Remaining / Spoken / Live / Idle. Remaining is the hero.
+`how_run`: still four bands. Sleeves is four tiles Remaining / Spoken / Active / Idle. Remaining is the hero.
 
 Cockpit / README: same phrase.
 
@@ -94,8 +94,8 @@ Cockpit / README: same phrase.
 
 ## 6. Verification
 
-- `#run-remaining`, `#run-spoken`, `#run-count-live`, `#run-count-idle` live inside `#run-book`. Remaining is the hero. `metrics-4`.
+- `#run-remaining`, `#run-spoken`, `#run-count-active`, `#run-count-idle` live inside `#run-book`. Remaining is the hero. `metrics-4`.
 - `#run-sleeves`, `#start-form`, `#account-resume`, `#account-kill` keep their bands.
 - JS paints remaining from `1 - spoken`. Empty copy includes `No sleeves yet`.
-- Help contains `Remaining / Spoken / Live / Idle`. `#nav` still five screens.
+- Help contains `Remaining / Spoken / Active / Idle`. `#nav` still five screens.
 - No real broker orders.

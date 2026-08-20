@@ -508,7 +508,7 @@ def test_html_run_kill_switch_zones(html_text: str) -> None:
     assert 'id="run-sleeves"' in book
     assert 'id="run-remaining"' in book
     assert 'id="run-spoken"' in book
-    assert 'id="run-count-live"' in book
+    assert 'id="run-count-active"' in book
     assert 'id="run-count-idle"' in book
     assert "metrics-4" in book
     assert "hero" in book
@@ -537,7 +537,7 @@ def test_js_paints_run_capacity(js_text: str) -> None:
     ]
     assert "run-remaining" in paint
     assert "run-spoken" in paint
-    assert "run-count-live" in paint
+    assert "run-count-active" in paint
     assert "run-count-idle" in paint
     assert "No sleeves yet" in paint
     assert "window.confirm" not in js_text
