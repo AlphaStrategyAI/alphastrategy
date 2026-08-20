@@ -294,3 +294,28 @@ def test_e2e_account_flatten_sets_status_flattened(tmp_path: Path) -> None:
     finally:
         server.shutdown()
         thread.join(timeout=2)
+
+
+def test_control_plane_serves_help(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    home.root.mkdir(parents=True, exist_ok=True)
+    broker = FakeBroker()
+    supervisor = _make_supervisor(home, broker)
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+        conn.request("GET", "/api/help")
+        help_resp = conn.getresponse()
+        help_body = json.loads(help_resp.read().decode("utf-8"))
+        assert help_resp.status == 200
+        assert help_body["sections"][2]["id"] == "halt_flatten"
+        conn.request("GET", "/")
+        html_resp = conn.getresponse()
+        html = html_resp.read().decode("utf-8")
+        assert html_resp.status == 200
+        assert 'id="help-toggle"' in html
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
