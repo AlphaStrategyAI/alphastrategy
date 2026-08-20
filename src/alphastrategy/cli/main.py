@@ -251,6 +251,7 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         "halted": halted,
         "halt_reason": snapshot.halt_reason,
         "last_rebalance_event": snapshot.last_rebalance_event,
+        "last_rebalance_complete": bool(snapshot.last_rebalance_complete),
         "flattened": snapshot.state
         in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
         "last_kill": snapshot.last_kill,

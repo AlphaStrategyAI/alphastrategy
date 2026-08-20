@@ -263,6 +263,7 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "halted": halted,
             "halt_reason": snapshot.halt_reason,
             "last_rebalance_event": snapshot.last_rebalance_event,
+            "last_rebalance_complete": bool(snapshot.last_rebalance_complete),
             "countdown": _countdown_payload(clock, snapshot.last_rebalance_event),
             "flattened": snapshot.state
             in (SupervisorState.FLATTENING, SupervisorState.STOPPED),

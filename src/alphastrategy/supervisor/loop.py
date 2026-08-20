@@ -636,6 +636,7 @@ class Supervisor:
         except Exception:
             pass
         placed = int(self._snapshot.rebalance_placed or 0)
+        self._snapshot.last_rebalance_complete = False
         event = "open"
         marker = self._snapshot.last_rebalance_event or ""
         if ":" in marker:
@@ -648,7 +649,10 @@ class Supervisor:
             got=dict(self._snapshot.last_got),
             complete=False,
         )
-        self._halt(f"interrupted rebalancing after {placed} orders")
+        if marker:
+            self._halt(f"interrupted rebalancing after {placed} orders; {marker} spent")
+        else:
+            self._halt(f"interrupted rebalancing after {placed} orders")
 
     def _recover_interrupted_flatten(self) -> None:
         if self._snapshot.state != SupervisorState.FLATTENING:
@@ -720,6 +724,7 @@ class Supervisor:
         if plans:
             self._snapshot.last_rebalance_event = f"{session_date}:{event}"
             self._snapshot.rebalance_placed = 0
+            self._snapshot.last_rebalance_complete = False
             self._persist()
         placed, place_error = self._place_batch(plans, already)
         got = self._snapshot_got(combined, prices, equity)
@@ -737,6 +742,7 @@ class Supervisor:
                 f"place_order failed after {placed} of {len(plans)}: {place_error}"
             ) from place_error
         self._snapshot.rebalance_placed = 0
+        self._snapshot.last_rebalance_complete = True
         self._set_idle_state(cur)
 
     def _halt(self, reason: str) -> None:

@@ -55,6 +55,7 @@ def _kill_from_payload(raw: Any) -> dict[str, Any] | None:
 class SupervisorSnapshot:
     state: SupervisorState = SupervisorState.STARTING
     last_rebalance_event: str | None = None
+    last_rebalance_complete: bool = True
     sleeves: dict[str, float] = field(default_factory=dict)
     halt_reason: str | None = None
     prime_clock_after_resume: bool = False
@@ -94,6 +95,7 @@ class SupervisorSnapshot:
         return cls(
             state=SupervisorState(state_raw),
             last_rebalance_event=payload.get("last_rebalance_event"),
+            last_rebalance_complete=bool(payload.get("last_rebalance_complete", True)),
             sleeves=dict(payload.get("sleeves") or {}),
             halt_reason=payload.get("halt_reason"),
             prime_clock_after_resume=bool(payload.get("prime_clock_after_resume", False)),

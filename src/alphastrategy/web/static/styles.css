@@ -798,6 +798,10 @@ button.action:focus-visible,
   color: #10b981;
 }
 
+#metric-last-rebalance.warn {
+  color: #f59e0b;
+}
+
 #run-remaining.warn {
   color: #f59e0b;
 }

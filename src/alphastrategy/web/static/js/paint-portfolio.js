@@ -19,7 +19,10 @@
     function dashNowLast() {
       if (nowEl) nowEl.textContent = "—";
       if (nowSub) nowSub.textContent = "—";
-      if (lastEl) lastEl.textContent = "—";
+      if (lastEl) {
+        lastEl.textContent = "—";
+        lastEl.classList.remove("warn");
+      }
       if (lastSub) lastSub.textContent = "—";
     }
     if (!clock || clock.error) {
@@ -58,13 +61,25 @@
       }
     }
     const last = state.status && state.status.last_rebalance_event;
+    const complete = state.status && state.status.last_rebalance_complete;
+    if (lastEl) lastEl.classList.remove("warn");
     if (!last) {
       if (lastEl) lastEl.textContent = "—";
       if (lastSub) lastSub.textContent = "—";
     } else {
       const parts = String(last).split(":");
-      if (lastEl) lastEl.textContent = parts.length > 1 ? parts.slice(1).join(":") : String(last);
-      if (lastSub) lastSub.textContent = parts.length > 1 ? parts[0] : "—";
+      const kind = parts.length > 1 ? parts.slice(1).join(":") : String(last);
+      const date = parts.length > 1 ? parts[0] : "—";
+      if (complete === false) {
+        if (lastEl) {
+          lastEl.textContent = "spent";
+          lastEl.classList.add("warn");
+        }
+        if (lastSub) lastSub.textContent = kind;
+      } else {
+        if (lastEl) lastEl.textContent = kind;
+        if (lastSub) lastSub.textContent = date;
+      }
     }
   }
 

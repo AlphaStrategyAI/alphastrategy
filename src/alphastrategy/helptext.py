@@ -33,6 +33,8 @@ SECTIONS: list[dict[str, str]] = [
             "and does not flatten or retry that event. "
             "Persist-before-send flushes the snapshot to disk before orders so a "
             "host kill still sees REBALANCING, FLATTENING, or isolate_in_flight. "
+            "Persist-before-send spends the session event even with 0 fills. "
+            "Clock Last names the spent window. "
             "Audit and runtime overlays flush to disk with that snapshot family. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
@@ -153,6 +155,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Book Drift is names off the last combined target. "
             "Positions is four tiles Rows / Wanted / Got / At cap. Wanted is the hero. "
             "Clock is four tiles Session / Now / Next / Last. Next is the hero. "
+            "Clock Last names the spent window when that event did not finish. "
             "Positions include wanted names with no fill. "
             "The Positions Book column is wanted versus got. "
             "Header LIVE is the Supervisor beat, not Session OPEN."
@@ -182,6 +185,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
             "Resume lives under After halt and does not catch up. "
             "After halt shows the halt reason. "
+            "After halt names the spent session event. "
             "Account kill lives under Flatten account and requires typing FLATTEN. "
             "Each Run band shows its own error."
         ),
