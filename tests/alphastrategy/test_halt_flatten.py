@@ -352,7 +352,7 @@ def test_limit_breach_flattens_account(tmp_path: Path):
     assert supervisor.state == SupervisorState.STOPPED
     assert broker.orders == []
     assert supervisor.snapshot.last_kill is not None
-    assert supervisor.snapshot.last_kill["reason"] == "limit"
+    assert supervisor.snapshot.last_kill["reason"] == "max_gross"
     assert supervisor.snapshot.last_kill["flattened"] is True
     assert supervisor.snapshot.last_kill["scope"] == "account"
     events = [
@@ -361,7 +361,7 @@ def test_limit_breach_flattens_account(tmp_path: Path):
         if line.strip()
     ]
     flattens = [ev for ev in events if ev.get("event") == "flatten"]
-    assert flattens[-1]["reason"] == "limit"
+    assert flattens[-1]["reason"] == "max_gross"
 
 
 def test_residual_cash_weights_do_not_halt(tmp_path: Path):

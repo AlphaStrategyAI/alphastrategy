@@ -124,6 +124,7 @@ def test_plan_orders_raises_flatten_on_order_notional_breach():
     with pytest.raises(FlattenRequested) as exc:
         plan_orders(combined, positions, prices, equity, policy)
     assert exc.value.scope == "account"
+    assert exc.value.reason == "max_order_notional_frac"
 
 
 def test_plan_orders_raises_flatten_on_order_count_breach():
@@ -136,6 +137,7 @@ def test_plan_orders_raises_flatten_on_order_count_breach():
     with pytest.raises(FlattenRequested) as exc:
         plan_orders(combined, positions, prices, equity, policy)
     assert exc.value.scope == "account"
+    assert exc.value.reason == "max_orders_per_rebalance"
 
 
 def test_fake_broker_captures_place_order_calls():
@@ -204,6 +206,7 @@ def test_plan_orders_raises_flatten_on_daily_order_budget():
             orders_already_today=0,
         )
     assert exc.value.scope == "account"
+    assert exc.value.reason == "max_orders_per_day"
 
 
 def test_plan_orders_daily_budget_allows_remaining_room():

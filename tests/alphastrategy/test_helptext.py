@@ -59,6 +59,7 @@ REQUIRED_PHRASES = (
     "After halt shows the halt reason",
     "flatten banner names interrupted flattening",
     "flatten banner names a limit breach",
+    "flatten banner names the breached cap",
     "Tight / Delta $ / Delta % / Fields",
     "flushes the snapshot to disk before orders",
     "Tighten this sleeve",

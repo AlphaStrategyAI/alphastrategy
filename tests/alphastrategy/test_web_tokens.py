@@ -325,6 +325,24 @@ def test_js_activity_flatten_limit_breach(js_text: str) -> None:
     assert "limit breach" in flatten_branch
 
 
+def test_js_flatten_banner_names_breached_cap(js_text: str) -> None:
+    block = js_text.split("function renderBanners")[1].split("function renderPortfolio")[0]
+    assert "policyLabel(killReason)" in block
+    assert "NUMERIC_CAPS" in block
+    assert "long_only" in block
+    assert "FLAT: limit breach — paper account flattened" in block
+    assert block.count("const reason") == 1
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_js_activity_flatten_names_breached_cap(js_text: str) -> None:
+    flatten_branch = js_text.split('case "flatten":')[1].split("default:")[0]
+    assert "policyLabel(ev.reason)" in flatten_branch
+    assert "NUMERIC_CAPS" in flatten_branch
+    assert "limit breach" in flatten_branch
+
+
 def test_html_session_and_cap_mounts(html_text: str) -> None:
     assert 'id="metric-session"' in html_text
     assert 'id="metric-countdown"' in html_text

@@ -68,6 +68,7 @@ def test_check_book_gross_breach_flattens_account():
     with pytest.raises(FlattenRequested) as exc:
         check_book(combined, 1.0, policy)
     assert exc.value.scope == "account"
+    assert exc.value.reason == "max_gross"
 
 
 def test_check_book_long_only_breach_flattens():
@@ -75,6 +76,7 @@ def test_check_book_long_only_breach_flattens():
     with pytest.raises(FlattenRequested) as exc:
         check_book({"A": -0.1, "B": 1.1}, 100_000.0, policy)
     assert exc.value.scope == "account"
+    assert exc.value.reason == "long_only"
 
 
 def test_check_book_name_weight_breach_flattens():
@@ -82,6 +84,7 @@ def test_check_book_name_weight_breach_flattens():
     with pytest.raises(FlattenRequested) as exc:
         check_book({"A": 0.25}, 100_000.0, policy)
     assert exc.value.scope == "account"
+    assert exc.value.reason == "max_name_weight"
 
 
 def test_check_book_name_count_breach_flattens():
@@ -90,6 +93,7 @@ def test_check_book_name_count_breach_flattens():
     with pytest.raises(FlattenRequested) as exc:
         check_book(combined, 100_000.0, policy)
     assert exc.value.scope == "account"
+    assert exc.value.reason == "max_names"
 
 
 def test_check_book_ok_passes():
