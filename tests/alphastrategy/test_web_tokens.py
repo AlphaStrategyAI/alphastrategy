@@ -380,6 +380,42 @@ def test_css_desk_pulse_tokens(css_text: str) -> None:
     assert "prefers-reduced-motion" in css_text
 
 
+def test_html_header_session_chips(html_text: str) -> None:
+    header = html_text[html_text.find("<header>") : html_text.find("</header>")]
+    assert 'id="desk-pulse"' in header
+    assert 'id="desk-session"' in header
+    assert 'id="desk-supervisor"' in header
+    assert "desk-chip" in header
+    port = html_text[
+        html_text.find('id="screen-portfolio"') : html_text.find('id="screen-strategies"')
+    ]
+    assert 'id="desk-session"' not in port
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_paints_header_chips(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderDeskPulse") : js_text.find("function renderStrategies")
+    ]
+    assert "desk-session" in paint
+    assert "desk-supervisor" in paint
+    assert "function supervisorLabel" in js_text
+    assert "RTH session" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_header_chip_tokens(css_text: str) -> None:
+    session = re.search(r"#desk-session\.open\s*\{[^}]*\}", css_text)
+    halt = re.search(r"#desk-supervisor\.halt\s*\{[^}]*\}", css_text)
+    fail = re.search(r"#desk-supervisor\.fail\s*\{[^}]*\}", css_text)
+    assert session is not None and "#10b981" in session.group(0).lower()
+    assert halt is not None and "#f59e0b" in halt.group(0).lower()
+    assert fail is not None and "#ef4444" in fail.group(0).lower()
+
+
 def test_html_glance_bands(html_text: str) -> None:
     assert 'id="glance-book"' in html_text
     assert 'id="glance-risk"' in html_text

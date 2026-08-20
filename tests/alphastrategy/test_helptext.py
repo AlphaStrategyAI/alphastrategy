@@ -45,6 +45,7 @@ REQUIRED_PHRASES = (
     "Start paper after flatten",
     "Your first paper session",
     "Pulse / Age / Interval / Supervisor",
+    "Pulse, Session, and Supervisor",
 )
 
 
