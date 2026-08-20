@@ -1525,6 +1525,8 @@ def test_js_paints_live_limit_banner(js_text: str) -> None:
     assert "live-limit-banner" in js_text
     assert "live_limit" in js_text
     assert "next rebalance will flatten" in js_text
+    assert "next send through" in js_text
+    assert "live book through" in js_text
     assert banners.count("const reason") == 1
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text

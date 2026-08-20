@@ -655,6 +655,7 @@ def test_status_live_limit_does_not_flatten(api_stack):
     close_all_before = broker.close_all_count
     body = client.get("/api/status").json()
     assert body["utilization"]["live_limit"]["reason"] == "max_name_weight"
+    assert body["utilization"]["live_limit"]["kind"] == "book"
     risk = client.get("/api/risk").json()
     assert risk["utilization"]["live_limit"]["reason"] == "max_name_weight"
     assert broker.close_all_count == close_all_before
@@ -697,8 +698,10 @@ def test_status_live_limit_next_send_order_size(api_stack):
     close_all_before = broker.close_all_count
     body = client.get("/api/status").json()
     assert body["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    assert body["utilization"]["live_limit"]["kind"] == "send"
     risk = client.get("/api/risk").json()
     assert risk["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    assert risk["utilization"]["live_limit"]["kind"] == "send"
     assert broker.close_all_count == close_all_before
     assert supervisor.state.value != "stopped"
 

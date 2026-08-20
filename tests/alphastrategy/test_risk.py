@@ -194,6 +194,7 @@ def test_from_supervisor_live_limit_next_send_order_size() -> None:
 
     out = from_supervisor(Fake(), live=True)
     assert out["live_limit"]["reason"] == "max_order_notional_frac"
+    assert out["live_limit"]["kind"] == "send"
 
 
 def test_summarize_live_limit_from_marked_name() -> None:
@@ -203,6 +204,7 @@ def test_summarize_live_limit_from_marked_name() -> None:
         last_got={"AAPL": 0.225},
     )
     assert out["live_limit"]["reason"] == "max_name_weight"
+    assert out["live_limit"]["kind"] == "book"
 
 
 def test_summarize_live_limit_none_inside_cap() -> None:
