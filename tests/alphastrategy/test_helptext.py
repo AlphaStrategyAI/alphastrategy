@@ -106,6 +106,7 @@ REQUIRED_PHRASES = (
     "Tighten PUT reads runtime overlays from the Supervisor",
     "Caps LIMIT follows the same live book as Tighten",
     "Day PnL is equity minus last close",
+    "status names Day PnL",
 )
 
 

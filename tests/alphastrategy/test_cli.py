@@ -278,6 +278,61 @@ def test_status_prints_book_on_stderr(
     patch_alpaca.assert_not_called()
 
 
+def test_status_prints_pnl_on_stderr(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = {
+        "state": "idle_in_session",
+        "clock": {},
+        "halted": False,
+        "flattened": False,
+        "utilization": {"live_limit": {"reason": "max_name_weight"}},
+        "heartbeat": {"age_seconds": 4, "pulse": "live", "interval_seconds": 20},
+        "book": {"source": "heartbeat"},
+        "pnl": 100.0,
+        "pnl_source": "last_close",
+    }
+    monkeypatch.setattr(
+        "alphastrategy.cli.main._control_request",
+        lambda *args, **kwargs: (200, payload),
+    )
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    out = json.loads(captured.out.strip())
+    assert out["pnl"] == 100.0
+    assert captured.err.splitlines() == [
+        "BOOK: heartbeat",
+        "PNL: 100.00 vs last close",
+        "LIMIT: live book through Name cap — next rebalance will flatten",
+    ]
+    patch_alpaca.assert_not_called()
+
+
+def test_status_omits_pnl_when_null(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = {
+        "state": "idle_in_session",
+        "clock": {},
+        "halted": False,
+        "flattened": False,
+        "utilization": {},
+        "book": {"source": "glance"},
+        "pnl": None,
+        "pnl_source": None,
+    }
+    monkeypatch.setattr(
+        "alphastrategy.cli.main._control_request",
+        lambda *args, **kwargs: (200, payload),
+    )
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert captured.err.splitlines() == ["BOOK: glance"]
+    patch_alpaca.assert_not_called()
+
+
 def test_status_omits_limit_when_flattened(
     cli_home: Path, patch_alpaca: mock.MagicMock, capsys
 ) -> None:
@@ -734,7 +789,11 @@ def test_offline_status_includes_last_kill_after_account_kill(
     capsys.readouterr()
     rc = main(["status"])
     assert rc == 0
-    payload = json.loads(capsys.readouterr().out.strip())
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out.strip())
     assert payload["last_kill"]["reason"] == "account"
     assert payload["last_kill"]["flattened"] is True
+    assert payload["pnl"] is None
+    assert payload["pnl_source"] is None
+    assert "PNL:" not in captured.err
 

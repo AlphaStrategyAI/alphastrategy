@@ -257,6 +257,33 @@ def test_status_returns_state_clock_and_halt(api_client: ApiClient):
     assert body["flattened"] is False
 
 
+def test_status_day_pnl_null_without_last_equity(api_stack):
+    client, _home, supervisor, broker = api_stack
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["pnl"] is None
+    assert body["pnl_source"] is None
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
+def test_status_day_pnl_from_last_equity(api_stack):
+    client, _home, _supervisor, broker = api_stack
+    orig = broker.get_account
+
+    def with_last():
+        account = orig()
+        account["last_equity"] = "9900"
+        return account
+
+    broker.get_account = with_last  # type: ignore[method-assign]
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["pnl"] == 100.0
+    assert body["pnl_source"] == "last_close"
+    assert broker.close_all_count == close_all_before
+
+
 def test_status_heartbeat_missing_before_tick(api_client: ApiClient) -> None:
     body = api_client.get("/api/status").json()
     assert body["heartbeat"]["pulse"] == "missing"
