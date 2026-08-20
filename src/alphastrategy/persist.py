@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 
 
-def _fsync_dir(directory: Path) -> None:
+def fsync_dir(directory: Path) -> None:
     dir_fd = os.open(os.fspath(directory), os.O_RDONLY | os.O_DIRECTORY)
     try:
         os.fsync(dir_fd)
@@ -31,7 +31,7 @@ def replace_text(path: Path | str, payload: str, *, prefix: str = ".tmp.") -> No
             os.fsync(handle.fileno())
         os.replace(tmp_path, dest)
         replaced = True
-        _fsync_dir(dest.parent)
+        fsync_dir(dest.parent)
     except Exception:
         if not replaced:
             tmp_path.unlink(missing_ok=True)
@@ -50,4 +50,4 @@ def append_text(path: Path | str, payload: str) -> None:
         os.fsync(fd)
     finally:
         os.close(fd)
-    _fsync_dir(dest.parent)
+    fsync_dir(dest.parent)

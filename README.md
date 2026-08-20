@@ -159,7 +159,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   orders so a host kill still sees interrupted rebalancing, flattening,
   or sleeve isolate. Persist-before-send spends the session event even
   with 0 fills. Clock Last names that spent window. Audit and runtime
-  overlays flush to disk with that snapshot family.
+  overlays flush to disk with that snapshot family. import-meta flushes
+  to disk with that family. Roster names imported at.
 - **Account kill** flattens the whole paper account, clears the last book,
   and zeros live sleeves. **Start paper after flatten** starts the session
   loop again and does not catch up. On the Web, flatten lives

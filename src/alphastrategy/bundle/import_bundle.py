@@ -24,6 +24,7 @@ from alphastrategy.bundle.schema import (
 from alphastrategy.dsl.sandbox import run_sandbox, weights_match
 from alphastrategy.errors import HaltRequested, ImportRejected
 from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.persist import fsync_dir, replace_text
 
 
 def _bars_from_csv(data: bytes) -> dict:
@@ -99,17 +100,18 @@ def import_asb(path: Path, home: AlphaStrategyHome) -> str:
 
         _run_conformance(staging, members)
 
-        bundle_dir.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(staging), str(bundle_dir))
-
         meta = {
             "imported_at": datetime.now(timezone.utc).isoformat(),
             "source_path": str(path.resolve()),
         }
-        (bundle_dir / "import-meta.json").write_text(
+        replace_text(
+            staging / "import-meta.json",
             json.dumps(meta, indent=2) + "\n",
-            encoding="utf-8",
+            prefix=".meta.",
         )
+        bundle_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(staging), str(bundle_dir))
+        fsync_dir(bundle_dir.parent)
     except Exception:
         shutil.rmtree(staging_parent, ignore_errors=True)
         if bundle_dir.exists():

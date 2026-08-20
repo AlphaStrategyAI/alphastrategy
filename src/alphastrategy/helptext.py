@@ -36,6 +36,7 @@ SECTIONS: list[dict[str, str]] = [
             "Persist-before-send spends the session event even with 0 fills. "
             "Clock Last names the spent window. "
             "Audit and runtime overlays flush to disk with that snapshot family. "
+            "import-meta flushes to disk with that snapshot family. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },
@@ -172,6 +173,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Three bands: Inventory / Import .asb / Roster. Paper is the hero count. "
             "The four tiles are imported, paper, halted, and stopped. "
+            "Roster names imported at. "
             "Upload a qualified .asb. Import is not permission to trade. "
             "Failures name the gate (hash, schema, conformance) and a next action. "
             "Start paper on Run."

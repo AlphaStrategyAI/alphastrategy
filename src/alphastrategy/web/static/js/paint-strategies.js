@@ -29,9 +29,11 @@
         const policy = risk.sleeves[id];
         const statusClass =
           st === "paper" ? "running" : st === "halted" ? "halt" : st === "stopped" ? "stopped" : "muted";
+        const importedAt = (bundles.imported_at || {})[id];
+        const when = importedAt ? String(importedAt).slice(0, 10) : "—";
         const tr = document.createElement("tr");
         tr.innerHTML = `
-        <td>${id}</td>
+        <td>${id}<div class="metric-sub nums">${when}</div></td>
         <td class="status-${statusClass}">${st}</td>
         <td class="nums">${fmtPct(alloc)}</td>
         <td class="muted">${riskSummary(policy)}</td>

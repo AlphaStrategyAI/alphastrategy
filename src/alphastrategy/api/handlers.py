@@ -155,6 +155,21 @@ def _list_imported_bundles(home: AlphaStrategyHome) -> list[str]:
     )
 
 
+def _imported_at_map(home: AlphaStrategyHome) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for bundle_id in _list_imported_bundles(home):
+        meta_path = home.bundle_dir(bundle_id) / "import-meta.json"
+        if not meta_path.is_file():
+            continue
+        try:
+            doc = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(doc, dict) and doc.get("imported_at"):
+            out[bundle_id] = str(doc["imported_at"])
+    return out
+
+
 def _bundle_envelope(home: AlphaStrategyHome, bundle_id: str) -> dict[str, Any]:
     envelope_path = home.bundle_dir(bundle_id) / "risk-envelope.yaml"
     if not envelope_path.is_file():
@@ -315,6 +330,7 @@ def handle_get_bundles(handler: Any, home: AlphaStrategyHome, supervisor: Superv
         200,
         {
             "imported": _list_imported_bundles(home),
+            "imported_at": _imported_at_map(home),
             "paper": paper,
             "stopped": list(snapshot.stopped),
         },
