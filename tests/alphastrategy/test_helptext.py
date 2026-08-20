@@ -80,6 +80,7 @@ REQUIRED_PHRASES = (
     "Clock Next is flat while the paper account is flattened",
     "stale persist temps and import staging are removed on start",
     "Start paper while halted waits for resume",
+    "Tighten that breaches the live book flattens now",
 )
 
 

@@ -77,6 +77,8 @@ def test_v1_done_path(tmp_path: Path) -> None:
     assert supervisor.last_rebalance_event == "2024-01-31:open"
 
     supervisor.set_policy({"max_gross": 0.1})
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
     broker.advance_now(session_close - timedelta(minutes=10))
     supervisor.tick()
 

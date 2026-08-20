@@ -1018,6 +1018,25 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
 
 
+def test_html_risk_tighten_live_book_hint(html_text: str) -> None:
+    risk = html_text[html_text.find('id="screen-risk"') :]
+    tighten = risk[risk.find('id="risk-tighten"') : risk.find('id="risk-overlays"')]
+    assert 'id="risk-tighten-hint"' in tighten
+    assert "Tighten that breaches the live book flattens now." in tighten
+    assert tighten.find("risk-tighten-fields") < tighten.find('id="risk-tighten-hint"')
+    assert tighten.find('id="risk-tighten-hint"') < tighten.find('id="risk-account-form"')
+    form_onward = risk[risk.find('id="risk-account-form"') :]
+    assert 'id="risk-tighten-hint"' not in form_onward
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_css_risk_tighten_hint_warn_token(css_text: str) -> None:
+    warn = re.search(r"#risk-tighten-hint\.warn\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
+
+
 def test_css_risk_tighten_groups(css_text: str) -> None:
     assert ".risk-tighten-groups" in css_text
     assert ".risk-group" in css_text

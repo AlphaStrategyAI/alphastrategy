@@ -1145,6 +1145,39 @@ def test_start_sleeve_while_halted_stays_halted_without_catchup(tmp_path: Path):
     assert broker.orders == orders_before
 
 
+def test_set_policy_flattens_when_live_book_breaches_gross(tmp_path: Path):
+    broker = FakeBroker(equity=10_000.0)
+    broker.positions = {"AAPL": 40.0}
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor.set_policy({"max_gross": 0.1})
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_gross"
+    assert supervisor.snapshot.last_kill["flattened"] is True
+
+
+def test_set_policy_min_delta_does_not_flatten_live_book(tmp_path: Path):
+    broker = FakeBroker(equity=10_000.0)
+    broker.positions = {"AAPL": 40.0}
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor.set_policy({"min_delta_dollar": 5.0})
+    assert supervisor.state != SupervisorState.STOPPED
+    assert broker.close_all_count == 0
+
+
+def test_set_policy_ok_when_live_book_inside_cap(tmp_path: Path):
+    broker = FakeBroker(equity=10_000.0)
+    broker.positions = {"AAPL": 5.0}
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor.set_policy({"max_gross": 0.1})
+    assert supervisor.state != SupervisorState.STOPPED
+    assert broker.close_all_count == 0
+
+
 def test_tick_stamps_heartbeat_when_halted(tmp_path: Path) -> None:
     supervisor = _make_supervisor(tmp_path, FakeBroker())
     supervisor._snapshot.state = SupervisorState.HALTED

@@ -338,10 +338,25 @@ def test_put_risk_tightens_account_policy(api_stack):
     client, home, supervisor, _ = api_stack
     response = client.put("/api/risk", json={"account": {"max_name_weight": 0.15}})
     assert response.status == 200
+    assert response.json()["ok"] is True
+    assert response.json()["flattened"] is False
     assert supervisor.policy.max_name_weight == 0.15
 
     risk = client.get("/api/risk").json()
     assert risk["account"]["max_name_weight"] == 0.15
+
+
+def test_put_risk_flattens_when_live_book_breaches(api_stack):
+    client, _home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 40.0}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    response = client.put("/api/risk", json={"account": {"max_gross": 0.1}})
+    assert response.status == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["flattened"] is True
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
 
 
 def test_put_risk_rejects_loosening(api_client: ApiClient):
