@@ -54,6 +54,7 @@ REQUIRED_PHRASES = (
     "Session / Now / Next / Last",
     "incomplete rebalance",
     "interrupted rebalancing",
+    "interrupted flattening",
 )
 
 

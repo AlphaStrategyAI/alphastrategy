@@ -43,6 +43,7 @@ class FakeBroker:
         self.raise_on_get_clock = False
         self.fail_place_after = None
         self.crash_after_place = None
+        self.crash_on_close_all = False
         self._next_open = next_open or datetime(2024, 1, 31, 14, 30)
         self._next_close = next_close or datetime(2024, 1, 31, 21, 0)
         self._now = now or self._next_open
@@ -91,6 +92,8 @@ class FakeBroker:
         self.operations.append("cancel_open_orders")
 
     def close_all(self) -> None:
+        if self.crash_on_close_all:
+            raise SimulatedCrash("host killed during close_all")
         self.close_all_called = True
         self.close_all_count += 1
         self.operations.append("close_all")
@@ -924,6 +927,50 @@ def test_flatten_clears_last_book_and_zeros_sleeves(tmp_path: Path):
     assert snap.last_prices == {}
     assert snap.sleeves.get("asb_test", 0) == 0.0
     assert "asb_test" in snap.stopped
+
+
+def test_restart_during_flattening_finishes_flatten(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.positions["AAPL"] = 10.0
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    supervisor.snapshot.last_combined = {"AAPL": 0.15}
+    supervisor.snapshot.last_got = {"AAPL": 0.10}
+    supervisor._snapshot.state = SupervisorState.FLATTENING
+    supervisor._persist()
+
+    restarted = _make_supervisor(tmp_path, broker)
+    assert restarted.state == SupervisorState.STOPPED
+    assert broker.close_all_called is True
+    assert broker.positions == {}
+    assert restarted.snapshot.last_combined == {}
+    assert restarted.snapshot.last_got == {}
+    assert restarted.snapshot.sleeves.get("asb_test", 0) == 0.0
+    assert "asb_test" in restarted.snapshot.stopped
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert any(event["event"] == "flatten" for event in events)
+
+
+def test_kill_account_host_crash_then_restart_finishes_flatten(tmp_path: Path):
+    broker = FakeBroker(is_open=True)
+    broker.positions["AAPL"] = 10.0
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.start_sleeve("asb_test", 0.15)
+    broker.crash_on_close_all = True
+    with pytest.raises(SimulatedCrash):
+        supervisor.kill_account()
+    inflight = _read_state(tmp_path)
+    assert inflight["state"] == "flattening"
+    assert broker.positions.get("AAPL", 0.0) == 10.0
+    broker.crash_on_close_all = False
+    restarted = _make_supervisor(tmp_path, broker)
+    assert restarted.state == SupervisorState.STOPPED
+    assert broker.close_all_called is True
+    assert broker.positions == {}
+    assert broker.close_all_count == 1
 
 
 def test_start_sleeve_after_flatten_leaves_stopped_without_catchup(tmp_path: Path):
