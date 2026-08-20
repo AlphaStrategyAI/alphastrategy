@@ -14,7 +14,9 @@ import pytest
 from alphastrategy.api.app import make_server
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy
+from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
 from alphastrategy.supervisor.loop import Supervisor
+from alphastrategy.supervisor.state import save_state
 
 
 class FakeBroker:
@@ -386,3 +388,65 @@ def test_dispatch_reloads_cli_persisted_sleeve(api_stack):
     body = response.json()
     assert body["paper"]["asb_x"] == 0.3
     assert supervisor.snapshot.sleeves["asb_x"] == 0.3
+
+
+def test_status_includes_last_rebalance_and_countdown(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_rebalance_event = "2024-01-31:open"
+    save_state(home.state_path(), supervisor.snapshot)
+    broker._is_open = True
+    response = client.get("/api/status")
+    assert response.status == 200
+    body = response.json()
+    assert body["last_rebalance_event"] == "2024-01-31:open"
+    clock = body["clock"]
+    cur = ClockSnapshot(
+        is_open=bool(clock["is_open"]),
+        next_open=datetime.fromisoformat(clock["next_open"]),
+        next_close=datetime.fromisoformat(clock["next_close"]),
+        now=datetime.fromisoformat(clock["timestamp"]),
+    )
+    expected = rebalance_countdown(cur, "2024-01-31:open")
+    assert body["countdown"]["next_rebalance"] == expected.next_rebalance
+    assert body["countdown"]["seconds"] == expected.seconds
+    assert "at" in body["countdown"]
+
+
+def test_status_countdown_null_when_clock_fails(api_stack):
+    client, _home, _supervisor, broker = api_stack
+
+    def boom() -> dict:
+        raise RuntimeError("clock down")
+
+    broker.get_clock = boom  # type: ignore[method-assign]
+    body = client.get("/api/status").json()
+    assert "error" in body["clock"]
+    assert body["countdown"] is None
+
+
+def test_portfolio_includes_contribution_and_position_weight(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_combined = {"AAPL": 0.4}
+    supervisor.snapshot.last_sleeve_contribution = {"asb_x": {"AAPL": 0.4}}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor.snapshot.last_rebalance_event = "2024-01-31:open"
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {"AAPL": 10.0}
+    broker.equity = 10_000.0
+    body = client.get("/api/portfolio").json()
+    assert body["last_combined"] == {"AAPL": 0.4}
+    assert body["sleeve_contribution"]["asb_x"]["AAPL"] == 0.4
+    assert body["last_rebalance_event"] == "2024-01-31:open"
+    pos = next(item for item in body["positions"] if item["symbol"] == "AAPL")
+    assert float(pos["qty"]) == 10.0
+    assert pos["notional"] == pytest.approx(1000.0)
+    assert pos["weight"] == pytest.approx(0.1)
+
+
+def test_bundles_lists_stopped(api_stack):
+    client, _home, supervisor, _broker = api_stack
+    supervisor.start_sleeve("asb_x", 0.25)
+    supervisor.stop_sleeve("asb_x")
+    body = client.get("/api/bundles").json()
+    assert "asb_x" in body["stopped"]
+    assert "asb_x" not in body["paper"]

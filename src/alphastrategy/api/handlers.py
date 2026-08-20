@@ -4,6 +4,7 @@ import cgi
 import json
 import tempfile
 from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,8 +16,58 @@ from alphastrategy.errors import ImportRejected
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
 from alphastrategy.supervisor import audit
+from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
 from alphastrategy.supervisor.loop import Supervisor
 from alphastrategy.supervisor.state import SupervisorState
+
+
+def _parse_iso(value: Any) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    text = str(value)
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    return datetime.fromisoformat(text)
+
+
+def _countdown_payload(clock: dict[str, Any], last_event: str | None) -> dict[str, Any] | None:
+    if not isinstance(clock, dict) or clock.get("error") is not None:
+        return None
+    try:
+        now_raw = clock.get("timestamp") or clock.get("now")
+        cur = ClockSnapshot(
+            is_open=bool(clock.get("is_open", False)),
+            next_open=_parse_iso(clock["next_open"]),
+            next_close=_parse_iso(clock["next_close"]),
+            now=_parse_iso(now_raw),
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
+    hint = rebalance_countdown(cur, last_event)
+    return {
+        "next_rebalance": hint.next_rebalance,
+        "at": hint.at.isoformat(),
+        "seconds": hint.seconds,
+    }
+
+
+def _enrich_positions(
+    positions: list[dict[str, Any]],
+    equity: float,
+    prices: dict[str, float],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for pos in positions:
+        item = dict(pos)
+        symbol = str(item.get("symbol", ""))
+        qty = float(item.get("qty", 0) or 0)
+        price = prices.get(symbol)
+        if price is not None:
+            notional = qty * price
+            item["notional"] = notional
+            item["weight"] = (notional / equity) if equity else 0.0
+        out.append(item)
+    return out
 
 
 def _json_response(handler: Any, status: int, payload: Any) -> None:
@@ -151,6 +202,8 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "clock": clock,
             "halted": halted,
             "halt_reason": snapshot.halt_reason,
+            "last_rebalance_event": snapshot.last_rebalance_event,
+            "countdown": _countdown_payload(clock, snapshot.last_rebalance_event),
         },
     )
 
@@ -159,14 +212,24 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
     account = supervisor.broker.get_account()
     equity = float(account.get("equity", 0))
     cash = float(account.get("cash", equity))
-    positions = supervisor.broker.list_positions()
     snapshot = supervisor.snapshot
+    positions = _enrich_positions(
+        supervisor.broker.list_positions(),
+        equity,
+        snapshot.last_prices,
+    )
     payload: dict[str, Any] = {
         "equity": equity,
         "cash": cash,
         "pnl": float(account.get("pnl", account.get("day_pnl", 0)) or 0),
         "positions": positions,
         "sleeves": dict(snapshot.sleeves),
+        "last_combined": dict(snapshot.last_combined),
+        "sleeve_contribution": {
+            bundle_id: dict(weights)
+            for bundle_id, weights in snapshot.last_sleeve_contribution.items()
+        },
+        "last_rebalance_event": snapshot.last_rebalance_event,
     }
     if snapshot.halt_reason:
         payload["halt_reason"] = snapshot.halt_reason
@@ -186,6 +249,7 @@ def handle_get_bundles(handler: Any, home: AlphaStrategyHome, supervisor: Superv
         {
             "imported": _list_imported_bundles(home),
             "paper": paper,
+            "stopped": list(snapshot.stopped),
         },
     )
 
