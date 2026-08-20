@@ -36,7 +36,7 @@ Out: heartbeat flatten; GET flatten; JS paint; merging HTTP routes; live; `app.j
 `_heartbeat_health_check`:
 
 1. `list_positions` then `get_account` in one try. Failure → existing `HaltRequested("heartbeat live book: …")`. Do not flatten.
-2. Seed `_live_book_cache = (monotonic, account, raw_positions)` (same pair `live_book()` returns).
+2. Seed `_live_book_cache = (monotonic, account, raw_positions)` (same pair `live_book()` returns) **after** marks, in `finally`, so bars I/O does not consume the 1s TTL while `tick()` still holds the lock. After idle/rebalance persist, `_touch_live_book_cache()` so persist I/O does not expire the seed before GET can run.
 3. Build the price universe from the mapped positions. Empty universe **returns after the seed** (no bars). Non-empty: `_fetch_prices`, merge `last_prices`, recompute `last_got` from **this** account equity × live qty × fetched prices. Do not call `_snapshot_got`. Do not call `_equity()` again.
 
 `live_book()` unchanged: TTL hit returns the seeded pair.

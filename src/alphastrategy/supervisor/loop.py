@@ -461,6 +461,7 @@ class Supervisor:
                 self._set_idle_state(cur)
                 self._update_prev_clock(cur, None)
                 self._persist()
+                self._touch_live_book_cache()
                 return
 
             if event in ("open", "close"):
@@ -490,6 +491,7 @@ class Supervisor:
                 finally:
                     self._update_prev_clock(cur, event)
                     self._persist()
+                    self._touch_live_book_cache()
 
     def _validate_session(self, cur: ClockSnapshot) -> None:
         if not cur.is_open:
@@ -533,23 +535,25 @@ class Supervisor:
             account = self._broker.get_account()
         except Exception as exc:
             raise HaltRequested(f"heartbeat live book: {exc}") from exc
-        self._live_book_cache = (time.monotonic(), account, raw_positions)
-        positions = _positions_map(raw_positions)
-        symbols = self._price_universe(positions)
-        if not symbols:
-            return
-        prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
-        equity = float(account.get("equity", 0))
-        self._snapshot.last_prices = {
-            **self._snapshot.last_prices,
-            **{symbol: float(price) for symbol, price in prices.items()},
-        }
-        if equity > 0:
-            self._snapshot.last_got = {
-                symbol: (qty * prices[symbol]) / equity
-                for symbol, qty in positions.items()
-                if symbol in prices and qty != 0.0
+        try:
+            positions = _positions_map(raw_positions)
+            symbols = self._price_universe(positions)
+            if not symbols:
+                return
+            prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
+            equity = float(account.get("equity", 0))
+            self._snapshot.last_prices = {
+                **self._snapshot.last_prices,
+                **{symbol: float(price) for symbol, price in prices.items()},
             }
+            if equity > 0:
+                self._snapshot.last_got = {
+                    symbol: (qty * prices[symbol]) / equity
+                    for symbol, qty in positions.items()
+                    if symbol in prices and qty != 0.0
+                }
+        finally:
+            self._live_book_cache = (time.monotonic(), account, raw_positions)
 
     def _set_idle_state(self, cur: ClockSnapshot) -> None:
         if self._snapshot.state == SupervisorState.HALTED:
@@ -692,6 +696,12 @@ class Supervisor:
 
     def _invalidate_live_book(self) -> None:
         self._live_book_cache = None
+
+    def _touch_live_book_cache(self) -> None:
+        cached = self._live_book_cache
+        if cached is None:
+            return
+        self._live_book_cache = (time.monotonic(), cached[1], cached[2])
 
     def spoken_policy(self) -> AccountPolicy:
         with self._lock:

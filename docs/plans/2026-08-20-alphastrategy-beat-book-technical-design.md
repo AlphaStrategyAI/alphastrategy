@@ -157,7 +157,7 @@ git commit -m "test: heartbeat seeds live book; envelope stamp cache"
 
 - [ ] **Step 1: Heartbeat seed**
 
-Rewrite `_heartbeat_health_check` to fetch `raw_positions` then `account`, seed `_live_book_cache`, then existing mark logic using `float(account.get("equity", 0))` instead of `_equity()`. Empty universe returns **after** the seed.
+Rewrite `_heartbeat_health_check` to fetch `raw_positions` then `account`, seed `_live_book_cache` in a `finally` after marks (so the 1s TTL starts when the pair is publishable, not before `_fetch_prices`). Empty universe still seeds. After idle/rebalance `_persist()`, `_touch_live_book_cache()` so persist time does not expire the seed before GET can take the lock.
 
 - [ ] **Step 2: Envelope digest cache**
 

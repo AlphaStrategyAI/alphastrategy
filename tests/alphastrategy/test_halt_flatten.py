@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -1323,6 +1324,53 @@ def test_heartbeat_seeds_live_book_without_extra_broker_reads(tmp_path: Path) ->
     assert after_tick_positions >= 1
 
 
+def test_heartbeat_live_book_survives_slow_price_fetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphastrategy.supervisor import loop as loop_mod
+
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    clock = {"t": 0.0}
+    monkeypatch.setattr(loop_mod.time, "monotonic", lambda: clock["t"])
+    inner_fetch = supervisor._fetch_prices
+    inner_persist = supervisor._persist
+
+    def slow_fetch(symbols, now=None):
+        clock["t"] += Supervisor.LIVE_BOOK_TTL_SEC + 0.1
+        return inner_fetch(symbols, now=now)
+
+    def slow_persist() -> None:
+        clock["t"] += Supervisor.LIVE_BOOK_TTL_SEC + 0.1
+        inner_persist()
+
+    supervisor._fetch_prices = slow_fetch  # type: ignore[method-assign]
+    supervisor._persist = slow_persist  # type: ignore[method-assign]
+    accounts = {"n": 0}
+    positions = {"n": 0}
+    inner_account = broker.get_account
+    inner_positions = broker.list_positions
+
+    def counted_account() -> dict:
+        accounts["n"] += 1
+        return inner_account()
+
+    def counted_positions() -> list:
+        positions["n"] += 1
+        return inner_positions()
+
+    broker.get_account = counted_account  # type: ignore[method-assign]
+    broker.list_positions = counted_positions  # type: ignore[method-assign]
+    supervisor.tick()
+    after_tick_accounts = accounts["n"]
+    after_tick_positions = positions["n"]
+    supervisor.live_book()
+    assert accounts["n"] == after_tick_accounts
+    assert positions["n"] == after_tick_positions
+    assert after_tick_accounts >= 1
+    assert after_tick_positions >= 1
+
+
 def test_bundle_envelope_parses_once_while_unchanged(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1364,7 +1412,11 @@ def test_spoken_policy_sees_envelope_yaml_write(tmp_path: Path) -> None:
     envelope.write_text("max_name_weight: 0.10\n", encoding="utf-8")
     supervisor.start_sleeve("asb_test", 0.25)
     assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.10)
+    prior = envelope.stat()
     envelope.write_text("max_name_weight: 0.05\n", encoding="utf-8")
+    os.utime(envelope, ns=(prior.st_atime_ns, prior.st_mtime_ns))
+    assert envelope.stat().st_size == prior.st_size
+    assert envelope.stat().st_mtime_ns == prior.st_mtime_ns
     assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.05)
 
 
