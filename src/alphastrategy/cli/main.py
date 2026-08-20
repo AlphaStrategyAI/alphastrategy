@@ -36,6 +36,9 @@ DEFAULT_PORT = 7460
 _HELD_START = (
     "held: start paper while halted waits for resume. Resume does not catch up."
 )
+_FLAT_START = (
+    "flattened: a sleeve overlay that breaches the live book flattens now."
+)
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
     {
@@ -281,14 +284,22 @@ def _cmd_paper_start(
     if response is not None:
         status, payload = response
         if 200 <= status < 300:
-            if payload.get("held"):
+            if payload.get("flattened"):
+                print(_FLAT_START, file=sys.stderr)
+            elif payload.get("held"):
                 print(_HELD_START, file=sys.stderr)
             return 0
         return _control_result(response)
     supervisor = _make_supervisor(home, broker)
     try:
         held = supervisor.start_sleeve(bundle_id, allocation)
-        if held:
+        flattened = supervisor.state in (
+            SupervisorState.FLATTENING,
+            SupervisorState.STOPPED,
+        )
+        if flattened:
+            print(_FLAT_START, file=sys.stderr)
+        elif held:
             print(_HELD_START, file=sys.stderr)
         return 0
     except ValueError as exc:

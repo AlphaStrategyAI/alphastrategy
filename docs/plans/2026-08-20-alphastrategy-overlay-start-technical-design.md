@@ -257,6 +257,10 @@ In `start_sleeve`, after `_persist()`, still inside `with self._lock:`:
 
 Do not take the lock again. `_enforce_live_book` is the internal unlocked helper. Public `enforce_live_book()` stays for the API overlay path.
 
+At the top of `_enforce_live_book`, if `self._broker is None` return without halt. CLI `paper start` without a control plane still constructs Supervisor with `broker=None` so allocation can persist without Alpaca.
+
+The CLI flatten test must hit a running control plane (`make_server` + `--port`) so enforce sees a FakeBroker. Do not construct Alpaca on `paper start`.
+
 - [ ] **Step 2: POST /api/paper/start returns flattened**
 
 ```python

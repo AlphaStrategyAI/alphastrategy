@@ -43,6 +43,8 @@ Return value stays `state == HALTED` **after** enforce:
 
 Do **not** fold idle overlays into `_rebalance_policy`. Allocation 0 keeps the overlay unpublished. PUT overlay while idle must **not** flatten; Start paper must.
 
+CLI `paper start` without a running control plane still constructs the Supervisor with `broker=None` so allocation can persist without Alpaca. `_enforce_live_book` returns immediately when there is no broker (do **not** health-halt). Flatten-on-start is the control-plane path (`alphastrategy start` then `paper start` / web Set allocation).
+
 Reuse `_live_book_weights`: priced live qty, else `last_got`, else `last_combined`. Fixture: 15 AAPL × $100 / $10k = 0.15 (under default 20% name cap, over a 5% overlay). Do not use 40 shares (already 40% vs 20%).
 
 `PUT /api/risk` overlay while allocation > 0 already calls `enforce_live_book()` after `runtime.yaml` is on disk. Lock that. Do not flatten because only `min_delta_*` tightened.

@@ -157,6 +157,8 @@ class Supervisor:
         return dict(self._snapshot.last_combined)
 
     def _enforce_live_book(self) -> None:
+        if self._broker is None:
+            return
         if self._snapshot.state in (
             SupervisorState.FLATTENING,
             SupervisorState.STOPPED,
@@ -237,6 +239,7 @@ class Supervisor:
             ]
             self._audit("paper_start", bundle_id=bundle_id, allocation=allocation)
             self._persist()
+            self._enforce_live_book()
             return self._snapshot.state == SupervisorState.HALTED
 
     def stop_sleeve(self, bundle_id: str) -> None:

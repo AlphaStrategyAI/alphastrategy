@@ -436,16 +436,35 @@ def test_paper_start_overlay_breach_prints_flattened(
         yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
         encoding="utf-8",
     )
+    broker = FakeBroker()
     supervisor = Supervisor(
         home=home,
-        broker=FakeBroker(),
+        broker=broker,
         policy=AccountPolicy.defaults(),
         evaluators={"asb_test": {"AAPL": 1.0}},
     )
     supervisor.snapshot.last_got = {"AAPL": 0.15}
     supervisor.snapshot.last_prices = {"AAPL": 100.0}
     supervisor._persist()
-    rc = main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"])
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rc = main(
+            [
+                "paper",
+                "start",
+                "--bundle",
+                "asb_test",
+                "--allocation",
+                "0.25",
+                "--port",
+                str(server.server_port),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
     assert rc == 0
     captured = capsys.readouterr()
     assert captured.out.strip() == ""
@@ -453,6 +472,7 @@ def test_paper_start_overlay_breach_prints_flattened(
     assert "flattened:" in err
     assert "sleeve overlay" in err
     assert "flattens now" in err
+    patch_alpaca.assert_not_called()
 
 
 def test_paper_kill_prints_outcome_json(
