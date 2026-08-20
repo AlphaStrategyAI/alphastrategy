@@ -1147,7 +1147,7 @@ def test_start_sleeve_while_halted_stays_halted_without_catchup(tmp_path: Path):
 
 def test_set_policy_flattens_when_live_book_breaches_gross(tmp_path: Path):
     broker = FakeBroker(equity=10_000.0)
-    broker.positions = {"AAPL": 40.0}
+    broker.positions = {"AAPL": 15.0}
     supervisor = _make_supervisor(tmp_path, broker)
     supervisor.snapshot.last_prices = {"AAPL": 100.0}
     supervisor.set_policy({"max_gross": 0.1})
@@ -1160,7 +1160,7 @@ def test_set_policy_flattens_when_live_book_breaches_gross(tmp_path: Path):
 
 def test_set_policy_min_delta_does_not_flatten_live_book(tmp_path: Path):
     broker = FakeBroker(equity=10_000.0)
-    broker.positions = {"AAPL": 40.0}
+    broker.positions = {"AAPL": 15.0}
     supervisor = _make_supervisor(tmp_path, broker)
     supervisor.snapshot.last_prices = {"AAPL": 100.0}
     supervisor.set_policy({"min_delta_dollar": 5.0})

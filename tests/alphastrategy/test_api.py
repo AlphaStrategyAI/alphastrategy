@@ -348,8 +348,9 @@ def test_put_risk_tightens_account_policy(api_stack):
 
 def test_put_risk_flattens_when_live_book_breaches(api_stack):
     client, _home, supervisor, broker = api_stack
-    broker.positions = {"AAPL": 40.0}
+    broker.positions = {"AAPL": 15.0}
     supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor._persist()
     response = client.put("/api/risk", json={"account": {"max_gross": 0.1}})
     assert response.status == 200
     body = response.json()

@@ -135,6 +135,53 @@ class Supervisor:
         """Apply a tighten-only overlay patch to the account policy."""
         with self._lock:
             self._policy = merge_limits({}, self._policy, overlay)
+            self._enforce_live_book()
+
+    def enforce_live_book(self) -> None:
+        with self._lock:
+            self._enforce_live_book()
+
+    def _live_book_weights(self, equity: float) -> dict[str, float]:
+        positions = _positions_map(self._broker.list_positions())
+        prices = dict(self._snapshot.last_prices)
+        if equity > 0 and prices:
+            got = {
+                symbol: (qty * prices[symbol]) / equity
+                for symbol, qty in positions.items()
+                if symbol in prices
+            }
+            if got:
+                return got
+        if self._snapshot.last_got:
+            return dict(self._snapshot.last_got)
+        return dict(self._snapshot.last_combined)
+
+    def _enforce_live_book(self) -> None:
+        if self._snapshot.state in (
+            SupervisorState.FLATTENING,
+            SupervisorState.STOPPED,
+        ):
+            return
+        try:
+            equity = self._equity()
+            weights = self._live_book_weights(equity)
+        except Exception as exc:
+            self._halt(f"tighten live book: {exc}")
+            return
+        try:
+            check_book(weights, equity, self._rebalance_policy())
+        except FlattenRequested as exc:
+            reason = exc.reason or "limit"
+            self._flatten_account(reason=reason)
+            self._record_kill(
+                KillOutcome(
+                    isolated=False,
+                    flattened=True,
+                    scope="account",
+                    reason=reason,
+                    bundle_id=None,
+                )
+            )
 
     def reload_from_disk(self) -> None:
         """Reload persisted snapshot from disk without reconstructing the broker."""

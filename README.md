@@ -192,6 +192,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   `alphastrategy status` includes `last_kill` even if the desk is down.
 - Daily paper orders are capped (default 200). Overflow is a limit
   flatten, not a partial batch. The flatten banner names the breached cap.
+  Tighten that breaches the live book flattens now.
 - Same runbook: `alphastrategy help`, `GET /api/help`, cockpit Help.
 
 ---

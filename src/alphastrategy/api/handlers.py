@@ -486,8 +486,14 @@ def handle_put_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
 
         if account_patch is not None or sleeves_patch is not None:
             _save_runtime(home, runtime)
+            if sleeves_patch is not None:
+                supervisor.enforce_live_book()
 
-        _json_response(handler, 200, {"ok": True})
+        flattened = supervisor.state in (
+            SupervisorState.FLATTENING,
+            SupervisorState.STOPPED,
+        )
+        _json_response(handler, 200, {"ok": True, "flattened": flattened})
     except ImportRejected as exc:
         _error(handler, 400, str(exc))
     except (json.JSONDecodeError, TypeError, ValueError) as exc:

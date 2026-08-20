@@ -862,6 +862,10 @@ button.action:focus-visible,
   color: #f59e0b;
 }
 
+#risk-tighten-hint.warn {
+  color: #f59e0b;
+}
+
 #risk-sleeves .tighter-line.warn {
   color: #f59e0b;
 }

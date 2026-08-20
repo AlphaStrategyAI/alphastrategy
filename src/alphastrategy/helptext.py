@@ -55,6 +55,7 @@ SECTIONS: list[dict[str, str]] = [
             "The flatten banner names a limit breach when a cap flattened the "
             "paper account. The flatten banner names the breached cap in desk "
             "words (Gross cap, Name cap, Names, Orders today). "
+            "Tighten that breaches the live book flattens now. "
             "Activity flatten rows say limit breach or that cap plus breach. "
             "If the host dies during a sleeve isolate, the desk treats that as "
             "interrupted sleeve isolate: it flattens the whole paper account "
@@ -238,7 +239,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Tighten this sleeve stays open across the refresh until you close it. "
             "Account totals stay sticky. "
             "Tighten groups Gross / Names / Orders / Deltas. Tighten only; "
-            "the form refuses looser values and still posts the policy keys."
+            "the form refuses looser values and still posts the policy keys. "
+            "Tighten that breaches the live book flattens now."
         ),
     },
 ]
@@ -313,7 +315,8 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "1. Open Risk (Alt+5). "
             "2. Caps and Headroom stay sticky. "
             "3. Under Tighten change only Gross / Names / Orders / Deltas fields you mean to tighten, then Tighten. "
-            "Looser values are refused; PUT keys stay machine names."
+            "Looser values are refused; PUT keys stay machine names. "
+            "Tighten that breaches the live book flattens now."
         ),
     },
     {
