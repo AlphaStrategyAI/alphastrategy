@@ -46,6 +46,7 @@ coverage.xml
 
 # Local loop / Claude state (not source code)
 .claude/
+.superpowers/
 
 # Output dirs
 reports/

@@ -1,0 +1,4 @@
+dsl_version: alphaloop.dsl/v0
+universe: [AAPL, MSFT]
+steps:
+  - op: equal_weight

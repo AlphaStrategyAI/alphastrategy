@@ -1,0 +1,318 @@
+from __future__ import annotations
+
+import json
+import os
+import threading
+from datetime import date
+from pathlib import Path
+from unittest import mock
+
+import pytest
+
+from alphastrategy.api.app import make_server
+from alphastrategy.cli.main import _make_weight_fn, _shutdown_flatten, main
+from alphastrategy.errors import HaltRequested
+from alphastrategy.home import AlphaStrategyHome
+from alphastrategy.risk.policy import AccountPolicy
+from alphastrategy.supervisor.loop import Supervisor
+
+GOLDEN_ASB = Path(__file__).parent / "fixtures" / "golden.asb"
+
+
+class FakeBroker:
+    def __init__(self) -> None:
+        self._is_open = False
+
+    def get_account(self) -> dict:
+        return {"equity": "10000", "cash": "10000"}
+
+    def list_positions(self) -> list[dict]:
+        return []
+
+    def place_order(self, symbol: str, qty: float, side: str) -> dict:
+        return {"id": "order-1", "status": "filled"}
+
+    def cancel_order(self, order_id: str) -> None:
+        return None
+
+    def cancel_open_orders(self) -> None:
+        return None
+
+    def close_all(self) -> None:
+        return None
+
+    def get_clock(self) -> dict:
+        return {
+            "is_open": self._is_open,
+            "next_open": "2024-01-31T14:30:00",
+            "next_close": "2024-01-31T21:00:00",
+            "timestamp": "2024-01-31T14:30:00",
+        }
+
+    def get_bars(self, symbols: list[str], start: str, end: str) -> dict:
+        return {symbol: {"bars": [{"c": 100.0, "t": "2024-01-31"}]} for symbol in symbols}
+
+
+@pytest.fixture
+def cli_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    home_root = tmp_path / "home"
+    monkeypatch.setenv("ALPHASTRATEGY_HOME", str(home_root))
+    return home_root
+
+
+@pytest.fixture
+def fake_broker() -> FakeBroker:
+    return FakeBroker()
+
+
+@pytest.fixture
+def patch_alpaca(fake_broker: FakeBroker):
+    with mock.patch("alphastrategy.cli.main.AlpacaAdapter") as adapter_cls:
+        adapter_cls.return_value = fake_broker
+        yield adapter_cls
+
+
+def _create_imported_bundle(home_root: Path, bundle_id: str = "asb_test") -> Path:
+    bundle_dir = home_root / "imported" / bundle_id
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    return bundle_dir
+
+
+def test_cli_import_golden_asb(cli_home: Path) -> None:
+    assert GOLDEN_ASB.is_file()
+    rc = main(["import", str(GOLDEN_ASB)])
+    assert rc == 0
+
+    home = AlphaStrategyHome.from_env()
+    imported = list(cli_home.joinpath("imported").iterdir())
+    assert len(imported) == 1
+    bundle_id = imported[0].name
+    assert bundle_id.startswith("asb_")
+    assert (home.bundle_dir(bundle_id) / "strategy.dsl.yaml").is_file()
+
+
+def test_paper_start_rejects_live_flag(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
+    rc = main(
+        [
+            "paper",
+            "start",
+            "--bundle",
+            "asb_test",
+            "--allocation",
+            "0.5",
+            "--live",
+        ]
+    )
+    assert rc != 0
+    patch_alpaca.assert_not_called()
+
+
+def test_paper_start_rejects_confirm_live_flag(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
+    rc = main(
+        [
+            "paper",
+            "start",
+            "--bundle",
+            "asb_test",
+            "--allocation",
+            "0.5",
+            "--confirm-yes-i-know-what-im-doing",
+        ]
+    )
+    assert rc != 0
+    patch_alpaca.assert_not_called()
+
+
+def test_start_rejects_live_flag(patch_alpaca: mock.MagicMock) -> None:
+    rc = main(["start", "--live"])
+    assert rc != 0
+    patch_alpaca.assert_not_called()
+
+
+def test_start_rejects_public_bind(patch_alpaca: mock.MagicMock) -> None:
+    rc = main(["start", "--host", "0.0.0.0"])
+    assert rc != 0
+    patch_alpaca.assert_not_called()
+
+
+def test_start_starts_supervisor_heartbeat(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
+    calls = []
+    with mock.patch("alphastrategy.cli.main.make_server") as make_server:
+        with mock.patch("alphastrategy.cli.main.start_heartbeat") as start_heartbeat:
+            with mock.patch("alphastrategy.cli.main.signal.signal") as signal_install:
+                server = mock.MagicMock()
+                server.serve_forever.side_effect = KeyboardInterrupt
+                make_server.return_value = server
+                make_server.side_effect = lambda *args, **kwargs: calls.append("server") or server
+                start_heartbeat.side_effect = lambda *args, **kwargs: calls.append("heartbeat")
+                signal_install.side_effect = lambda _signum, handler: (
+                    calls.append("handler")
+                    if getattr(handler, "__name__", "") == "_interrupt"
+                    else None
+                )
+
+                rc = main(["start"])
+
+    assert rc == 0
+    start_heartbeat.assert_called_once()
+    supervisor = start_heartbeat.call_args.args[0]
+    assert supervisor is make_server.call_args.args[1]
+    assert calls == ["server", "handler", "handler", "heartbeat"]
+
+
+def test_start_uses_paper_adapter(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
+    with mock.patch("alphastrategy.cli.main.make_server") as make_server:
+        server = mock.MagicMock()
+        server.serve_forever.side_effect = KeyboardInterrupt
+        make_server.return_value = server
+
+        with mock.patch.dict(
+            os.environ,
+            {"ALPACA_API_KEY": "PK_TEST", "ALPACA_API_SECRET_KEY": "SECRET_TEST"},
+            clear=False,
+        ):
+            rc = main(["start"])
+
+    assert rc == 0
+    patch_alpaca.assert_called_once()
+    kwargs = patch_alpaca.call_args.kwargs
+    assert kwargs.get("paper", True) is True
+    assert kwargs.get("confirm_live", False) is False
+    make_server.assert_called_once()
+    bind = make_server.call_args.kwargs.get("bind") or make_server.call_args.args[2]
+    assert bind == "127.0.0.1"
+
+
+def test_paper_start_persists_allocation(cli_home: Path, patch_alpaca: mock.MagicMock) -> None:
+    _create_imported_bundle(cli_home)
+    rc = main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"])
+    assert rc == 0
+
+    state = json.loads((cli_home / "supervisor-state.json").read_text(encoding="utf-8"))
+    assert state["sleeves"]["asb_test"] == 0.25
+    patch_alpaca.assert_not_called()
+
+
+def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys) -> None:
+    _create_imported_bundle(cli_home)
+    main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"])
+
+    rc = main(["status"])
+    assert rc == 0
+
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["state"] == "idle_out_of_session"
+    assert "clock" in payload
+    assert payload["halted"] is False
+
+
+def test_weight_fn_uses_last_fetched_bar_and_long_lookback(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    bundle_dir = home.bundle_dir("asb_test")
+    bundle_dir.mkdir(parents=True)
+    (bundle_dir / "strategy.dsl.yaml").write_text(
+        "dsl_version: alphaloop.dsl/v0\n"
+        "universe: [AAPL]\n"
+        "steps:\n"
+        "  - op: equal_weight\n",
+        encoding="utf-8",
+    )
+    (bundle_dir / "conformance").mkdir()
+    (bundle_dir / "conformance" / "expected_weights.yaml").write_text(
+        "effective_at: '1999-01-01T00:00:00Z'\nweights: {AAPL: 1.0}\n",
+        encoding="utf-8",
+    )
+
+    class BarsBroker:
+        request: tuple[str, str] | None = None
+
+        def get_bars(self, symbols, start, end):
+            self.request = (start, end)
+            return {
+                "AAPL": {
+                    "bars": [
+                        {"c": 90.0, "t": "2026-08-17T20:00:00Z"},
+                        {"c": 100.0, "t": "2026-08-18T20:00:00Z"},
+                    ]
+                }
+            }
+
+    broker = BarsBroker()
+    with mock.patch("alphastrategy.cli.main.run_sandbox", return_value={"AAPL": 1.0}) as run:
+        weights = _make_weight_fn(home, broker)("asb_test")
+
+    assert weights == {"AAPL": 1.0}
+    assert run.call_args.args[2] == "2026-08-18T20:00:00Z"
+    assert broker.request is not None
+    start, end = broker.request
+    assert (date.fromisoformat(end) - date.fromisoformat(start)).days >= 400
+
+
+def test_weight_fn_halts_on_empty_broker_bars(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    bundle_dir = home.bundle_dir("asb_test")
+    bundle_dir.mkdir(parents=True)
+    (bundle_dir / "strategy.dsl.yaml").write_text(
+        "dsl_version: alphaloop.dsl/v0\n"
+        "universe: [AAPL]\n"
+        "steps:\n"
+        "  - op: equal_weight\n",
+        encoding="utf-8",
+    )
+
+    class EmptyBarsBroker:
+        def get_bars(self, symbols, start, end):
+            return {"AAPL": {"bars": []}}
+
+    with pytest.raises(HaltRequested, match="missing bars"):
+        _make_weight_fn(home, EmptyBarsBroker())("asb_test")
+
+
+def test_shutdown_flatten_kills_account_before_server_shutdown() -> None:
+    supervisor = mock.MagicMock()
+    server = mock.MagicMock()
+    calls = []
+    supervisor.kill_account.side_effect = lambda: calls.append("kill")
+    server.shutdown.side_effect = lambda: calls.append("shutdown")
+
+    _shutdown_flatten(supervisor, server)
+
+    assert calls == ["kill", "shutdown"]
+
+
+def test_paper_start_uses_running_control_plane_without_constructing_alpaca(
+    cli_home: Path,
+    patch_alpaca: mock.MagicMock,
+) -> None:
+    _create_imported_bundle(cli_home)
+    home = AlphaStrategyHome(root=cli_home)
+    broker = FakeBroker()
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_test": {"AAPL": 1.0}},
+    )
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rc = main(
+            [
+                "paper",
+                "start",
+                "--bundle",
+                "asb_test",
+                "--allocation",
+                "0.25",
+                "--port",
+                str(server.server_port),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+
+    assert rc == 0
+    assert supervisor.snapshot.sleeves["asb_test"] == 0.25
+    patch_alpaca.assert_not_called()
