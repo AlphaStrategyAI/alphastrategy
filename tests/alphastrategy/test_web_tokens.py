@@ -636,3 +636,47 @@ def test_js_risk_tighten_groups(js_text: str) -> None:
         js_text.find("function buildRiskInputs") : js_text.find("function validateTighten")
     ]
     assert 'createElement("fieldset")' in built
+
+
+def test_html_activity_tape_bands(html_text: str) -> None:
+    assert 'id="act-beat"' in html_text
+    assert 'id="act-tape"' in html_text
+    assert 'id="act-blotter"' in html_text
+    assert '<h2 class="glance-heading">Beat</h2>' in html_text
+    assert '<h2 class="glance-heading">Tape</h2>' in html_text
+    assert '<h2 class="glance-heading">Blotter</h2>' in html_text
+    act = html_text[
+        html_text.find('id="screen-activity"') : html_text.find('id="screen-risk"')
+    ]
+    beat = act[act.find('id="act-beat"') : act.find('id="act-tape"')]
+    tape = act[act.find('id="act-tape"') : act.find('id="act-blotter"')]
+    blotter = act[act.find('id="act-blotter"') :]
+    assert 'id="activity-heartbeat"' in beat
+    assert 'id="act-count-rebalance"' in tape
+    assert 'id="act-count-halt"' in tape
+    assert 'id="act-count-deviation"' in tape
+    assert 'id="act-count-kill"' in tape
+    assert "hero" in tape
+    assert 'id="activity-list"' in blotter
+    assert 'id="activity-list"' not in tape
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_paints_activity_tape(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
+    ]
+    assert '"act-count-rebalance"' in paint
+    assert '"act-count-halt"' in paint
+    assert '"act-count-deviation"' in paint
+    assert '"act-count-kill"' in paint
+    assert '"status-running"' in paint
+    assert '"status-halt"' in paint
+    assert '"status-fail"' in paint
+    assert 'event === "rebalance"' in paint
+    assert 'event === "execution_deviation"' in paint
+    assert 'event === "flatten"' in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text

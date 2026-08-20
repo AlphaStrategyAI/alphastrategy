@@ -341,6 +341,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="run-flatten"' in html
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
+        assert 'id="act-tape"' in html
         conn.request("GET", "/api/risk")
         risk_resp = conn.getresponse()
         risk_body = json.loads(risk_resp.read().decode("utf-8"))
