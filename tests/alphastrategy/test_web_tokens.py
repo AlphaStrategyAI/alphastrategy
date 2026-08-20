@@ -436,6 +436,9 @@ def test_css_desk_pulse_tokens(css_text: str) -> None:
     assert ".desk-pulse" in css_text
     assert ".pulse-dot" in css_text
     assert "prefers-reduced-motion" in css_text
+    live = re.search(r"\.desk-pulse\.live\s*\{[^}]*\}", css_text)
+    assert live is not None and "#10b981" in live.group(0).lower()
+    assert "border" in live.group(0).lower()
 
 
 def test_html_header_session_chips(html_text: str) -> None:
@@ -473,6 +476,13 @@ def test_css_header_chip_tokens(css_text: str) -> None:
     fail = re.search(r"#desk-supervisor\.fail\s*\{[^}]*\}", css_text)
     assert session is not None and "#10b981" in session.group(0).lower()
     assert halt is not None and "#f59e0b" in halt.group(0).lower()
+    assert fail is not None and "#ef4444" in fail.group(0).lower()
+
+
+def test_css_glance_book_limit_rail(css_text: str) -> None:
+    warn = re.search(r"#glance-book\.warn\s*\{[^}]*\}", css_text)
+    fail = re.search(r"#glance-book\.fail\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
     assert fail is not None and "#ef4444" in fail.group(0).lower()
 
 
@@ -602,7 +612,7 @@ def test_css_glance_bands(css_text: str) -> None:
     assert ".glance-heading" in css_text
     assert ".book-grid" in css_text
     assert ".stack" in css_text
-    assert "1.85rem" in css_text
+    assert "2.35rem" in css_text
     assert ".metrics-3" in css_text
     assert ".metrics-2" in css_text
     assert "repeat(3, minmax(0, 1fr))" in css_text
@@ -1528,6 +1538,24 @@ def test_js_paints_live_limit_banner(js_text: str) -> None:
     assert "next send through" in js_text
     assert "live book through" in js_text
     assert banners.count("const reason") == 1
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_paints_book_limit_rail(js_text: str) -> None:
+    assert "function paintBookLimitRail" in js_text
+    paint = js_text[
+        js_text.find("function paintBookLimitRail") : js_text.find("function renderGrossUtilization")
+    ]
+    assert "glance-book" in paint
+    assert "live_limit" in paint
+    assert 'classList.add("warn")' in paint
+    assert 'classList.add("fail")' in paint
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "paintBookLimitRail(" in port
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
