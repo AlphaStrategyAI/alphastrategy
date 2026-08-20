@@ -117,6 +117,7 @@ class Supervisor:
         self._spoken_cache: tuple[tuple, AccountPolicy] | None = None
         self._live_book_cache: tuple[float, dict[str, Any], list[dict[str, Any]]] | None = None
         self._runtime_doc_cache: tuple[tuple[int, int], dict[str, Any]] | None = None
+        self._envelope_cache: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
 
     @property
     def state(self) -> SupervisorState:
@@ -527,17 +528,17 @@ class Supervisor:
 
     def _heartbeat_health_check(self, cur: ClockSnapshot) -> None:
         try:
-            positions = _positions_map(self._broker.list_positions())
+            raw_positions = self._broker.list_positions()
+            account = self._broker.get_account()
         except Exception as exc:
             raise HaltRequested(f"heartbeat live book: {exc}") from exc
+        self._live_book_cache = (time.monotonic(), account, raw_positions)
+        positions = _positions_map(raw_positions)
         symbols = self._price_universe(positions)
         if not symbols:
             return
         prices = self._fetch_prices(symbols, now=cur.now if cur.is_open else None)
-        try:
-            equity = self._equity()
-        except Exception as exc:
-            raise HaltRequested(f"heartbeat live book: {exc}") from exc
+        equity = float(account.get("equity", 0))
         self._snapshot.last_prices = {
             **self._snapshot.last_prices,
             **{symbol: float(price) for symbol, price in prices.items()},
@@ -614,9 +615,16 @@ class Supervisor:
 
     def _bundle_envelope(self, bundle_id: str) -> dict[str, Any]:
         envelope_path = self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"
+        stamp = self._file_stamp(envelope_path)
+        cached = self._envelope_cache.get(bundle_id)
+        if cached is not None and cached[0] == stamp:
+            return cached[1]
         if not envelope_path.is_file():
-            return {}
-        return load_risk_envelope(envelope_path.read_bytes())
+            doc: dict[str, Any] = {}
+        else:
+            doc = load_risk_envelope(envelope_path.read_bytes())
+        self._envelope_cache[bundle_id] = (stamp, doc)
+        return doc
 
     def _effective_sleeve_policy(
         self, bundle_id: str, runtime: dict[str, Any] | None = None
