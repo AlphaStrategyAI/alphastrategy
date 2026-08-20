@@ -12,6 +12,15 @@ def _read_lines(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
 
+def test_append_source_uses_append_text() -> None:
+    from alphastrategy.supervisor import audit as audit_mod
+
+    src = Path(audit_mod.__file__).read_text(encoding="utf-8")
+    body = src.split("def append", 1)[1]
+    assert "append_text" in body
+    assert 'open("a"' not in body
+
+
 def test_append_redacts_api_key(tmp_path: Path):
     path = tmp_path / "audit.jsonl"
     audit.append(path, {"event": "order", "api_key": "PK_SECRET", "symbol": "AAPL"})

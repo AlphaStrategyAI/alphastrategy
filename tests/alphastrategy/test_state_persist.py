@@ -19,8 +19,7 @@ def test_save_state_source_uses_fsync_and_replace() -> None:
 
     src = Path(state_mod.__file__).read_text(encoding="utf-8")
     body = src.split("def save_state", 1)[1]
-    assert "os.fsync" in body
-    assert "os.replace" in body
+    assert "replace_text" in body
     assert "write_text" not in body
 
 
