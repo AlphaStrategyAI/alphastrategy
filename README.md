@@ -106,12 +106,14 @@ Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 Portfolio is the home screen: **Session** (OPEN/CLOSED) and **Next
 rebalance** countdown tiles, sleeve contribution, and **wanted vs got**
 weights. Positions add a **Cap** rail against the single-name limit.
+**Names** and **Orders today** show remaining flatten budgets.
+**Cash** shows invested versus residual against the last combined target.
 Sleeves show how much of the paper book is spoken for. An empty desk
 shows **Start this paper desk** (import, then start paper). Positions
 include a **Book** bar (wanted vs got). Gross shows utilization against
 the account cap. Risk lists sleeve allocation as text. A flattened
 account shows a red **FLAT** banner; it must not look like an idle empty
-book.
+book. `alphastrategy status` includes `utilization`.
 
 ---
 

@@ -16,6 +16,7 @@ from alphastrategy.errors import ImportRejected
 from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
+from alphastrategy.risk.utilization import from_supervisor
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
 from alphastrategy.supervisor.loop import Supervisor
@@ -247,6 +248,7 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "flattened": snapshot.state
             in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
             "last_kill": snapshot.last_kill,
+            "utilization": from_supervisor(supervisor, live=True),
         },
     )
 
@@ -389,6 +391,7 @@ def handle_get_risk(handler: Any, home: AlphaStrategyHome, supervisor: Superviso
         {
             "account": _policy_to_dict(supervisor.policy),
             "sleeves": sleeves,
+            "utilization": from_supervisor(supervisor, live=True),
         },
     )
 

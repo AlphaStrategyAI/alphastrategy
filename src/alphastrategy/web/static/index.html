@@ -46,6 +46,8 @@
         <div class="metric">
           <div class="metric-label">Cash</div>
           <div id="metric-cash" class="metric-value">—</div>
+          <div id="metric-cash-sub" class="metric-sub">—</div>
+          <div id="metric-cash-bar" class="cash-track hidden" aria-hidden="true"></div>
         </div>
         <div class="metric">
           <div class="metric-label">Day PnL</div>
@@ -55,6 +57,18 @@
           <div class="metric-label">Gross</div>
           <div id="metric-gross" class="metric-value">—</div>
           <div id="metric-gross-bar" class="util-track hidden" aria-hidden="true"></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Names</div>
+          <div id="metric-names" class="metric-value">—</div>
+          <div id="metric-names-cap" class="metric-sub">—</div>
+          <div id="metric-names-bar" class="util-track hidden" aria-hidden="true"></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Orders today</div>
+          <div id="metric-orders" class="metric-value">—</div>
+          <div id="metric-orders-cap" class="metric-sub">—</div>
+          <div id="metric-orders-bar" class="util-track hidden" aria-hidden="true"></div>
         </div>
         <div class="metric">
           <div class="metric-label">Session</div>
@@ -167,6 +181,7 @@
       <div class="risk-account-bar">
         <h2>Account caps (always visible)</h2>
         <div id="risk-account-caps" class="risk-caps nums"></div>
+        <div id="risk-utilization" class="risk-caps nums"></div>
       </div>
       <div class="panel">
         <h2>Tighten account policy</h2>

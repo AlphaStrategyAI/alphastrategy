@@ -347,6 +347,10 @@ button.action.account-kill {
   font-size: 0.85rem;
 }
 
+#risk-utilization {
+  margin-top: 0.65rem;
+}
+
 .confirm-row {
   display: flex;
   align-items: center;
@@ -442,6 +446,7 @@ button.action.account-kill {
 
 .first-run.hidden,
 .util-track.hidden,
+.cash-track.hidden,
 #sleeve-alloc-label.hidden {
   display: none;
 }
@@ -453,7 +458,8 @@ button.action.account-kill {
 }
 
 .wg-track,
-.util-track {
+.util-track,
+.cash-track {
   position: relative;
   height: 8px;
   background: #0b0e14;
@@ -462,12 +468,14 @@ button.action.account-kill {
   overflow: hidden;
 }
 
-.util-track {
+.util-track,
+.cash-track {
   margin-top: 0.35rem;
 }
 
 .wg-got,
-.util-fill {
+.util-fill,
+.cash-invested {
   display: block;
   height: 100%;
   background: #10b981;

@@ -7,6 +7,7 @@ import pytest
 from alphastrategy.errors import FlattenRequested, ImportRejected
 from alphastrategy.risk.check import check_book
 from alphastrategy.risk.policy import AccountPolicy, merge_limits
+from alphastrategy.risk.utilization import summarize
 
 
 def test_account_policy_defaults():
@@ -94,3 +95,66 @@ def test_check_book_name_count_breach_flattens():
 def test_check_book_ok_passes():
     policy = AccountPolicy.defaults()
     check_book({"A": 0.1, "B": 0.1, "C": 0.1}, 100_000.0, policy)
+
+
+def test_summarize_counts_live_nonzero_positions() -> None:
+    policy = AccountPolicy.defaults()
+    out = summarize(
+        policy=policy,
+        orders_today=3,
+        equity=10_000.0,
+        cash=4_000.0,
+        positions=[{"symbol": "AAPL", "qty": "10"}, {"symbol": "MSFT", "qty": "0"}],
+        last_combined={"AAPL": 0.6},
+        last_got={"AAPL": 0.55, "MSFT": 0.1},
+    )
+    assert out["names"] == 1
+    assert out["max_names"] == 50
+    assert out["orders_today"] == 3
+    assert out["max_orders_per_day"] == 200
+    assert out["cash_weight"] == pytest.approx(0.4)
+    assert out["invested_weight"] == pytest.approx(0.6)
+    assert out["target_cash_weight"] == pytest.approx(0.4)
+    assert out["max_gross"] == 1.0
+
+
+def test_summarize_falls_back_to_last_got_when_no_positions() -> None:
+    out = summarize(
+        policy=AccountPolicy.defaults(),
+        orders_today=0,
+        last_got={"AAPL": 0.2, "MSFT": 0.0, "GOOG": 0.1},
+    )
+    assert out["names"] == 2
+    assert out["cash_weight"] is None
+    assert out["invested_weight"] is None
+    assert out["target_cash_weight"] is None
+
+
+def test_summarize_falls_back_to_last_combined_when_got_empty() -> None:
+    out = summarize(
+        policy=AccountPolicy.defaults(),
+        orders_today=0,
+        last_combined={"AAPL": 0.25, "MSFT": 0.25},
+    )
+    assert out["names"] == 2
+    assert out["target_cash_weight"] == pytest.approx(0.5)
+
+
+def test_summarize_empty_book_is_zeros() -> None:
+    out = summarize(policy=AccountPolicy.defaults(), orders_today=0)
+    assert out["names"] == 0
+    assert out["orders_today"] == 0
+    assert out["cash_weight"] is None
+    assert out["target_cash_weight"] is None
+
+
+def test_summarize_zero_equity_cash_weight_is_zero() -> None:
+    out = summarize(
+        policy=AccountPolicy.defaults(),
+        orders_today=0,
+        equity=0.0,
+        cash=0.0,
+        positions=[],
+    )
+    assert out["cash_weight"] == 0.0
+    assert out["invested_weight"] == 0.0

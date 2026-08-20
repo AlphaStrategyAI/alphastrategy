@@ -520,6 +520,23 @@ def test_api_kill_account_returns_account_payload(api_stack):
     assert status["last_kill"]["reason"] == "account"
 
 
+def test_status_and_risk_include_utilization(api_stack) -> None:
+    client, home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 4.0, "MSFT": 2.0}
+    supervisor.snapshot.orders_today = 7
+    save_state(home.state_path(), supervisor.snapshot)
+    status = client.get("/api/status").json()
+    util = status["utilization"]
+    assert util["names"] == 2
+    assert util["orders_today"] == 7
+    assert util["max_names"] == supervisor.policy.max_names
+    assert util["max_orders_per_day"] == supervisor.policy.max_orders_per_day
+    assert util["cash_weight"] == pytest.approx(1.0)
+    risk = client.get("/api/risk").json()
+    assert risk["utilization"]["names"] == 2
+    assert risk["utilization"]["orders_today"] == 7
+
+
 def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
     from alphastrategy.helptext import help_payload
 

@@ -288,3 +288,25 @@ def test_js_session_name_and_alloc_rails(js_text: str) -> None:
     assert "Spoken " in js_text
     assert "colspan='7'" in js_text
     assert "window.confirm" not in js_text
+
+
+def test_html_remaining_budget_mounts(html_text: str) -> None:
+    assert 'id="metric-names"' in html_text
+    assert 'id="metric-names-cap"' in html_text
+    assert 'id="metric-names-bar"' in html_text
+    assert 'id="metric-orders"' in html_text
+    assert 'id="metric-orders-cap"' in html_text
+    assert 'id="metric-orders-bar"' in html_text
+    assert 'id="metric-cash-bar"' in html_text
+    assert 'id="metric-cash-sub"' in html_text
+    assert 'id="risk-utilization"' in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_remaining_budget_painters(js_text: str) -> None:
+    assert "function renderRemainingBudgets" in js_text
+    assert "function renderCashComposition" in js_text
+    assert "function paintUtilTrack" in js_text
+    assert "window.confirm" not in js_text

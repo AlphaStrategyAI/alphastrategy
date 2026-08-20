@@ -188,6 +188,9 @@ def test_operator_desk_portfolio_after_rebalance(tmp_path: Path) -> None:
         assert status["countdown"]["next_rebalance"] in ("open", "close")
         assert "seconds" in status["countdown"]
         assert status["last_rebalance_event"] == "2024-01-31:open"
+        assert "utilization" in status
+        assert "names" in status["utilization"]
+        assert "orders_today" in status["utilization"]
 
         supervisor.stop_sleeve(bundle_id)
 
@@ -270,6 +273,9 @@ def test_e2e_isolated_sleeve_kill(tmp_path: Path) -> None:
         assert 'id="kill-outcome-banner"' in html
         assert 'id="first-run"' in html
         assert 'id="metric-countdown"' in html
+        assert 'id="metric-names"' in html
+        assert 'id="metric-orders"' in html
+        assert 'id="metric-cash-bar"' in html
         conn.request("GET", "/api/bundles")
         bundles = json.loads(conn.getresponse().read().decode("utf-8"))
         assert "asb_a" in bundles["stopped"]
