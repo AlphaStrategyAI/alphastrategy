@@ -489,6 +489,37 @@ def test_api_kill_sleeve_isolates(api_stack):
     assert broker.positions.get("MSFT", 0.0) > 0
 
 
+def test_api_kill_sleeve_returns_isolated_payload(api_stack):
+    client, _home, supervisor, broker = api_stack
+    supervisor.start_sleeve("asb_x", 0.15)
+    supervisor.start_sleeve("asb_y", 0.15)
+    broker._is_open = True
+    broker._now = datetime(2024, 1, 31, 14, 33)
+    supervisor.tick()
+    response = client.post("/api/paper/kill", json={"bundle_id": "asb_x"})
+    assert response.status == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["isolated"] is True
+    assert body["flattened"] is False
+    assert body["reason"] == "isolated"
+    status = client.get("/api/status").json()
+    assert status["last_kill"]["reason"] == "isolated"
+    assert status["last_kill"]["bundle_id"] == "asb_x"
+
+
+def test_api_kill_account_returns_account_payload(api_stack):
+    client, _home, supervisor, _broker = api_stack
+    response = client.post("/api/paper/kill", json={})
+    assert response.status == 200
+    body = response.json()
+    assert body["isolated"] is False
+    assert body["flattened"] is True
+    assert body["reason"] == "account"
+    status = client.get("/api/status").json()
+    assert status["last_kill"]["reason"] == "account"
+
+
 def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
     from alphastrategy.helptext import help_payload
 

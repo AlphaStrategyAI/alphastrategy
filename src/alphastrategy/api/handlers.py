@@ -246,6 +246,7 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "countdown": _countdown_payload(clock, snapshot.last_rebalance_event),
             "flattened": snapshot.state
             in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
+            "last_kill": snapshot.last_kill,
         },
     )
 
@@ -357,10 +358,10 @@ def handle_post_paper_kill(handler: Any, home: AlphaStrategyHome, supervisor: Su
         body = _read_json_body(handler)
         bundle_id = body.get("bundle_id")
         if bundle_id:
-            supervisor.kill_sleeve(str(bundle_id))
+            outcome = supervisor.kill_sleeve(str(bundle_id))
         else:
-            supervisor.kill_account()
-        _json_response(handler, 200, {"ok": True})
+            outcome = supervisor.kill_account()
+        _json_response(handler, 200, {"ok": True, **outcome.to_dict()})
     except (json.JSONDecodeError, TypeError) as exc:
         _error(handler, 400, str(exc))
 
