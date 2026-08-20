@@ -348,6 +348,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="risk-overlay-spoken"' in html
         assert 'id="risk-cap-gross"' in html
         assert 'id="risk-head-names"' in html
+        assert 'id="pos-count-wanted"' in html
         assert 'id="act-tape"' in html
         assert 'id="act-beat-age"' in html
         assert 'id="metric-drift"' in html

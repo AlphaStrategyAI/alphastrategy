@@ -456,6 +456,48 @@ def test_css_glance_bands(css_text: str) -> None:
     assert ".metric.hero .metric-value" in css_text
 
 
+def test_html_positions_glance_bands(html_text: str) -> None:
+    port = html_text[
+        html_text.find('id="screen-portfolio"') : html_text.find('id="screen-strategies"')
+    ]
+    pos = port[port.find('id="glance-positions"') : port.find('id="glance-sleeves"')]
+    sleeves = port[port.find('id="glance-sleeves"') :]
+    assert 'id="pos-count-rows"' in pos
+    assert 'id="pos-count-wanted"' in pos
+    assert 'id="pos-count-got"' in pos
+    assert 'id="pos-count-cap"' in pos
+    assert "metrics-4" in pos
+    assert "hero" in pos
+    assert ">Wanted<" in pos
+    assert ">At cap<" in pos
+    assert 'id="positions-table"' in pos
+    assert 'id="sleeves-table"' in sleeves
+    assert 'id="sleeve-alloc-track"' in sleeves
+    assert "book-grid" in port
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_paints_positions_glance_tiles(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderPositionsGlance") : js_text.find("function renderDeskPulse")
+    ]
+    assert "pos-count-rows" in paint
+    assert "pos-count-wanted" in paint
+    assert "pos-count-got" in paint
+    assert "pos-count-cap" in paint
+    assert "max_name_weight" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+    assert "Gross cap" not in js_text
+
+
+def test_css_positions_cap_fail_token(css_text: str) -> None:
+    cap = re.search(r"#pos-count-cap\.fail\s*\{[^}]*\}", css_text)
+    assert cap is not None and "#ef4444" in cap.group(0).lower()
+
+
 def test_js_uses_api_policy_labels(js_text: str) -> None:
     assert "function policyLabel" in js_text
     assert "risk.labels" in js_text
