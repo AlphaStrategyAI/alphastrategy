@@ -113,6 +113,7 @@ how to read a spent window).
 Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 (every 20s, no orders), not RTH Session OPEN/CLOSED.
+**Session OPEN is halt color while Supervisor is HALTED.**
 
 Portfolio is three bands: **Book** (Equity is the hero, with Cash, Day PnL,
 and **Drift**), **Flatten budgets** (Gross, Names, Orders today), and
@@ -178,7 +179,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   same outcome.
 - Heartbeat every 20s does not place orders. Header **LIVE / STALE /
   DEAD** is the Supervisor beat, not RTH session. Header **OPEN / CLOSED**
-  is the RTH session. Spoken Supervisor is the runtime state. `status`
+  is the RTH session. Session OPEN is halt color while Supervisor is
+  HALTED. Spoken Supervisor is the runtime state. `status`
   includes `heartbeat`.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio. The deviation banner

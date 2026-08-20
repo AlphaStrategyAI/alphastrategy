@@ -116,6 +116,7 @@ SECTIONS: list[dict[str, str]] = [
             "Expanding a blotter row shows Wanted versus Got, not a JSON dump. "
             "Header shows Pulse, Session, and Supervisor. "
             "Header LIVE is the Supervisor beat, not Session. "
+            "Session OPEN is halt color while Supervisor is HALTED. "
             "Alt+1 through Alt+5 switch screens. "
             "F1 opens Help. Help starts with Your first paper session, then "
             "the screen how-to and the jobs for that screen. The six runbook sections "
@@ -164,7 +165,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Clock Last names the spent window when that event did not finish. "
             "Positions include wanted names with no fill. "
             "The Positions Book column is wanted versus got. "
-            "Header LIVE is the Supervisor beat, not Session OPEN."
+            "Header LIVE is the Supervisor beat, not Session OPEN. "
+            "Session OPEN is halt color while Supervisor is HALTED."
         ),
     },
     {

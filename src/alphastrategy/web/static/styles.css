@@ -111,6 +111,10 @@ header {
   color: #10b981;
 }
 
+#desk-session.warn {
+  color: #f59e0b;
+}
+
 #desk-supervisor.halt {
   color: #f59e0b;
 }
@@ -800,6 +804,10 @@ button.action:focus-visible,
 
 #metric-session.open {
   color: #10b981;
+}
+
+#metric-session.warn {
+  color: #f59e0b;
 }
 
 #metric-last-rebalance.warn {

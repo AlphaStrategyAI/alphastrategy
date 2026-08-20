@@ -5,6 +5,23 @@
     el.classList.toggle("hidden", !empty);
   }
 
+  function applySessionChip(el) {
+    if (!el) return;
+    const clock = state.status && state.status.clock;
+    const halted = (state.status && state.status.state) === "halted";
+    el.classList.remove("open", "warn");
+    if (!clock || clock.error) {
+      el.textContent = "UNAVAILABLE";
+      return;
+    }
+    if (clock.is_open) {
+      el.textContent = "OPEN";
+      el.classList.add(halted ? "warn" : "open");
+      return;
+    }
+    el.textContent = "CLOSED";
+  }
+
   function renderSessionMetrics() {
     const sessionEl = document.getElementById("metric-session");
     const countEl = document.getElementById("metric-countdown");
@@ -15,7 +32,7 @@
     const lastSub = document.getElementById("metric-last-rebalance-sub");
     const clock = state.status && state.status.clock;
     const countdown = state.status && state.status.countdown;
-    sessionEl.classList.remove("open");
+    applySessionChip(sessionEl);
     function dashNowLast() {
       if (nowEl) nowEl.textContent = "—";
       if (nowSub) nowSub.textContent = "—";
@@ -26,17 +43,10 @@
       if (lastSub) lastSub.textContent = "—";
     }
     if (!clock || clock.error) {
-      sessionEl.textContent = "UNAVAILABLE";
       countEl.textContent = "—";
       kindEl.textContent = "—";
       dashNowLast();
       return;
-    }
-    if (clock.is_open) {
-      sessionEl.textContent = "OPEN";
-      sessionEl.classList.add("open");
-    } else {
-      sessionEl.textContent = "CLOSED";
     }
     if (countdown) {
       countEl.textContent = fmtCountdown(countdown.seconds);
@@ -344,17 +354,8 @@
     }
     const sessionEl = document.getElementById("desk-session");
     if (sessionEl) {
-      const clock = state.status && state.status.clock;
-      sessionEl.classList.remove("open");
       sessionEl.title = "RTH session";
-      if (!clock || clock.error) {
-        sessionEl.textContent = "UNAVAILABLE";
-      } else if (clock.is_open) {
-        sessionEl.textContent = "OPEN";
-        sessionEl.classList.add("open");
-      } else {
-        sessionEl.textContent = "CLOSED";
-      }
+      applySessionChip(sessionEl);
     }
     const stateEl = document.getElementById("desk-supervisor");
     if (stateEl) {
