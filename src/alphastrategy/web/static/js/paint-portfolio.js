@@ -274,7 +274,9 @@
       posBody.innerHTML = `<tr><td colspan='7' class='muted'>${empty}</td></tr>`;
     } else {
       const cap =
-        (state.risk && state.risk.account && state.risk.account.max_name_weight) || 0.2;
+        Number(spokenPolicy().max_name_weight) ||
+        Number(utilization().max_name_weight) ||
+        0.2;
       for (const pos of positions) {
         const tr = document.createElement("tr");
         const notional = pos.notional == null ? "—" : fmtNum(pos.notional, 2);
@@ -337,7 +339,9 @@
     const capEl = document.getElementById("pos-count-cap");
     const rows = positions || [];
     const cap =
-      Number(state.risk && state.risk.account && state.risk.account.max_name_weight) || 0.2;
+      Number(spokenPolicy().max_name_weight) ||
+      Number(utilization().max_name_weight) ||
+      0.2;
     let wantedN = 0;
     let gotN = 0;
     let atCap = 0;

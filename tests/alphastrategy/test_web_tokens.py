@@ -1206,7 +1206,7 @@ def test_js_gross_and_name_rails_use_spoken_caps(js_text: str) -> None:
     assert "state.risk.account.max_gross" not in rails
     port = js_text[js_text.find("const posBody") : js_text.find("function pulseLabel")]
     glance = js_text[
-        js_text.find("function renderPositionsGlance") : js_text.find("function renderBanners")
+        js_text.find("function renderPositionsGlance") : js_text.find("function renderDeskPulse")
     ]
     assert "spokenPolicy()" in port or "utilization().max_name_weight" in port
     assert "spokenPolicy()" in glance or "utilization().max_name_weight" in glance

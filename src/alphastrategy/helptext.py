@@ -103,6 +103,7 @@ SECTIONS: list[dict[str, str]] = [
             "Run Sleeves is Remaining / Spoken / Active / Idle. "
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
             "Caps is Gross cap / Name cap / Names / Orders today. "
+            "Caps is the spoken book. "
             "Headroom is Names / Orders today / Cash / Target cash. "
             "Risk is four bands Caps / Headroom / Tighten plus Sleeve overlays. "
             "Tighten is Tight / Delta $ / Delta % / Fields. "
@@ -232,6 +233,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Four bands: Caps / Headroom / Tighten, then Sleeve overlays. "
             "Caps is four tiles Gross cap / Name cap / Names / Orders today. Gross cap is the hero. "
+            "Caps is the spoken book. Tighten still edits the account form. "
             "Headroom is four tiles Names / Orders today / Cash / Target cash. Names is the hero. "
             "Tighten is four tiles Tight / Delta $ / Delta % / Fields. Tight is the hero. "
             "Tight counts account caps stricter than v1 defaults. "

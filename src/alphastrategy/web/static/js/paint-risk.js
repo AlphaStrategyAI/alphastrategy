@@ -5,7 +5,7 @@
     { legend: "Deltas", keys: ["min_delta_dollar", "min_delta_frac"] },
   ];
 
-  function renderRiskCaps(container, policy) {
+  function renderRiskCaps(container, policy, account) {
     const gross = document.getElementById("risk-cap-gross");
     const name = document.getElementById("risk-cap-name");
     const names = document.getElementById("risk-cap-names");
@@ -40,6 +40,20 @@
           ? "—"
           : policyLabel("long_only") + " " + flag;
     }
+    function markTighter(el, spokenVal, accountVal) {
+      if (!el) return;
+      el.classList.remove("warn");
+      if (accountVal == null || accountVal === undefined) return;
+      if (spokenVal == null || spokenVal === undefined) return;
+      const spokenNum = Number(spokenVal);
+      const accountNum = Number(accountVal);
+      if (!Number.isFinite(spokenNum) || !Number.isFinite(accountNum)) return;
+      if (spokenNum < accountNum) el.classList.add("warn");
+    }
+    markTighter(gross, policy.max_gross, account && account.max_gross);
+    markTighter(name, policy.max_name_weight, account && account.max_name_weight);
+    markTighter(names, policy.max_names, account && account.max_names);
+    markTighter(orders, policy.max_orders_per_day, account && account.max_orders_per_day);
   }
 
   function buildRiskInputs(prefix, policy, current) {
@@ -182,7 +196,8 @@
 
   function renderRisk() {
     const risk = state.risk || { account: {}, sleeves: {} };
-    renderRiskCaps(document.getElementById("risk-account-caps"), risk.account);
+    const spoken = (risk && risk.spoken) || (risk && risk.account) || {};
+    renderRiskCaps(document.getElementById("risk-account-caps"), spoken, risk.account);
     renderRiskUtilization();
     renderTightenGlance(risk);
     renderOverlayGlance(risk);

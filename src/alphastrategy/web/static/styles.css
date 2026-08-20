@@ -890,6 +890,22 @@ button.action:focus-visible,
   color: #f59e0b;
 }
 
+#risk-cap-gross.warn {
+  color: #f59e0b;
+}
+
+#risk-cap-name.warn {
+  color: #f59e0b;
+}
+
+#risk-cap-names.warn {
+  color: #f59e0b;
+}
+
+#risk-cap-orders.warn {
+  color: #f59e0b;
+}
+
 #risk-sleeves .tighter-line.warn {
   color: #f59e0b;
 }

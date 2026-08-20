@@ -35,9 +35,19 @@
     );
   }
 
+  function spokenPolicy() {
+    return (
+      (state.risk && state.risk.spoken) ||
+      (state.risk && state.risk.account) ||
+      {}
+    );
+  }
+
   function renderGrossUtilization(gross) {
     const bar = document.getElementById("metric-gross-bar");
-    const cap = Number(state.risk && state.risk.account && state.risk.account.max_gross);
+    const util = utilization();
+    const spoken = spokenPolicy();
+    const cap = Number(util.max_gross) || Number(spoken.max_gross);
     const limit = cap > 0 ? cap : 1;
     paintUtilTrack(bar, gross, limit, `gross ${fmtPct(gross)} of cap ${fmtPct(limit)}`);
   }
