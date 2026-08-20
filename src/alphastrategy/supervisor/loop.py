@@ -157,7 +157,7 @@ class Supervisor:
         self._persist()
         return outcome
 
-    def start_sleeve(self, bundle_id: str, allocation: float) -> None:
+    def start_sleeve(self, bundle_id: str, allocation: float) -> bool:
         with self._lock:
             if not self._home.bundle_dir(bundle_id).is_dir():
                 raise ValueError(f"bundle is not imported: {bundle_id}")
@@ -190,6 +190,7 @@ class Supervisor:
             ]
             self._audit("paper_start", bundle_id=bundle_id, allocation=allocation)
             self._persist()
+            return self._snapshot.state == SupervisorState.HALTED
 
     def stop_sleeve(self, bundle_id: str) -> None:
         with self._lock:

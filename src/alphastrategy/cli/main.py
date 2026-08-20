@@ -33,6 +33,9 @@ from alphastrategy.supervisor.state import SupervisorState
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 7460
+_HELD_START = (
+    "held: start paper while halted waits for resume. Resume does not catch up."
+)
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
     {
@@ -276,10 +279,17 @@ def _cmd_paper_start(
         {"bundle_id": bundle_id, "allocation": allocation},
     )
     if response is not None:
+        status, payload = response
+        if 200 <= status < 300:
+            if payload.get("held"):
+                print(_HELD_START, file=sys.stderr)
+            return 0
         return _control_result(response)
     supervisor = _make_supervisor(home, broker)
     try:
-        supervisor.start_sleeve(bundle_id, allocation)
+        held = supervisor.start_sleeve(bundle_id, allocation)
+        if held:
+            print(_HELD_START, file=sys.stderr)
         return 0
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -375,7 +385,15 @@ def create_parser() -> argparse.ArgumentParser:
     paper_parser = subparsers.add_parser("paper", help="paper trading controls")
     paper_sub = paper_parser.add_subparsers(dest="paper_command")
 
-    paper_start = paper_sub.add_parser("start", help="start paper sleeve")
+    paper_start = paper_sub.add_parser(
+        "start",
+        help="start paper sleeve; while halted waits for resume (does not catch up)",
+        description=(
+            "Start a paper sleeve. While halted this waits for resume and does not "
+            "catch up. After flatten this starts the session loop again and does not "
+            "catch up."
+        ),
+    )
     paper_start.add_argument("--bundle", required=True, help="bundle id")
     paper_start.add_argument("--allocation", type=float, required=True, help="allocation 0-1")
     paper_start.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")

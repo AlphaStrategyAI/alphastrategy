@@ -369,8 +369,8 @@ def handle_post_paper_start(handler: Any, home: AlphaStrategyHome, supervisor: S
         if not bundle_id:
             _error(handler, 400, "bundle_id required")
             return
-        supervisor.start_sleeve(bundle_id, allocation)
-        _json_response(handler, 200, {"ok": True})
+        held = supervisor.start_sleeve(bundle_id, allocation)
+        _json_response(handler, 200, {"ok": True, "held": held})
     except ValueError as exc:
         _error(handler, 409, str(exc))
     except (json.JSONDecodeError, TypeError) as exc:
