@@ -14,6 +14,15 @@
     return "—";
   }
 
+  function paintBookSourceHeadings() {
+    const label = bookSourceLabel();
+    const text = label === "—" ? "" : label;
+    ["book-source", "act-book-source", "risk-book-source"].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    });
+  }
+
   function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);

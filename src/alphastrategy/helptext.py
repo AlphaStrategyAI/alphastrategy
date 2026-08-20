@@ -151,7 +151,8 @@ SECTIONS: list[dict[str, str]] = [
             "on a TTY and refuses on a non-TTY unless --force is passed. "
             "paper kill --bundle isolates when the "
             "last book is clean; otherwise it flattens the account rather than guess. "
-            "status names LIMIT while the live book is through the spoken cap."
+            "status names LIMIT while the live book is through the spoken cap. "
+            "status names BOOK heartbeat or glance. "
         ),
     },
     {
@@ -188,6 +189,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "A heartbeat live book holds until flatten or place. "
             "Runtime overlays load once until the file changes. "
             "Book Equity names Beat or Glance. "
+            "Book, Beat, and Headroom name Beat or Glance. "
             "Positions include wanted names with no fill. "
             "The Positions Book column is wanted versus got. "
             "Header LIVE is the Supervisor beat, not Session OPEN. "
@@ -235,6 +237,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Three bands: Beat / Tape / Blotter. "
             "Beat is four tiles Pulse / Age / Interval / Supervisor. Pulse is the hero. "
+            "Book, Beat, and Headroom name Beat or Glance. "
             "Heartbeat refreshes last prices and does not flatten. "
             "Heartbeat seeds the live book glance. "
             "A heartbeat live book holds until flatten or place. "
@@ -264,6 +267,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Sleeve envelopes load once until the file changes. "
             "Runtime overlays load once until the file changes. "
             "Headroom is four tiles Names / Orders today / Cash / Target cash. Names is the hero. "
+            "Book, Beat, and Headroom name Beat or Glance. "
             "Tighten is four tiles Tight / Delta $ / Delta % / Fields. Tight is the hero. "
             "Tight counts account caps stricter than v1 defaults. "
             "Delta $ and Delta % are skip floors Caps does not show. "

@@ -43,6 +43,7 @@ _FLAT_START = (
 _LIMIT_STATUS = (
     "LIMIT: live book through {label} — next rebalance will flatten"
 )
+_BOOK_STATUS = "BOOK: {source}"
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
     {
@@ -257,8 +258,21 @@ def _status_limit_line(payload: dict[str, Any]) -> str | None:
     return _LIMIT_STATUS.format(label=label_for(str(reason)))
 
 
+def _status_book_line(payload: dict[str, Any]) -> str | None:
+    book = payload.get("book") if isinstance(payload.get("book"), dict) else None
+    if not isinstance(book, dict):
+        return None
+    source = book.get("source")
+    if source not in ("heartbeat", "glance"):
+        return None
+    return _BOOK_STATUS.format(source=source)
+
+
 def _print_status(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, separators=(",", ":")))
+    book_line = _status_book_line(payload)
+    if book_line:
+        print(book_line, file=sys.stderr)
     line = _status_limit_line(payload)
     if line:
         print(line, file=sys.stderr)
@@ -287,6 +301,7 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         "last_kill": snapshot.last_kill,
         "utilization": from_supervisor(supervisor, live=False),
         "heartbeat": describe(snapshot.last_heartbeat_at),
+        "book": {"source": supervisor.live_book_source()},
     }
     _print_status(payload)
     return 0

@@ -392,4 +392,5 @@
       stateEl.classList.toggle("halt", raw === "halted");
       stateEl.classList.toggle("fail", raw === "flattening" || raw === "stopped");
     }
+    paintBookSourceHeadings();
   }

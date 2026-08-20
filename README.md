@@ -194,13 +194,14 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   A heartbeat live book holds until flatten or place.
   Sleeve envelopes load once until the file changes.
   Runtime overlays load once until the file changes.
-  Book Equity names Beat or Glance. Rebalance flattens a live book that
+  Book Equity names Beat or Glance.
+  Book, Beat, and Headroom name Beat or Glance. Rebalance flattens a live book that
   already breaches the spoken cap. Header **LIVE / STALE /
   DEAD** is the Supervisor beat, not RTH session. Header **OPEN / CLOSED**
   is the RTH session. Session OPEN is halt color while Supervisor is
   HALTED. Spoken Supervisor is the runtime state. `status`
   includes `heartbeat`. status names LIMIT while the live book is
-  through the spoken cap.
+  through the spoken cap. status names BOOK heartbeat or glance.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio. The deviation banner
   follows Book Drift and cannot go quiet while Drift is above zero.
