@@ -700,6 +700,13 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert 'id="risk-account-form"' in tighten
     assert 'id="risk-error"' in tighten
     assert 'id="risk-sleeves"' in overlays
+    assert 'id="risk-overlay-spoken"' in overlays
+    assert 'id="risk-overlay-count"' in overlays
+    assert 'id="risk-overlay-tighter"' in overlays
+    assert 'id="risk-overlay-idle"' in overlays
+    assert "metrics-4" in overlays
+    assert "hero" in overlays
+    assert ">Spoken<" in overlays
     assert 'id="risk-account-form"' not in overlays
     sticky = html_text[
         html_text.find("risk-account-bar") : html_text.find('id="risk-tighten"')
@@ -715,6 +722,29 @@ def test_html_risk_glance_bands(html_text: str) -> None:
 def test_css_risk_tighten_groups(css_text: str) -> None:
     assert ".risk-tighten-groups" in css_text
     assert ".risk-group" in css_text
+
+
+def test_js_paints_risk_overlay_glance(js_text: str) -> None:
+    paint = js_text[js_text.find("function overlayTighterCount") :]
+    assert "function overlayTighterCount" in js_text
+    assert "risk-overlay-spoken" in paint
+    assert "risk-overlay-count" in paint
+    assert "risk-overlay-tighter" in paint
+    assert "risk-overlay-idle" in paint
+    assert "paintUtilTrack" in paint
+    assert "No sleeve overlays" in paint
+    assert "tighter than account" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_risk_overlay_tokens(css_text: str) -> None:
+    warn = re.search(r"#risk-overlay-spoken\.warn\s*\{[^}]*\}", css_text)
+    fail = re.search(r"#risk-overlay-spoken\.fail\s*\{[^}]*\}", css_text)
+    tight = re.search(r"#risk-overlay-tighter\.warn\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
+    assert fail is not None and "#ef4444" in fail.group(0).lower()
+    assert tight is not None and "#f59e0b" in tight.group(0).lower()
 
 
 def test_js_risk_tighten_groups(js_text: str) -> None:

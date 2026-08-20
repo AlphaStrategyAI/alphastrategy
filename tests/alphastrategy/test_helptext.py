@@ -47,6 +47,7 @@ REQUIRED_PHRASES = (
     "Pulse / Age / Interval / Supervisor",
     "Pulse, Session, and Supervisor",
     "Remaining / Spoken / Active / Idle",
+    "Spoken / Overlays / Tighter / Idle",
 )
 
 

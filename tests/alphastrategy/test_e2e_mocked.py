@@ -345,6 +345,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="run-remaining"' in html
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
+        assert 'id="risk-overlay-spoken"' in html
         assert 'id="act-tape"' in html
         assert 'id="act-beat-age"' in html
         assert 'id="metric-drift"' in html
