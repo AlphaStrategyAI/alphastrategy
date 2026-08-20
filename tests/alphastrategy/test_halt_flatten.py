@@ -1276,6 +1276,25 @@ def test_spoken_policy_idle_overlay_unpublished_after_stop(tmp_path: Path) -> No
     )
 
 
+def test_sleeve_policies_read_runtime_once(tmp_path: Path) -> None:
+    supervisor = _make_supervisor(
+        tmp_path,
+        FakeBroker(),
+        evaluators={"asb_a": {"AAPL": 1.0}, "asb_b": {"MSFT": 1.0}},
+    )
+    reads = {"n": 0}
+    inner = supervisor._read_runtime
+
+    def counted() -> dict:
+        reads["n"] += 1
+        return inner()
+
+    supervisor._read_runtime = counted  # type: ignore[method-assign]
+    policies = supervisor.sleeve_policies(["asb_a", "asb_b"])
+    assert set(policies) == {"asb_a", "asb_b"}
+    assert reads["n"] == 1
+
+
 def _open_then_idle(
     tmp_path: Path,
     *,

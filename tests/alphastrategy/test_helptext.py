@@ -93,6 +93,8 @@ REQUIRED_PHRASES = (
     "Caps names the cap the live book is through",
     "status names LIMIT while the live book is through the spoken cap",
     "Spoken policy is reused until overlays or allocations change",
+    "Status, Portfolio, and Risk share one live book glance",
+    "Risk overlays load runtime once per glance",
 )
 
 

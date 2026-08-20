@@ -34,11 +34,15 @@ class FakeBroker:
         self._now = datetime(2024, 1, 31, 14, 30)
         self._next_open = datetime(2024, 1, 31, 14, 30)
         self._next_close = datetime(2024, 1, 31, 21, 0)
+        self.account_reads = 0
+        self.position_reads = 0
 
     def get_account(self) -> dict:
+        self.account_reads += 1
         return {"equity": str(self.equity), "cash": str(self.equity)}
 
     def list_positions(self) -> list[dict]:
+        self.position_reads += 1
         return [{"symbol": symbol, "qty": str(qty)} for symbol, qty in self.positions.items()]
 
     def place_order(self, symbol: str, qty: float, side: str) -> dict:
@@ -749,6 +753,28 @@ def test_status_and_risk_include_utilization(api_stack) -> None:
     risk = client.get("/api/risk").json()
     assert risk["utilization"]["names"] == 2
     assert risk["utilization"]["orders_today"] == 7
+
+
+def test_status_portfolio_risk_share_one_live_book(api_stack) -> None:
+    client, _home, _supervisor, broker = api_stack
+    broker.positions = {"AAPL": 4.0}
+    client.get("/api/status")
+    client.get("/api/portfolio")
+    client.get("/api/risk")
+    assert broker.account_reads == 1
+    assert broker.position_reads == 1
+
+
+def test_portfolio_after_account_kill_is_not_stale_live_book(api_stack) -> None:
+    client, _home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 15.0}
+    before = client.get("/api/portfolio").json()
+    assert any(pos.get("symbol") == "AAPL" for pos in before["positions"])
+    killed = client.post("/api/paper/kill", json={})
+    assert killed.status == 200
+    after = client.get("/api/portfolio").json()
+    assert after["positions"] == []
+    assert broker.close_all_count >= 1
 
 
 def test_get_risk_includes_spoken_labels(api_client: ApiClient) -> None:
