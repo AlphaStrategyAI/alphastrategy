@@ -151,7 +151,6 @@ def test_js_uses_api_policy_labels(js_text: str) -> None:
     assert "risk.labels" in js_text
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
-    nav = None  # nav stays five; HTML fixture still required
 ```
 
 Keep the HTML five-screen assertion in existing nav tests. Also add to `REQUIRED_PHRASES`: `"Gross cap"`.
