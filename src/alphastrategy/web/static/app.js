@@ -139,8 +139,13 @@
 
   function renderBanners() {
     const haltEl = document.getElementById("halt-banner");
+    const flattenEl = document.getElementById("flatten-banner");
     const devEl = document.getElementById("deviation-banner");
     const halted = state.status && state.status.halted;
+    const flattened =
+      (state.status && state.status.flattened) ||
+      (state.status &&
+        (state.status.state === "stopped" || state.status.state === "flattening"));
     const reason =
       (state.portfolio && state.portfolio.halt_reason) ||
       (state.status && state.status.halt_reason) ||
@@ -151,6 +156,13 @@
       haltEl.textContent = `HALT: ${reason || state.status.state || "halted"}`;
     } else {
       haltEl.classList.add("hidden");
+    }
+
+    if (flattened) {
+      flattenEl.classList.remove("hidden");
+      flattenEl.textContent = "FLAT: paper account flattened";
+    } else {
+      flattenEl.classList.add("hidden");
     }
 
     if (state.deviationActive) {
@@ -197,13 +209,14 @@
     posBody.innerHTML = "";
     const positions = portfolio.positions || [];
     if (!positions.length) {
-      posBody.innerHTML = "<tr><td colspan='4' class='muted'>No positions</td></tr>";
+      posBody.innerHTML = "<tr><td colspan='5' class='muted'>No positions</td></tr>";
     } else {
       for (const pos of positions) {
         const tr = document.createElement("tr");
         const notional = pos.notional == null ? "—" : fmtNum(pos.notional, 2);
-        const weight = pos.weight == null ? "—" : fmtPct(pos.weight);
-        tr.innerHTML = `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td><td class="nums">${notional}</td><td class="nums">${weight}</td>`;
+        const wanted = pos.wanted == null ? "—" : fmtPct(pos.wanted);
+        const got = pos.weight == null ? "—" : fmtPct(pos.weight);
+        tr.innerHTML = `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td><td class="nums">${notional}</td><td class="nums">${wanted}</td><td class="nums">${got}</td>`;
         posBody.appendChild(tr);
       }
     }
@@ -303,8 +316,12 @@
         return `${ev.side || ""} ${ev.qty || ""} ${ev.symbol || ""}`.trim();
       case "halt":
         return ev.reason || "halt";
-      case "rebalance":
-        return `${ev.session_event || ""} · ${ev.orders == null ? "" : ev.orders + " orders"}`.trim();
+      case "rebalance": {
+        const wantedN = ev.wanted && typeof ev.wanted === "object" ? Object.keys(ev.wanted).length : 0;
+        const gotN = ev.got && typeof ev.got === "object" ? Object.keys(ev.got).length : 0;
+        const orders = ev.orders == null ? "" : `${ev.orders} orders`;
+        return `${ev.session_event || ""} · ${orders} · wanted ${wantedN} got ${gotN}`.trim();
+      }
       case "execution_deviation":
         return `${ev.asset || ""} wanted ${ev.wanted} got ${ev.got}`;
       case "paper_start":

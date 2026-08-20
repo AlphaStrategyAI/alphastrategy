@@ -82,6 +82,26 @@ orders through Alpaca. Strategy code never sees broker credentials.
 shows portfolio state, running sleeves, activity, and risk — not
 backtests or strategy editing.
 
+Portfolio is the home screen: RTH countdown to the next legal
+rebalance, sleeve contribution, and **wanted vs got** weights. A
+flattened account shows a red **FLAT** banner; it must not look like
+an idle empty book.
+
+---
+
+## Operator
+
+- **Halt** stops new orders and does not flatten. `paper resume` does
+  not catch up; the next legal open/close rebalance does.
+- **Account kill** flattens the whole paper account. On the Web, type
+  `FLATTEN` and confirm. CLI: `alphastrategy paper kill` (omit
+  `--bundle`).
+- **Sleeve kill** (`paper kill --bundle <id>`) trades to the residual
+  book when last targets and an open session make isolation clean;
+  otherwise it flattens the whole account rather than guess.
+- Daily paper orders are capped (default 200). Overflow is a limit
+  flatten, not a partial batch.
+
 ---
 
 ## Hard walls

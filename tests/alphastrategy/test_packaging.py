@@ -23,6 +23,8 @@ def test_readme_paper_desk_positioning() -> None:
     lower = text.lower()
     assert "paper" in lower
     assert "alphaloop" in lower
+    assert "halt" in lower
+    assert "flatten" in lower
     assert "find alpha" not in lower
     assert "guaranteed" not in lower
     for line in text.splitlines():

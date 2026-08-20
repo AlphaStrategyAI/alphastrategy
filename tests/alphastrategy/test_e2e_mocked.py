@@ -201,6 +201,9 @@ def test_operator_desk_portfolio_after_rebalance(tmp_path: Path) -> None:
         response = conn.getresponse()
         after_stop = json.loads(response.read().decode("utf-8"))
         assert after_stop["sleeve_contribution"] == portfolio["sleeve_contribution"]
+        aapl = next(item for item in portfolio["positions"] if item["symbol"] == "AAPL")
+        assert "wanted" in aapl
+        assert "weight" in aapl
     finally:
         server.shutdown()
         thread.join(timeout=2)
@@ -259,6 +262,35 @@ def test_e2e_isolated_sleeve_kill(tmp_path: Path) -> None:
         bundles = json.loads(conn.getresponse().read().decode("utf-8"))
         assert "asb_a" in bundles["stopped"]
         assert bundles["paper"]["asb_b"] == 0.15
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+
+
+def test_e2e_account_flatten_sets_status_flattened(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    home.root.mkdir(parents=True, exist_ok=True)
+    broker = FakeBroker()
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_a": {"AAPL": 1.0}},
+    )
+    home.bundle_dir("asb_a").mkdir(parents=True)
+    supervisor.kill_account()
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+        conn.request("GET", "/api/status")
+        status = json.loads(conn.getresponse().read().decode("utf-8"))
+        assert status["flattened"] is True
+        assert status["state"] == "stopped"
+        conn.request("GET", "/")
+        html = conn.getresponse().read().decode("utf-8")
+        assert 'id="flatten-banner"' in html
     finally:
         server.shutdown()
         thread.join(timeout=2)

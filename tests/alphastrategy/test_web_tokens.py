@@ -97,7 +97,7 @@ def test_html_has_control_plane_banner(html_text: str) -> None:
     assert 'id="account-kill-confirm"' in html_text
     assert "Contribution" in html_text
     assert "Notional" in html_text
-    assert "Weight" in html_text
+    assert "Wanted" in html_text
 
 
 def test_js_renders_countdown_and_stopped(js_text: str) -> None:
@@ -109,3 +109,15 @@ def test_js_renders_countdown_and_stopped(js_text: str) -> None:
     assert "control-plane-banner" in js_text
     assert "riskFormIsDirty" in js_text
     assert "expanded" in js_text
+
+
+def test_html_has_flatten_banner_and_wanted_column(html_text: str) -> None:
+    assert 'id="flatten-banner"' in html_text
+    assert "Wanted" in html_text
+    assert "Got" in html_text
+
+
+def test_js_renders_flatten_banner(js_text: str) -> None:
+    assert "flatten-banner" in js_text
+    assert "flattened" in js_text
+    assert "wanted" in js_text

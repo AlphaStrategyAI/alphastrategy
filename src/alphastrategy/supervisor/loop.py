@@ -583,4 +583,5 @@ class Supervisor:
             self._halt(f"flatten close_all failed: {exc}")
             return
         self._snapshot.state = SupervisorState.STOPPED
+        self._snapshot.halt_reason = None
         self._audit("flatten", scope="account")
