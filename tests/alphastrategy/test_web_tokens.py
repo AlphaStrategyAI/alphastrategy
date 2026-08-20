@@ -418,6 +418,11 @@ def test_html_screen_help_howto(html_text: str) -> None:
 def test_js_renders_howto_for_active_screen(js_text: str) -> None:
     assert 'getElementById("help-howto")' in js_text
     assert "payload.howtos" in js_text
+    assert "function activeScreen" in js_text
+    assert "item.screen === screen" in js_text
     show = js_text[js_text.find("function showScreen") : js_text.find("function setError")]
     assert "renderHelp" in show
+    load = js_text[js_text.find("async function loadHelp") : js_text.find("function setHelpOpen")]
+    assert 'getElementById("help-howto")' in load
+    assert "Help unavailable" in load
     assert "window.confirm" not in js_text

@@ -1159,13 +1159,15 @@
   }
 
   async function loadHelp() {
-    const body = document.getElementById("help-body");
+    const howtoRoot = document.getElementById("help-howto");
     try {
       const payload = await api("GET", "/api/help");
       renderHelp(payload);
       helpState.loaded = true;
     } catch (err) {
-      body.textContent = `Help unavailable — ${err.message}`;
+      if (howtoRoot) {
+        howtoRoot.textContent = `Help unavailable — ${err.message}`;
+      }
     }
   }
 
