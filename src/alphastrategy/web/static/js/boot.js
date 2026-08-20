@@ -38,6 +38,7 @@
       if (!runFormIsDirty()) {
         renderRunSleeves();
       }
+      renderRunRecover();
       renderActivity();
       renderRisk();
     } catch (err) {

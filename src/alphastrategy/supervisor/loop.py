@@ -650,7 +650,12 @@ class Supervisor:
         if not bundle_id:
             return
         self._flatten_account()
-        self._audit("kill", bundle_id=bundle_id, isolated=False)
+        self._audit(
+            "kill",
+            bundle_id=bundle_id,
+            isolated=False,
+            reason="fallback_interrupted",
+        )
         self._record_kill(
             KillOutcome(
                 isolated=False,

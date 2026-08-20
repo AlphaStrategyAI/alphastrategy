@@ -19,6 +19,9 @@
         return ev.bundle_id || ev.scope || "";
       case "kill": {
         const id = ev.bundle_id || "";
+        if (ev.reason === "fallback_interrupted") {
+          return `interrupted sleeve isolate ${id}`.trim();
+        }
         if (ev.isolated === true) {
           return `isolated residual ${id}`.trim();
         }

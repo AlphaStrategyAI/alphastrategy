@@ -152,6 +152,10 @@
         "SLEEVE KILL: isolated residual for " +
         (lastKill.bundle_id || "sleeve") +
         " — other sleeves still live";
+    } else if (killReason === "fallback_interrupted") {
+      killEl.className = "banner fail";
+      killEl.textContent =
+        "SLEEVE KILL: interrupted sleeve isolate — whole paper account flattened";
     } else if (killReason === "fallback_not_ready" || killReason === "fallback_error") {
       killEl.className = "banner fail";
       killEl.textContent =

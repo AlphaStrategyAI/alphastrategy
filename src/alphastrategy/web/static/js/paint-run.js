@@ -116,3 +116,20 @@
     });
   }
 
+  function renderRunRecover() {
+    const el = document.getElementById("run-halt-reason");
+    if (!el) return;
+    const halted = state.status && state.status.halted;
+    const reason =
+      (state.portfolio && state.portfolio.halt_reason) ||
+      (state.status && state.status.halt_reason) ||
+      "";
+    if (halted || reason) {
+      el.className = "warn";
+      el.textContent = reason || (state.status && state.status.state) || "halted";
+      return;
+    }
+    el.className = "muted";
+    el.textContent = "Resume is only after halt.";
+  }
+

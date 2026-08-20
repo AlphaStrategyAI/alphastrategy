@@ -258,6 +258,10 @@ main {
   color: #f59e0b;
 }
 
+#run-halt-reason.warn {
+  color: #f59e0b;
+}
+
 .flatten-zone {
   margin-top: 1.25rem;
 }
