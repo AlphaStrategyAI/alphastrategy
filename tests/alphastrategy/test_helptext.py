@@ -63,6 +63,7 @@ REQUIRED_PHRASES = (
     "flushes the snapshot to disk before orders",
     "Tighten this sleeve",
     "audit and runtime overlays flush to disk",
+    "Tighten this sleeve stays open across the refresh",
 )
 
 

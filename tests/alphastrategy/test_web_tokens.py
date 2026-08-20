@@ -879,6 +879,20 @@ def test_js_paints_risk_overlay_glance(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_risk_form_dirty_includes_open_details(js_text: str) -> None:
+    fn = js_text.split("function riskFormIsDirty")[1].split("function renderRisk")[0]
+    assert "details[open]" in fn
+    assert "#screen-risk" in fn
+    risk_fn = js_text[js_text.find("function renderRisk") :]
+    glance = risk_fn.find("renderTightenGlance")
+    overlay = risk_fn.find("renderOverlayGlance")
+    dirty = risk_fn.find("if (riskFormIsDirty())")
+    assert glance != -1 and overlay != -1 and dirty != -1
+    assert glance < dirty and overlay < dirty
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_js_paints_risk_tighten_glance(js_text: str) -> None:
     paint = js_text[
         js_text.find("function renderTightenGlance") : js_text.find(
