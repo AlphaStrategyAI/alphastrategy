@@ -370,3 +370,40 @@ def test_paper_stop_help_mentions_next_rebalance(capsys) -> None:
     out = capsys.readouterr().out.lower()
     assert "rebalance" in out
 
+
+def test_paper_kill_prints_outcome_json(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    _create_imported_bundle(cli_home, "asb_test")
+    home = AlphaStrategyHome.from_env()
+    broker = FakeBroker()
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_test": {"AAPL": 1.0}},
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rc = main(
+            [
+                "paper",
+                "kill",
+                "--bundle",
+                "asb_test",
+                "--port",
+                str(server.server_port),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["reason"] == "fallback_not_ready"
+    assert payload["flattened"] is True
+    assert payload["isolated"] is False
+

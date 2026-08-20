@@ -176,6 +176,15 @@ def _control_result(response: tuple[int, dict[str, Any]]) -> int:
     return 1
 
 
+def _control_json(response: tuple[int, dict[str, Any]]) -> int:
+    status, payload = response
+    if 200 <= status < 300:
+        print(json.dumps(payload, separators=(",", ":")))
+        return 0
+    print(f"error: {payload.get('error', f'HTTP {status}')}", file=sys.stderr)
+    return 1
+
+
 def _cmd_import(home: AlphaStrategyHome, path: Path) -> int:
     try:
         bundle_id = import_asb(path, home)
@@ -297,14 +306,15 @@ def _cmd_paper_kill(
         {"bundle_id": bundle_id} if bundle_id else {},
     )
     if response is not None:
-        return _control_result(response)
+        return _control_json(response)
     if broker is None:
         broker = _make_paper_broker()
     supervisor = _make_supervisor(home, broker)
     if bundle_id:
-        supervisor.kill_sleeve(bundle_id)
+        outcome = supervisor.kill_sleeve(bundle_id)
     else:
-        supervisor.kill_account()
+        outcome = supervisor.kill_account()
+    print(json.dumps(outcome.to_dict(), separators=(",", ":")))
     return 0
 
 
