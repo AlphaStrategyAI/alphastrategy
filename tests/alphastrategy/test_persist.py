@@ -118,10 +118,10 @@ def test_append_text_keeps_prior_lines_if_fsync_fails(
 
 
 def test_save_runtime_source_uses_replace_text() -> None:
-    from alphastrategy.api import handlers as handlers_mod
+    from alphastrategy.supervisor import loop as loop_mod
 
-    src = Path(handlers_mod.__file__).read_text(encoding="utf-8")
-    body = src.split("def _save_runtime", 1)[1].split("def _apply_startup_runtime", 1)[0]
+    src = Path(loop_mod.__file__).read_text(encoding="utf-8")
+    body = src.split("def _write_runtime", 1)[1].split("def ", 1)[0]
     assert "replace_text" in body
     assert "write_text" not in body
 

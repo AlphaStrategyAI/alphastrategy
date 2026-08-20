@@ -351,6 +351,44 @@ def test_put_risk_tightens_account_policy(api_stack):
     assert risk["account"]["max_name_weight"] == 0.15
 
 
+def test_put_risk_source_uses_supervisor_apply_risk() -> None:
+    from alphastrategy.api import handlers as handlers_mod
+
+    src = Path(handlers_mod.__file__).read_text(encoding="utf-8")
+    body = src.split("def handle_put_risk", 1)[1].split("def dispatch", 1)[0]
+    assert "apply_risk" in body
+    assert "_load_runtime" not in body
+    assert "_bundle_envelope" not in body
+
+
+def test_put_risk_overlay_does_not_reload_envelope_in_handlers(
+    api_stack, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from alphastrategy.api import handlers as handlers_mod
+
+    client, home, supervisor, _broker = api_stack
+    bundle_dir = home.imported_dir() / "asb_x"
+    (bundle_dir / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    loads = {"n": 0}
+    orig = handlers_mod.load_risk_envelope
+
+    def counted(raw: bytes):
+        loads["n"] += 1
+        return orig(raw)
+
+    monkeypatch.setattr(handlers_mod, "load_risk_envelope", counted)
+    supervisor.sleeve_policies(["asb_x"])
+    response = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_x": {"max_name_weight": 0.15}}},
+    )
+    assert response.status == 200
+    assert response.json()["ok"] is True
+    assert loads["n"] == 0
+
+
 def test_put_risk_flattens_when_live_book_breaches(api_stack):
     client, _home, supervisor, broker = api_stack
     broker.positions = {"AAPL": 15.0}

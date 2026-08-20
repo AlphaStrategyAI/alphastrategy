@@ -103,6 +103,7 @@ REQUIRED_PHRASES = (
     "Book, Beat, and Headroom name Beat or Glance",
     "status names BOOK heartbeat or glance",
     "Tighten and Start paper flatten the same live book as Book",
+    "Tighten PUT reads runtime overlays from the Supervisor",
 )
 
 
