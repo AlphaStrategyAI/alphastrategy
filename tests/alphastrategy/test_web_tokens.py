@@ -150,3 +150,22 @@ def test_css_help_panel_is_aside_not_modal(css_text: str) -> None:
     block = panel.group(0).lower()
     assert "position: fixed" not in block
     assert "#11151d" in css_text
+
+
+def test_js_run_sleeve_allocation_and_kill_confirm(js_text: str) -> None:
+    assert "sleeve-alloc-form" in js_text
+    assert "Confirm paper allocation" in js_text
+    assert "Set allocation" in js_text
+    assert "data-kill-confirm" in js_text
+    assert "Confirm sleeve kill" in js_text
+    assert "runFormIsDirty" in js_text
+    assert "Confirm paper allocation required" in js_text
+    assert "window.confirm" not in js_text
+    assert "/api/paper/start" in js_text
+    assert "box.checked = false" in js_text
+    assert "dataset.current" in js_text
+
+def test_js_sleeve_kill_does_not_require_flatten_phrase(js_text: str) -> None:
+    kill_fn = js_text.split("async function killSleeve")[1].split("async function onImportSubmit")[0]
+    assert "FLATTEN" not in kill_fn
+    assert "data-kill-confirm" in js_text
