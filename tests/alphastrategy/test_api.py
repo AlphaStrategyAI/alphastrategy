@@ -455,6 +455,21 @@ def test_get_risk_spoken_follows_allocated_overlay(api_stack):
     assert status["utilization"]["max_names"] == 10
 
 
+def test_status_live_limit_does_not_flatten(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_got = {"AAPL": 0.225}
+    supervisor.snapshot.last_prices = {"AAPL": 150.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {"AAPL": 15.0}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["reason"] == "max_name_weight"
+    risk = client.get("/api/risk").json()
+    assert risk["utilization"]["live_limit"]["reason"] == "max_name_weight"
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
 def test_put_risk_rejects_loosening(api_client: ApiClient):
     response = api_client.put("/api/risk", json={"account": {"max_name_weight": 0.25}})
     assert response.status == 400

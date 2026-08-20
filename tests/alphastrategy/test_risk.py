@@ -144,6 +144,38 @@ def test_from_supervisor_uses_spoken_policy() -> None:
     assert out["max_gross"] == 1.0
 
 
+def test_summarize_live_limit_from_marked_name() -> None:
+    out = summarize(
+        policy=AccountPolicy.defaults(),
+        orders_today=0,
+        last_got={"AAPL": 0.225},
+    )
+    assert out["live_limit"]["reason"] == "max_name_weight"
+
+
+def test_summarize_live_limit_none_inside_cap() -> None:
+    out = summarize(
+        policy=AccountPolicy.defaults(),
+        orders_today=0,
+        last_got={"AAPL": 0.15},
+    )
+    assert out["live_limit"] is None
+
+
+def test_summarize_live_limit_zero_name_cap() -> None:
+    out = summarize(
+        policy=replace(AccountPolicy.defaults(), max_name_weight=0.0),
+        orders_today=0,
+        last_got={"AAPL": 0.15},
+    )
+    assert out["live_limit"]["reason"] == "max_name_weight"
+
+
+def test_merge_limits_overlay_zero_name_cap() -> None:
+    merged = merge_limits({}, AccountPolicy.defaults(), {"max_name_weight": 0})
+    assert merged.max_name_weight == 0.0
+
+
 def test_summarize_falls_back_to_last_got_when_no_positions() -> None:
     out = summarize(
         policy=AccountPolicy.defaults(),

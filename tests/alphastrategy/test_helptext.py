@@ -87,6 +87,7 @@ REQUIRED_PHRASES = (
     "Heartbeat refreshes last prices and does not flatten",
     "Rebalance flattens a live book that already breaches the spoken cap",
     "Book Drift follows the last fill, not last prices",
+    "A live book through the spoken cap warns before the next rebalance flattens",
 )
 
 

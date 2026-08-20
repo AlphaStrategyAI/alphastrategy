@@ -179,6 +179,7 @@ def test_html_desk_banners_outside_portfolio(html_text: str) -> None:
     for banner_id in (
         "halt-banner",
         "flatten-banner",
+        "live-limit-banner",
         "deviation-banner",
         "control-plane-banner",
         "kill-outcome-banner",
@@ -1376,6 +1377,33 @@ def test_js_book_drift_uses_fill_not_mark(js_text: str) -> None:
         js_text.find("function renderBanners") : js_text.find("function renderPortfolio")
     ]
     assert banners.count("const reason") == 1
+
+
+def test_js_paints_live_limit_banner(js_text: str) -> None:
+    banners = js_text[
+        js_text.find("function renderBanners") : js_text.find("function renderPortfolio")
+    ]
+    assert "live-limit-banner" in js_text
+    assert "live_limit" in js_text
+    assert "next rebalance will flatten" in js_text
+    assert banners.count("const reason") == 1
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_spoken_caps_treat_zero_as_a_limit(js_text: str) -> None:
+    rails = js_text[
+        js_text.find("function wantedGotBar") : js_text.find("function renderSleeveAllocBook")
+    ]
+    assert "Number.isFinite" in rails
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "spokenNameCap" in js_text or "Number.isFinite" in port
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
 
 
 def test_js_paints_activity_beat(js_text: str) -> None:
