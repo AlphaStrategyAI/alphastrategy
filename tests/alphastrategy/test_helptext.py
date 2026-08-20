@@ -17,6 +17,7 @@ REQUIRED_PHRASES = (
     "sole order placer",
     "does not catch up",
     "FLATTEN",
+    "--force",
     "Wanted",
     "Got",
 )
@@ -42,6 +43,8 @@ def test_help_text_contains_required_phrases() -> None:
     for phrase in REQUIRED_PHRASES:
         if phrase == "FLATTEN":
             assert "FLATTEN" in text
+        elif phrase == "--force":
+            assert "--force" in text
         elif phrase in ("Wanted", "Got"):
             assert phrase in text
         else:

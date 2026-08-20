@@ -36,7 +36,8 @@ SECTIONS: list[dict[str, str]] = [
             "isolated sleeve residual) toward flat. Stop zeros a sleeve on the "
             "next legal rebalance and does not flatten now. Resume after halt "
             "does not catch up; the next legal open or close rebalance does. "
-            "Account kill on the Web requires typing FLATTEN. "
+            "Account kill on the Web requires typing FLATTEN. CLI account kill "
+            "requires typing FLATTEN on a TTY, or --force when stdin is not a TTY. "
             "Sleeve kill reports whether isolation succeeded or the whole paper "
             "account was flattened. Desk banners stay visible on every screen."
         ),
@@ -57,7 +58,9 @@ SECTIONS: list[dict[str, str]] = [
         "body": (
             "alphastrategy start, import, status, paper start, paper stop, "
             "paper kill, paper resume. paper kill without --bundle flattens "
-            "the whole paper account. paper kill --bundle isolates when the "
+            "the whole paper account. That CLI account kill prompts for FLATTEN "
+            "on a TTY and refuses on a non-TTY unless --force is passed. "
+            "paper kill --bundle isolates when the "
             "last book is clean; otherwise it flattens the account rather than guess."
         ),
     },

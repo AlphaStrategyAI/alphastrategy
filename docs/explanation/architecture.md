@@ -18,7 +18,7 @@ combined[asset] = Σ_i allocation_i * weight_i[asset]
 
 Heartbeat every 20 seconds is health and reconciliation only. It does **not** rebalance and does **not** place orders. At most two regular rebalances fire per RTH session (open +3 minutes, close −12 minutes).
 
-Halt is not flatten. Dirty data, disconnect, or a dead sandbox **halts** (no new orders, hold the book). Manual account kill, SIGINT/SIGTERM, and limit breaches **flatten** when the broker is reachable. Resume does not catch up.
+Halt is not flatten. Dirty data, disconnect, or a dead sandbox **halts** (no new orders, hold the book). Manual account kill, SIGINT/SIGTERM, and limit breaches **flatten** when the broker is reachable. CLI account kill (no `--bundle`) is fail-closed: type `FLATTEN` on a TTY, or pass `--force` when stdin is not a TTY. SIGINT flatten does not prompt. Resume does not catch up.
 
 ## System context (C4 level 1)
 

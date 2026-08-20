@@ -326,6 +326,7 @@ def test_help_command_prints_operator_copy(cli_home: Path, capsys) -> None:
     out = capsys.readouterr().out
     assert "halt is not flatten" in out.lower()
     assert "FLATTEN" in out
+    assert "--force" in out
     assert "sole order placer" in out.lower()
 
 

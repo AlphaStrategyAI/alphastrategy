@@ -115,7 +115,8 @@ an idle empty book.
   not catch up; the next legal open/close rebalance does.
 - **Account kill** flattens the whole paper account. On the Web, type
   `FLATTEN` and confirm. CLI: `alphastrategy paper kill` (omit
-  `--bundle`).
+  `--bundle`) types `FLATTEN` on a TTY, or pass `--force` when stdin
+  is not a TTY.
 - **Sleeve kill** (`paper kill --bundle <id>`) trades to the residual
   book when last targets and an open session make isolation clean;
   otherwise it flattens the whole account rather than guess. The CLI
