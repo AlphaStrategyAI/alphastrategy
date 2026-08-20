@@ -121,3 +121,32 @@ def test_js_renders_flatten_banner(js_text: str) -> None:
     assert "flatten-banner" in js_text
     assert "flattened" in js_text
     assert "wanted" in js_text
+
+
+def test_html_help_is_aside_not_sixth_nav(html_text: str) -> None:
+    assert 'id="help-toggle"' in html_text
+    assert 'id="help-panel"' in html_text
+    assert 'aria-controls="help-panel"' in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    assert nav is not None
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+    assert "help" not in screens
+    assert 'data-screen="help"' not in html_text
+
+
+def test_js_fetches_help_and_toggles_panel(js_text: str) -> None:
+    assert "/api/help" in js_text
+    assert "help-toggle" in js_text
+    assert "help-panel" in js_text
+    assert "aria-expanded" in js_text
+    assert "Escape" in js_text
+
+
+def test_css_help_panel_is_aside_not_modal(css_text: str) -> None:
+    assert "#help-panel" in css_text
+    panel = re.search(r"#help-panel\s*\{[^}]*\}", css_text)
+    assert panel is not None
+    block = panel.group(0).lower()
+    assert "position: fixed" not in block
+    assert "#11151d" in css_text

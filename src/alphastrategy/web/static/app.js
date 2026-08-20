@@ -703,6 +703,58 @@
     }
   });
 
+  const helpState = { loaded: false };
+
+  function renderHelp(payload) {
+    const body = document.getElementById("help-body");
+    body.innerHTML = "";
+    const title = document.createElement("p");
+    title.className = "muted";
+    title.textContent = payload.title || "Operator help";
+    body.appendChild(title);
+    const sections = payload.sections || [];
+    for (const section of sections) {
+      const h = document.createElement("h3");
+      h.textContent = section.title || "";
+      const p = document.createElement("p");
+      p.textContent = section.body || "";
+      body.appendChild(h);
+      body.appendChild(p);
+    }
+  }
+
+  async function loadHelp() {
+    const body = document.getElementById("help-body");
+    try {
+      const payload = await api("GET", "/api/help");
+      renderHelp(payload);
+      helpState.loaded = true;
+    } catch (err) {
+      body.textContent = `Help unavailable — ${err.message}`;
+    }
+  }
+
+  function setHelpOpen(open) {
+    const panel = document.getElementById("help-panel");
+    const toggle = document.getElementById("help-toggle");
+    panel.classList.toggle("hidden", !open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open && !helpState.loaded) {
+      loadHelp();
+    }
+  }
+
+  document.getElementById("help-toggle").addEventListener("click", () => {
+    const open =
+      document.getElementById("help-toggle").getAttribute("aria-expanded") === "true";
+    setHelpOpen(!open);
+  });
+
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape") return;
+    setHelpOpen(false);
+  });
+
   refresh();
   setInterval(refresh, 5000);
 })();

@@ -16,9 +16,11 @@
       <button type="button" data-screen="activity">Activity</button>
       <button type="button" data-screen="risk">Risk</button>
     </nav>
+    <button type="button" id="help-toggle" aria-expanded="false" aria-controls="help-panel">Help</button>
   </header>
 
-  <main>
+  <div class="shell">
+    <main>
     <section id="screen-portfolio" class="screen active" aria-label="Portfolio">
       <div id="halt-banner" class="banner halt hidden" role="alert"></div>
       <div id="flatten-banner" class="banner fail hidden" role="alert"></div>
@@ -153,7 +155,12 @@
         <div id="risk-sleeves"></div>
       </div>
     </section>
-  </main>
+    </main>
+    <aside id="help-panel" class="hidden" aria-label="Operator help">
+      <h2>Operator help</h2>
+      <div id="help-body"></div>
+    </aside>
+  </div>
 
   <script src="app.js"></script>
 </body>
