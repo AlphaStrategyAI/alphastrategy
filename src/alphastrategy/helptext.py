@@ -73,7 +73,8 @@ SECTIONS: list[dict[str, str]] = [
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
             "Risk is four bands Caps / Headroom / Tighten plus Sleeve overlays. "
             "Tighten still posts the policy keys. "
-            "Risk lists each sleeve allocation as text. A red FLAT banner means "
+            "Risk lists sleeve overlays as Spoken / Overlays / Tighter / Idle. "
+            "A red FLAT banner means "
             "the paper account was flattened. Activity kill rows say isolated "
             "residual or flattened account. status includes last_kill even "
             "when the control plane is down. Activity empty copy names the two "
@@ -175,6 +176,8 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "title": "On Risk",
         "body": (
             "Four bands: Caps / Headroom / Tighten, then Sleeve overlays. "
+            "Sleeve overlays is four tiles Spoken / Overlays / Tighter / Idle. Spoken is the hero. "
+            "Allocation is a rail, not only text. "
             "Account totals stay sticky. "
             "Tighten groups Gross / Names / Orders / Deltas. Tighten only; "
             "the form refuses looser values and still posts the policy keys."

@@ -81,6 +81,54 @@
     return null;
   }
 
+  function overlayTighterCount(overlay, account) {
+    if (!overlay || !account) return 0;
+    let n = 0;
+    for (const key of NUMERIC_CAPS) {
+      if (overlay[key] === undefined || overlay[key] === null) continue;
+      if (account[key] === undefined || account[key] === null) continue;
+      const proposed = Number(overlay[key]);
+      const base = Number(account[key]);
+      if (key === "min_delta_dollar" || key === "min_delta_frac") {
+        if (proposed > base) n += 1;
+      } else if (proposed < base) {
+        n += 1;
+      }
+    }
+    return n;
+  }
+
+  function renderOverlayGlance(risk) {
+    const sleeves = (risk && risk.sleeves) || {};
+    const account = (risk && risk.account) || {};
+    const paper = (state.bundles && state.bundles.paper) || {};
+    const ids = Object.keys(sleeves);
+    let spoken = 0;
+    let tighter = 0;
+    let idle = 0;
+    for (const id of ids) {
+      const alloc = Number(paper[id]) || 0;
+      spoken += alloc;
+      if (alloc <= 0) idle += 1;
+      if (overlayTighterCount(sleeves[id], account) > 0) tighter += 1;
+    }
+    const spokenEl = document.getElementById("risk-overlay-spoken");
+    if (spokenEl) {
+      spokenEl.textContent = fmtPct(spoken);
+      spokenEl.classList.toggle("warn", spoken >= 0.9 && spoken < 1);
+      spokenEl.classList.toggle("fail", spoken >= 1);
+    }
+    const countEl = document.getElementById("risk-overlay-count");
+    if (countEl) countEl.textContent = String(ids.length);
+    const tightEl = document.getElementById("risk-overlay-tighter");
+    if (tightEl) {
+      tightEl.textContent = String(tighter);
+      tightEl.classList.toggle("warn", tighter > 0);
+    }
+    const idleEl = document.getElementById("risk-overlay-idle");
+    if (idleEl) idleEl.textContent = String(idle);
+  }
+
   function riskFormIsDirty() {
     const forms = document.querySelectorAll("#screen-risk form");
     for (const form of forms) {
@@ -98,6 +146,7 @@
     const risk = state.risk || { account: {}, sleeves: {} };
     renderRiskCaps(document.getElementById("risk-account-caps"), risk.account);
     renderRiskUtilization();
+    renderOverlayGlance(risk);
     if (riskFormIsDirty()) {
       return;
     }
@@ -113,14 +162,30 @@
     sleevesEl.innerHTML = "";
     const ids = Object.keys(risk.sleeves || {}).sort();
     if (!ids.length) {
-      sleevesEl.innerHTML = "<p class='muted'>No sleeve overlays</p>";
+      sleevesEl.innerHTML =
+        "<p class='muted'>No sleeve overlays. Import a qualified .asb, then tighten a sleeve here.</p>";
       return;
     }
+    const account = risk.account || {};
     for (const id of ids) {
       const panel = document.createElement("div");
       panel.className = "panel";
       const alloc = ((state.bundles && state.bundles.paper) || {})[id] || 0;
-      panel.innerHTML = `<h2>${id}</h2><p class="muted nums">Allocation ${fmtPct(alloc)}</p>`;
+      const heading = document.createElement("h2");
+      heading.textContent = id;
+      panel.appendChild(heading);
+      const allocRow = document.createElement("div");
+      allocRow.innerHTML =
+        `<span class="muted">Allocation</span> <span class="nums">${fmtPct(alloc)}</span>`;
+      panel.appendChild(allocRow);
+      const track = document.createElement("div");
+      paintUtilTrack(track, alloc, 1, `allocation ${fmtPct(alloc)}`);
+      panel.appendChild(track);
+      const tight = overlayTighterCount(risk.sleeves[id], account);
+      const tightLine = document.createElement("p");
+      tightLine.className = "muted nums";
+      tightLine.textContent = tight ? `${tight} tighter than account` : "Same as account";
+      panel.appendChild(tightLine);
       const form = buildRiskInputs(id, risk.sleeves[id], risk.sleeves[id]);
       form.addEventListener("submit", (ev) => onRiskSleeveSubmit(ev, id));
       panel.appendChild(form);

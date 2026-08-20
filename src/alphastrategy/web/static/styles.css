@@ -802,3 +802,15 @@ button.action:focus-visible,
 #run-remaining.fail {
   color: #ef4444;
 }
+
+#risk-overlay-spoken.warn {
+  color: #f59e0b;
+}
+
+#risk-overlay-spoken.fail {
+  color: #ef4444;
+}
+
+#risk-overlay-tighter.warn {
+  color: #f59e0b;
+}
