@@ -312,6 +312,7 @@
     }
     renderSleeveAllocBook(sleeves);
 
+    paintBookLimitRail();
     renderBanners();
   }
 

@@ -197,6 +197,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Caps LIMIT follows the same live book as Tighten.
   Caps LIMIT follows a next send through Order size.
   LIMIT names a next send through Order size.
+  Book takes LIMIT color while a next rebalance will flatten.
+  Header Pulse, Session, and Supervisor are instruments.
   Sleeve envelopes load once until the file changes.
   Runtime overlays load once until the file changes.
   Tighten PUT reads runtime overlays from the Supervisor.

@@ -67,6 +67,10 @@ header {
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   color: #5c6573;
+  border: 1px solid #2a3142;
+  background: #0b0e14;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
 }
 
 .pulse-dot {
@@ -78,6 +82,7 @@ header {
 
 .desk-pulse.live {
   color: #10b981;
+  border-color: #10b981;
 }
 
 .desk-pulse.live .pulse-dot {
@@ -87,6 +92,7 @@ header {
 
 .desk-pulse.stale {
   color: #f59e0b;
+  border-color: #f59e0b;
 }
 
 .desk-pulse.stale .pulse-dot {
@@ -95,6 +101,7 @@ header {
 
 .desk-pulse.dead {
   color: #ef4444;
+  border-color: #ef4444;
 }
 
 .desk-pulse.dead .pulse-dot {
@@ -105,22 +112,30 @@ header {
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   color: #5c6573;
+  border: 1px solid #2a3142;
+  background: #0b0e14;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
 }
 
 #desk-session.open {
   color: #10b981;
+  border-color: #10b981;
 }
 
 #desk-session.warn {
   color: #f59e0b;
+  border-color: #f59e0b;
 }
 
 #desk-supervisor.halt {
   color: #f59e0b;
+  border-color: #f59e0b;
 }
 
 #desk-supervisor.fail {
   color: #ef4444;
+  border-color: #ef4444;
 }
 
 @keyframes desk-pulse-live {
@@ -254,6 +269,19 @@ main {
   margin: 0 0 0.4rem;
 }
 
+#glance-book {
+  border-left: 2px solid transparent;
+  padding-left: 0.65rem;
+}
+
+#glance-book.warn {
+  border-left-color: #f59e0b;
+}
+
+#glance-book.fail {
+  border-left-color: #ef4444;
+}
+
 .glance-source {
   color: #5c6573;
   font-weight: 500;
@@ -322,7 +350,7 @@ main {
 }
 
 .metric.hero .metric-value {
-  font-size: 1.85rem;
+  font-size: 2.35rem;
 }
 
 #metric-drift.fail {

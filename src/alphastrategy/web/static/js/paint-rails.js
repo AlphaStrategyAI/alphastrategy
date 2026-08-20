@@ -134,6 +134,22 @@
       "LIMIT: " + through + policyLabel(limit.reason) + " — next rebalance will flatten";
   }
 
+  function paintBookLimitRail() {
+    const band = document.getElementById("glance-book");
+    if (!band) return;
+    band.classList.remove("warn", "fail");
+    const flattened =
+      Boolean(state.status && state.status.flattened) ||
+      (state.status &&
+        (state.status.state === "stopped" || state.status.state === "flattening"));
+    if (flattened) {
+      band.classList.add("fail");
+      return;
+    }
+    const limit = utilization().live_limit;
+    if (limit && limit.reason) band.classList.add("warn");
+  }
+
   function renderGrossUtilization(gross) {
     const bar = document.getElementById("metric-gross-bar");
     const util = utilization();
