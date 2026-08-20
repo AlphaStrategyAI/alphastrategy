@@ -124,6 +124,8 @@ an idle empty book.
   same outcome.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio.
+- Activity kill rows say **isolated residual** or **flattened account**.
+  `alphastrategy status` includes `last_kill` even if the desk is down.
 - Daily paper orders are capped (default 200). Overflow is a limit
   flatten, not a partial batch.
 - Same runbook: `alphastrategy help`, `GET /api/help`, cockpit Help.

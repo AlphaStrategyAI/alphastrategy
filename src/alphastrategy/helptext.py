@@ -49,7 +49,9 @@ SECTIONS: list[dict[str, str]] = [
             "Five screens: Portfolio, Strategies, Run, Activity, Risk. "
             "Wanted is the last combined target weight; Got is the current "
             "position weight. A red FLAT banner means the paper account was "
-            "flattened. Help is this aside, not a sixth screen."
+            "flattened. Activity kill rows say isolated residual or flattened "
+            "account. status includes last_kill even when the control plane is down. "
+            "Help is this aside, not a sixth screen."
         ),
     },
     {

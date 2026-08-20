@@ -18,6 +18,7 @@ REQUIRED_PHRASES = (
     "does not catch up",
     "FLATTEN",
     "--force",
+    "isolated residual",
     "Wanted",
     "Got",
 )
