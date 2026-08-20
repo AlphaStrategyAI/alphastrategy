@@ -176,7 +176,7 @@
       panel.appendChild(heading);
       const allocRow = document.createElement("div");
       allocRow.innerHTML =
-        `<span class="muted">Allocation</span> <span class="nums">${fmtPct(alloc)}</span>`;
+        `<span class="muted nums">Allocation ${fmtPct(alloc)}</span>`;
       panel.appendChild(allocRow);
       const track = document.createElement("div");
       paintUtilTrack(track, alloc, 1, `allocation ${fmtPct(alloc)}`);
