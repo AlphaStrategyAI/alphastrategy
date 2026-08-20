@@ -336,7 +336,30 @@
         </div>
         <div id="risk-headroom" class="glance-band">
           <h2 class="glance-heading">Headroom</h2>
-          <div id="risk-utilization" class="risk-caps nums"></div>
+          <div id="risk-utilization" class="metrics metrics-4 nums">
+            <div class="metric hero">
+              <div class="metric-label">Names</div>
+              <div id="risk-head-names" class="metric-value">—</div>
+              <div id="risk-head-names-cap" class="metric-sub">—</div>
+              <div id="risk-head-names-bar" class="util-track hidden" aria-hidden="true"></div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Orders today</div>
+              <div id="risk-head-orders" class="metric-value">—</div>
+              <div id="risk-head-orders-cap" class="metric-sub">—</div>
+              <div id="risk-head-orders-bar" class="util-track hidden" aria-hidden="true"></div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Cash</div>
+              <div id="risk-head-cash" class="metric-value">—</div>
+              <div id="risk-head-cash-sub" class="metric-sub">—</div>
+              <div id="risk-head-cash-bar" class="cash-track hidden" aria-hidden="true"></div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Target cash</div>
+              <div id="risk-head-target" class="metric-value">—</div>
+            </div>
+          </div>
         </div>
       </div>
       <div id="risk-tighten" class="glance-band">

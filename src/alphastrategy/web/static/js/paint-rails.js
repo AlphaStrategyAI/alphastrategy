@@ -107,34 +107,86 @@
   }
 
   function renderRiskUtilization() {
-    const container = document.getElementById("risk-utilization");
-    if (!container) return;
-    container.innerHTML = "";
     const util = utilization();
-    function addCapRow(label, used, cap) {
-      const row = document.createElement("div");
-      const usedText = used == null || used === undefined ? "—" : used;
-      const capText = cap == null || cap === undefined ? "—" : cap;
-      const text = document.createElement("div");
-      text.innerHTML = `<span class="muted">${label}</span> <span class="nums">${usedText} / ${capText}</span>`;
-      const track = document.createElement("div");
-      track.className = "util-track";
-      paintUtilTrack(track, Number(used) || 0, Number(cap) || 0, `${label} ${usedText} of ${capText}`);
-      row.appendChild(text);
-      row.appendChild(track);
-      container.appendChild(row);
+    function fillUsedCap(valueId, capId, barId, used, cap, label) {
+      const valueEl = document.getElementById(valueId);
+      const capEl = document.getElementById(capId);
+      const bar = document.getElementById(barId);
+      const missing = used == null || used === undefined || cap == null || cap === undefined;
+      if (valueEl) {
+        valueEl.textContent = used == null || used === undefined ? "—" : String(used);
+        const atCap =
+          !missing && Number(cap) > 0 && Number(used) >= Number(cap);
+        valueEl.classList.toggle("fail", atCap);
+      }
+      if (capEl) {
+        capEl.textContent =
+          cap == null || cap === undefined ? "—" : `of ${cap}`;
+      }
+      if (!bar) return;
+      if (missing) {
+        bar.classList.add("hidden");
+        bar.setAttribute("aria-hidden", "true");
+        return;
+      }
+      paintUtilTrack(bar, Number(used) || 0, Number(cap) || 0, `${label} ${used} of ${cap}`);
     }
-    addCapRow("Names", util.names, util.max_names);
-    addCapRow("Orders today", util.orders_today, util.max_orders_per_day);
-    const cashRow = document.createElement("div");
-    const invested = util.invested_weight;
+    fillUsedCap(
+      "risk-head-names",
+      "risk-head-names-cap",
+      "risk-head-names-bar",
+      util.names,
+      util.max_names,
+      "names"
+    );
+    fillUsedCap(
+      "risk-head-orders",
+      "risk-head-orders-cap",
+      "risk-head-orders-bar",
+      util.orders_today,
+      util.max_orders_per_day,
+      "orders today"
+    );
+    const cashEl = document.getElementById("risk-head-cash");
+    const cashSub = document.getElementById("risk-head-cash-sub");
+    const cashBar = document.getElementById("risk-head-cash-bar");
     const cashW = util.cash_weight;
-    const cashText =
-      invested == null || cashW == null
-        ? "—"
-        : `invested ${fmtPct(invested)} · cash ${fmtPct(cashW)}`;
-    cashRow.innerHTML = `<span class="muted">Cash</span> <span class="nums">${cashText}</span>`;
-    container.appendChild(cashRow);
+    const invested = util.invested_weight;
+    const target = util.target_cash_weight;
+    if (cashEl) {
+      cashEl.textContent = cashW == null || cashW === undefined ? "—" : fmtPct(cashW);
+    }
+    if (cashSub) {
+      cashSub.textContent =
+        invested == null || invested === undefined ? "—" : `invested ${fmtPct(invested)}`;
+    }
+    if (cashBar) {
+      if (invested == null || invested === undefined) {
+        cashBar.classList.add("hidden");
+        cashBar.setAttribute("aria-hidden", "true");
+      } else {
+        const pct = Math.min(100, Math.max(0, Number(invested) * 100));
+        let marker = "";
+        if (target != null && target !== undefined) {
+          const investedTarget = Math.min(100, Math.max(0, (1 - Number(target)) * 100));
+          marker = `<span class="wg-wanted" style="left:${investedTarget}%"></span>`;
+        }
+        cashBar.classList.remove("hidden");
+        cashBar.removeAttribute("aria-hidden");
+        cashBar.innerHTML = `<span class="cash-invested" style="width:${pct}%"></span>${marker}`;
+        cashBar.setAttribute(
+          "aria-label",
+          `invested ${fmtPct(invested)}` +
+            (cashW != null ? ` cash ${fmtPct(cashW)}` : "") +
+            (target != null ? ` target cash ${fmtPct(target)}` : "")
+        );
+      }
+    }
+    const targetEl = document.getElementById("risk-head-target");
+    if (targetEl) {
+      targetEl.textContent =
+        target == null || target === undefined ? "—" : fmtPct(target);
+    }
   }
 
   function nameCapBar(got, cap) {

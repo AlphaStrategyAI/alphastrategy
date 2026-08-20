@@ -811,6 +811,14 @@ button.action:focus-visible,
   color: #ef4444;
 }
 
+#risk-head-names.fail {
+  color: #ef4444;
+}
+
+#risk-head-orders.fail {
+  color: #ef4444;
+}
+
 #risk-overlay-tighter.warn {
   color: #f59e0b;
 }
