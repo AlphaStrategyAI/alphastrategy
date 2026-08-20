@@ -599,6 +599,47 @@ def test_kill_sleeve_isolates_when_last_book_exists(tmp_path: Path):
     assert "asb_a" in supervisor.snapshot.stopped
 
 
+def test_restart_during_sleeve_isolate_flattens_account(tmp_path: Path):
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    evaluators = {
+        "asb_a": {"AAPL": 0.5, "MSFT": 0.5},
+        "asb_b": {"GOOG": 1.0},
+    }
+    supervisor = _make_supervisor(tmp_path, broker, evaluators=evaluators)
+    supervisor.start_sleeve("asb_a", 0.15)
+    supervisor.start_sleeve("asb_b", 0.15)
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+    assert "GOOG" in broker.positions
+    broker.crash_after_place = len(broker.orders) + 1
+    with pytest.raises(SimulatedCrash):
+        supervisor.kill_sleeve("asb_a")
+    inflight = _read_state(tmp_path)
+    assert inflight["isolate_in_flight"] == "asb_a"
+    assert inflight["state"] != "stopped"
+    assert broker.close_all_called is False
+    broker.crash_after_place = None
+    restarted = _make_supervisor(tmp_path, broker, evaluators=evaluators)
+    assert restarted.state == SupervisorState.STOPPED
+    assert broker.close_all_called is True
+    assert broker.positions == {}
+    assert restarted.snapshot.isolate_in_flight is None
+    assert restarted.snapshot.last_kill["reason"] == "fallback_interrupted"
+    assert restarted.snapshot.last_kill["flattened"] is True
+    assert restarted.snapshot.sleeves.get("asb_b", 0) == 0.0
+
+
 def test_sleeve_overlay_tightens_rebalance_policy(tmp_path: Path):
     open_time = datetime(2024, 1, 31, 14, 30)
     session_close = datetime(2024, 1, 31, 21, 0)

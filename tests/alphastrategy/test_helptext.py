@@ -55,6 +55,7 @@ REQUIRED_PHRASES = (
     "incomplete rebalance",
     "interrupted rebalancing",
     "interrupted flattening",
+    "interrupted sleeve isolate",
 )
 
 
