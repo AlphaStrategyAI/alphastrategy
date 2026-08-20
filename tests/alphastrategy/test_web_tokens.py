@@ -626,7 +626,7 @@ def test_js_paints_positions_glance_tiles(js_text: str) -> None:
     assert "pos-count-wanted" in paint
     assert "pos-count-got" in paint
     assert "pos-count-cap" in paint
-    assert "max_name_weight" in paint
+    assert "spokenNameCap" in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
     assert "Gross cap" not in js_text
@@ -1209,8 +1209,8 @@ def test_js_gross_and_name_rails_use_spoken_caps(js_text: str) -> None:
     glance = js_text[
         js_text.find("function renderPositionsGlance") : js_text.find("function renderDeskPulse")
     ]
-    assert "spokenPolicy()" in port or "utilization().max_name_weight" in port
-    assert "spokenPolicy()" in glance or "utilization().max_name_weight" in glance
+    assert "spokenNameCap" in port
+    assert "spokenNameCap" in glance
     assert "state.risk.account.max_name_weight" not in port
     assert "state.risk.account.max_name_weight" not in glance
     assert "Gross cap" not in js_text
