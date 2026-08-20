@@ -77,6 +77,7 @@ REQUIRED_PHRASES = (
     "staging lives under imported/",
     "Session OPEN is halt color while Supervisor is HALTED",
     "Clock Next is held while Supervisor is HALTED",
+    "Clock Next is flat while the paper account is flattened",
 )
 
 

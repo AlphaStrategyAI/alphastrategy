@@ -526,6 +526,27 @@ def test_css_countdown_warn_uses_halt_token(css_text: str) -> None:
     assert last is not None and "#f59e0b" in last.group(0).lower()
 
 
+def test_js_clock_next_flat_while_flattened(js_text: str) -> None:
+    session = js_text[
+        js_text.find("function renderSessionMetrics") : js_text.find("function bookDrift")
+    ]
+    assert "flat · " in session
+    assert 'countEl.classList.add("fail")' in session
+    assert "held · " in session
+    assert 'countEl.classList.add("warn")' in session
+    assert "fmtCountdown" in session
+    assert "flattened" in session
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_css_countdown_fail_uses_kill_token(css_text: str) -> None:
+    fail = re.search(r"#metric-countdown\.fail\s*\{[^}]*\}", css_text)
+    warn = re.search(r"#metric-countdown\.warn\s*\{[^}]*\}", css_text)
+    assert fail is not None and "#ef4444" in fail.group(0).lower()
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
+
+
 def test_html_glance_bands(html_text: str) -> None:
     assert 'id="glance-book"' in html_text
     assert 'id="glance-risk"' in html_text
