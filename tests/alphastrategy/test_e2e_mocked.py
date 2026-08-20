@@ -344,6 +344,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
         assert 'id="act-tape"' in html
+        assert 'id="act-beat-age"' in html
         assert 'id="metric-drift"' in html
         port = html[html.find('id="screen-portfolio"') : html.find('id="screen-strategies"')]
         assert 'id="first-run"' in port

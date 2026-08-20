@@ -688,6 +688,12 @@ def test_html_activity_tape_bands(html_text: str) -> None:
     tape = act[act.find('id="act-tape"') : act.find('id="act-blotter"')]
     blotter = act[act.find('id="act-blotter"') :]
     assert 'id="activity-heartbeat"' in beat
+    assert 'id="act-beat-age"' in beat
+    assert 'id="act-beat-interval"' in beat
+    assert 'id="act-beat-state"' in beat
+    assert "metrics-4" in beat
+    assert "hero" in beat
+    assert ">Pulse<" in beat
     assert 'id="act-count-rebalance"' in tape
     assert 'id="act-count-halt"' in tape
     assert 'id="act-count-deviation"' in tape
@@ -716,6 +722,28 @@ def test_js_paints_activity_tape(js_text: str) -> None:
     assert 'event === "flatten"' in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_paints_activity_beat(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
+    ]
+    assert "function supervisorLabel" in js_text
+    assert "act-beat-age" in paint
+    assert "act-beat-interval" in paint
+    assert "act-beat-state" in paint
+    assert "interval_seconds" in paint
+    assert "IN SESSION" in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_css_activity_beat_pulse_tokens(css_text: str) -> None:
+    live = re.search(r"#activity-heartbeat\.live\s*\{[^}]*\}", css_text)
+    stale = re.search(r"#activity-heartbeat\.stale\s*\{[^}]*\}", css_text)
+    dead = re.search(r"#activity-heartbeat\.dead\s*\{[^}]*\}", css_text)
+    assert live is not None and "#10b981" in live.group(0).lower()
+    assert stale is not None and "#f59e0b" in stale.group(0).lower()
+    assert dead is not None and "#ef4444" in dead.group(0).lower()
 
 
 def test_js_activity_drill_in_is_book_not_json(js_text: str) -> None:

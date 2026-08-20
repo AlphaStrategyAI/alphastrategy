@@ -44,6 +44,7 @@ REQUIRED_PHRASES = (
     "Book Drift",
     "Start paper after flatten",
     "Your first paper session",
+    "Pulse / Age / Interval / Supervisor",
 )
 
 
