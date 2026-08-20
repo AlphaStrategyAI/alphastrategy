@@ -56,6 +56,7 @@ REQUIRED_PHRASES = (
     "interrupted rebalancing",
     "interrupted flattening",
     "interrupted sleeve isolate",
+    "After halt shows the halt reason",
 )
 
 

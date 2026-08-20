@@ -193,6 +193,8 @@ def test_js_renders_kill_outcome_from_last_kill(js_text: str) -> None:
     assert "SLEEVE KILL: isolated residual" in js_text
     assert "could not isolate" in js_text
     assert "unknown sleeve" in js_text
+    assert "fallback_interrupted" in js_text
+    assert "interrupted sleeve isolate — whole paper account flattened" in js_text
 
 def test_js_sleeve_kill_does_not_require_flatten_phrase(js_text: str) -> None:
     start = js_text.index("async function killSleeve")
@@ -207,6 +209,8 @@ def test_js_activity_kill_summary_distinguishes_isolated(js_text: str) -> None:
     assert "isolated residual" in kill_branch
     assert "flattened account" in kill_branch
     assert "ev.isolated" in kill_branch
+    assert "fallback_interrupted" in kill_branch
+    assert "interrupted sleeve isolate" in kill_branch
 
 
 def test_html_first_run_and_book_column(html_text: str) -> None:
@@ -576,6 +580,8 @@ def test_html_run_kill_switch_zones(html_text: str) -> None:
     assert "hero" in book
     assert ">Remaining<" in book
     assert 'id="account-resume"' in recover
+    assert 'id="run-halt-reason"' in recover
+    assert 'id="run-halt-reason"' not in flatten
     assert 'id="account-kill"' not in recover
     assert 'id="account-kill"' in flatten
     assert 'id="account-kill-phrase"' in flatten
@@ -602,6 +608,18 @@ def test_js_paints_run_capacity(js_text: str) -> None:
     assert "run-count-active" in paint
     assert "run-count-idle" in paint
     assert "No sleeves yet" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_paints_run_halt_reason(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRunRecover") : js_text.find("function eventSummary")
+    ]
+    assert "run-halt-reason" in paint
+    assert "halt_reason" in paint
+    assert "Resume is only after halt." in paint
+    assert "innerHTML" not in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 

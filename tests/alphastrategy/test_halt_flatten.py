@@ -638,6 +638,13 @@ def test_restart_during_sleeve_isolate_flattens_account(tmp_path: Path):
     assert restarted.snapshot.last_kill["reason"] == "fallback_interrupted"
     assert restarted.snapshot.last_kill["flattened"] is True
     assert restarted.snapshot.sleeves.get("asb_b", 0) == 0.0
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    kills = [event for event in events if event["event"] == "kill"]
+    assert kills
+    assert kills[-1]["reason"] == "fallback_interrupted"
 
 
 def test_sleeve_overlay_tightens_rebalance_policy(tmp_path: Path):
