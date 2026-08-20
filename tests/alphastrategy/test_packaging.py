@@ -33,3 +33,42 @@ def test_readme_paper_desk_positioning() -> None:
             assert any(
                 neg in stripped for neg in ("not promise", "does not promise", "don't promise")
             ), f"README must not promise alpha: {line!r}"
+
+
+DOCS_INDEX = ROOT / "docs" / "index.md"
+ARCHITECTURE = ROOT / "docs" / "explanation" / "architecture.md"
+AGENTS = ROOT / "AGENTS.md"
+
+
+def test_docs_index_maps_diataxis() -> None:
+    text = DOCS_INDEX.read_text(encoding="utf-8")
+    assert "docs/requirements/2026-08-19-alphastrategy-v1-requirements.md" in text
+    assert "docs/explanation/architecture.md" in text
+    assert "docs/plans/" in text
+
+
+def test_architecture_explanation_has_c4_runtime() -> None:
+    text = ARCHITECTURE.read_text(encoding="utf-8")
+    lower = text.lower()
+    assert "supervisor" in lower
+    assert "alpaca" in lower
+    assert "alphaloop" in lower
+    assert "paper" in lower
+    assert "sole" in lower or "only order" in lower
+
+
+def test_readme_architecture_is_runtime_not_only_tree() -> None:
+    text = README.read_text(encoding="utf-8")
+    assert "docs/index.md" in text
+    assert "docs/explanation/architecture.md" in text
+    assert "Supervisor" in text
+    assert "control plane" in text.lower()
+
+
+def test_agents_md_describes_alphastrategy() -> None:
+    text = AGENTS.read_text(encoding="utf-8")
+    lower = text.lower()
+    assert "alphastrategy" in lower
+    assert "tests/alphastrategy" in text
+    assert "streamlit run" not in lower
+    assert "openstrategy report" not in lower

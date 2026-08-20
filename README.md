@@ -30,6 +30,9 @@ alphaloop FOUND candidate
 Import is not permission to trade. Starting a paper sleeve is a
 separate, explicit human action.
 
+Docs map: [docs/index.md](docs/index.md). Runtime explanation:
+[docs/explanation/architecture.md](docs/explanation/architecture.md).
+
 ---
 
 ## Quick start
@@ -59,6 +62,21 @@ trading controls in the CLI or web UI.
 ## Architecture
 
 ```text
+Web / CLI
+    |
+    v
+Local control plane (localhost)
+    |
+    v
+Supervisor  <-- sole holder of Alpaca keys and sole order placer
+    |
+    +-- sleeve interpreters (one sandbox process per running bundle)
+```
+
+Why one Supervisor, why paper-only, and C4 context/container diagrams:
+[docs/explanation/architecture.md](docs/explanation/architecture.md).
+
+```text
 alphastrategy/
 ├── bundle/       # .asb import, hash, conformance
 ├── dsl/          # closed-operator sandbox (alphaloop.dsl/v0)
@@ -66,6 +84,7 @@ alphastrategy/
 ├── live/         # Alpaca paper adapter (hard-walled)
 ├── api/          # localhost control plane
 ├── web/static/   # Quiet cockpit (Portfolio, Strategies, Run, Activity, Risk)
+├── helptext.py   # operator runbook (CLI, GET /api/help, cockpit Help)
 └── cli/          # alphastrategy command
 ```
 
@@ -80,7 +99,8 @@ orders through Alpaca. Strategy code never sees broker credentials.
 `alphastrategy start` serves a single-page web desk at
 `http://127.0.0.1:7460` (localhost only in v1). The Quiet cockpit
 shows portfolio state, running sleeves, activity, and risk — not
-backtests or strategy editing.
+backtests or strategy editing. **Help** (header control, not a sixth
+screen) loads the same operator runbook as `alphastrategy help`.
 
 Portfolio is the home screen: RTH countdown to the next legal
 rebalance, sleeve contribution, and **wanted vs got** weights. A
@@ -101,6 +121,7 @@ an idle empty book.
   otherwise it flattens the whole account rather than guess.
 - Daily paper orders are capped (default 200). Overflow is a limit
   flatten, not a partial batch.
+- Same runbook: `alphastrategy help`, `GET /api/help`, cockpit Help.
 
 ---
 
