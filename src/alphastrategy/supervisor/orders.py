@@ -28,6 +28,7 @@ def plan_orders(
     prices: dict[str, float],
     equity: float,
     policy: AccountPolicy,
+    orders_already_today: int = 0,
 ) -> list[OrderPlan]:
     symbols = set(combined) | set(positions)
     min_delta = policy.min_delta(equity)
@@ -51,6 +52,8 @@ def plan_orders(
         plans.append(OrderPlan(symbol=symbol, qty=int(abs(delta)), side=side))
 
     if len(plans) > policy.max_orders_per_rebalance:
+        raise FlattenRequested("account")
+    if orders_already_today + len(plans) > policy.max_orders_per_day:
         raise FlattenRequested("account")
 
     return plans

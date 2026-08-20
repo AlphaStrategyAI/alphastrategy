@@ -185,3 +185,34 @@ def test_deviations_after_skips_assets_with_missing_prices():
     deviations = deviations_after(wanted, got, equity, prices)
 
     assert deviations == [{"asset": "AAPL", "wanted": 0.15, "got": 0.10}]
+
+
+def test_plan_orders_raises_flatten_on_daily_order_budget():
+    combined = {"AAPL": 0.10, "MSFT": 0.10}
+    positions = {}
+    prices = {"AAPL": 100.0, "MSFT": 100.0}
+    equity = 10_000.0
+    policy = replace(AccountPolicy.defaults(), max_orders_per_day=1)
+
+    with pytest.raises(FlattenRequested) as exc:
+        plan_orders(
+            combined,
+            positions,
+            prices,
+            equity,
+            policy,
+            orders_already_today=0,
+        )
+    assert exc.value.scope == "account"
+
+
+def test_plan_orders_daily_budget_allows_remaining_room():
+    combined = {"AAPL": 0.10}
+    positions = {}
+    prices = {"AAPL": 100.0}
+    equity = 10_000.0
+    policy = replace(AccountPolicy.defaults(), max_orders_per_day=2)
+    plans = plan_orders(
+        combined, positions, prices, equity, policy, orders_already_today=1
+    )
+    assert plans == [OrderPlan(symbol="AAPL", qty=10, side="buy")]
