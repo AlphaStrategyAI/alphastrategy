@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from alphastrategy.supervisor.clock import ClockSnapshot, next_rebalance_event
+from alphastrategy.supervisor.clock import (
+    ClockSnapshot,
+    next_rebalance_event,
+    rebalance_countdown,
+)
 
 
 def _snap(
@@ -110,3 +114,53 @@ def test_open_uses_prev_next_open_for_delay():
     now = prev_open + timedelta(minutes=3)
     cur = _snap(True, cur_open, session_close, now)
     assert next_rebalance_event(prev, cur, None) == "open"
+
+
+def test_countdown_closed_market_is_open_plus_three_minutes():
+    session_close = datetime(2024, 1, 31, 21, 0)
+    open_time = datetime(2024, 1, 31, 14, 30)
+    now = open_time - timedelta(minutes=30)
+    cur = _snap(False, open_time, session_close, now)
+    hint = rebalance_countdown(cur, None)
+    assert hint.next_rebalance == "open"
+    assert hint.at == open_time + timedelta(minutes=3)
+    assert hint.seconds == int((hint.at - now).total_seconds())
+
+
+def test_countdown_after_session_open_event_is_close_minus_twelve():
+    session_close = datetime(2024, 1, 31, 21, 0)
+    now = datetime(2024, 1, 31, 16, 0)
+    cur = _snap(True, datetime(2024, 2, 1, 14, 30), session_close, now)
+    hint = rebalance_countdown(cur, "2024-01-31:open")
+    assert hint.next_rebalance == "close"
+    assert hint.at == session_close - timedelta(minutes=12)
+    assert hint.seconds == int((hint.at - now).total_seconds())
+
+
+def test_countdown_inside_close_window_has_zero_seconds():
+    session_close = datetime(2024, 1, 31, 21, 0)
+    now = session_close - timedelta(minutes=5)
+    cur = _snap(True, datetime(2024, 2, 1, 14, 30), session_close, now)
+    hint = rebalance_countdown(cur, "2024-01-31:open")
+    assert hint.next_rebalance == "close"
+    assert hint.seconds == 0
+
+
+def test_countdown_after_close_event_is_next_open_plus_three():
+    session_close = datetime(2024, 1, 31, 21, 0)
+    next_open = datetime(2024, 2, 1, 14, 30)
+    now = datetime(2024, 1, 31, 20, 55)
+    cur = _snap(True, next_open, session_close, now)
+    hint = rebalance_countdown(cur, "2024-01-31:close")
+    assert hint.next_rebalance == "open"
+    assert hint.at == next_open + timedelta(minutes=3)
+
+
+def test_countdown_open_pending_when_open_not_recorded_is_due_now():
+    session_close = datetime(2024, 1, 31, 21, 0)
+    now = datetime(2024, 1, 31, 16, 0)
+    cur = _snap(True, datetime(2024, 2, 1, 14, 30), session_close, now)
+    hint = rebalance_countdown(cur, None)
+    assert hint.next_rebalance == "open"
+    assert hint.at == now
+    assert hint.seconds == 0

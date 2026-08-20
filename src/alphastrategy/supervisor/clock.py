@@ -39,3 +39,32 @@ def next_rebalance_event(
         return "close"
 
     return None
+
+
+@dataclass(frozen=True)
+class RebalanceCountdown:
+    next_rebalance: str
+    at: datetime
+    seconds: int
+
+
+def rebalance_countdown(
+    cur: ClockSnapshot,
+    last_event: str | None,
+) -> RebalanceCountdown:
+    session_date = cur.next_close.date().isoformat()
+    open_key = f"{session_date}:open"
+    close_key = f"{session_date}:close"
+    now = cur.now
+
+    def pack(kind: str, at: datetime) -> RebalanceCountdown:
+        delta = (at - now).total_seconds()
+        return RebalanceCountdown(kind, at, max(0, int(delta)))
+
+    if not cur.is_open:
+        return pack("open", cur.next_open + timedelta(minutes=3))
+    if last_event == close_key:
+        return pack("open", cur.next_open + timedelta(minutes=3))
+    if last_event == open_key:
+        return pack("close", cur.next_close - timedelta(minutes=12))
+    return pack("open", now)
