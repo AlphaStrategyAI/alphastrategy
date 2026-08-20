@@ -55,6 +55,7 @@ def summarize(
         "invested_weight": invested_weight,
         "target_cash_weight": target_cash_weight,
         "max_gross": float(policy.max_gross),
+        "max_name_weight": float(policy.max_name_weight),
     }
 
 
@@ -74,7 +75,7 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
             cash = None
             positions = None
     return summarize(
-        policy=supervisor.policy,
+        policy=supervisor.spoken_policy(),
         orders_today=snapshot.orders_today,
         equity=equity,
         cash=cash,

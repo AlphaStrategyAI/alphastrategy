@@ -586,6 +586,10 @@ class Supervisor:
         envelope = self._bundle_envelope(bundle_id)
         return merge_limits(envelope, self._policy, overlay)
 
+    def spoken_policy(self) -> AccountPolicy:
+        with self._lock:
+            return self._rebalance_policy()
+
     def _rebalance_policy(self) -> AccountPolicy:
         policy = self._policy
         for bundle_id, allocation in self._snapshot.sleeves.items():
