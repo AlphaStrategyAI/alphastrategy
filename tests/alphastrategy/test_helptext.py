@@ -28,6 +28,7 @@ REQUIRED_PHRASES = (
     "utilization",
     "next action",
     "Supervisor beat",
+    "Book / Flatten budgets / Clock",
 )
 
 

@@ -353,3 +353,38 @@ def test_css_desk_pulse_tokens(css_text: str) -> None:
     assert ".desk-pulse" in css_text
     assert ".pulse-dot" in css_text
     assert "prefers-reduced-motion" in css_text
+
+
+def test_html_glance_bands(html_text: str) -> None:
+    assert 'id="glance-book"' in html_text
+    assert 'id="glance-risk"' in html_text
+    assert 'id="glance-clock"' in html_text
+    assert '<h2 class="glance-heading">Book</h2>' in html_text
+    assert '<h2 class="glance-heading">Flatten budgets</h2>' in html_text
+    assert '<h2 class="glance-heading">Clock</h2>' in html_text
+    book = html_text[html_text.find('id="glance-book"') : html_text.find('id="glance-risk"')]
+    risk = html_text[html_text.find('id="glance-risk"') : html_text.find('id="glance-clock"')]
+    clock = html_text[html_text.find('id="glance-clock"') : html_text.find('id="clock-line"')]
+    assert 'id="metric-equity"' in book
+    assert 'id="metric-cash"' in book
+    assert 'id="metric-pnl"' in book
+    assert "hero" in book
+    assert 'id="metric-gross"' in risk
+    assert 'id="metric-names"' in risk
+    assert 'id="metric-orders"' in risk
+    assert 'id="metric-session"' in clock
+    assert 'id="metric-countdown"' in clock
+    assert 'style="margin-top' not in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_css_glance_bands(css_text: str) -> None:
+    assert ".glance-band" in css_text
+    assert ".glance-heading" in css_text
+    assert ".book-grid" in css_text
+    assert ".stack" in css_text
+    assert "1.85rem" in css_text
+    assert ".metrics-3" in css_text
+    assert ".metrics-2" in css_text
