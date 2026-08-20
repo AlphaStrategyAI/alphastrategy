@@ -322,9 +322,58 @@ def test_get_portfolio_returns_account_fields(api_client: ApiClient):
     body = response.json()
     assert body["equity"] == 10_000.0
     assert body["cash"] == 10_000.0
-    assert "pnl" in body
+    assert body["pnl"] is None
+    assert body["pnl_source"] is None
     assert "positions" in body
     assert "sleeves" in body
+
+
+def test_get_portfolio_pnl_from_last_equity(api_stack):
+    client, _home, _supervisor, broker = api_stack
+    orig = broker.get_account
+
+    def with_last():
+        account = orig()
+        account["last_equity"] = "9900"
+        return account
+
+    broker.get_account = with_last  # type: ignore[method-assign]
+    close_all_before = broker.close_all_count
+    body = client.get("/api/portfolio").json()
+    assert body["pnl"] == 100.0
+    assert body["pnl_source"] == "last_close"
+    assert broker.close_all_count == close_all_before
+
+
+def test_get_portfolio_pnl_prefers_account_field(api_stack):
+    client, _home, _supervisor, broker = api_stack
+    orig = broker.get_account
+
+    def with_both():
+        account = orig()
+        account["pnl"] = "42.5"
+        account["last_equity"] = "9900"
+        return account
+
+    broker.get_account = with_both  # type: ignore[method-assign]
+    body = client.get("/api/portfolio").json()
+    assert body["pnl"] == 42.5
+    assert body["pnl_source"] == "account"
+
+
+def test_get_portfolio_explicit_zero_pnl_is_not_null(api_stack):
+    client, _home, _supervisor, broker = api_stack
+    orig = broker.get_account
+
+    def with_zero():
+        account = orig()
+        account["pnl"] = "0"
+        return account
+
+    broker.get_account = with_zero  # type: ignore[method-assign]
+    body = client.get("/api/portfolio").json()
+    assert body["pnl"] == 0.0
+    assert body["pnl_source"] == "account"
 
 
 def test_get_activity_returns_audit_events(api_stack):

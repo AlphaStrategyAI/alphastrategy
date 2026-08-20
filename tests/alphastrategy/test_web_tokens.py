@@ -577,6 +577,7 @@ def test_html_glance_bands(html_text: str) -> None:
     assert 'id="book-source"' in book
     assert 'id="metric-cash"' in book
     assert 'id="metric-pnl"' in book
+    assert 'id="metric-pnl-sub"' in book
     assert "hero" in book
     assert 'id="metric-gross"' in risk
     assert 'id="metric-names"' in risk
@@ -1237,6 +1238,23 @@ def test_js_paints_book_source_headings(js_text: str) -> None:
     assert "book-source" in js_text
     assert "act-book-source" in js_text
     assert "risk-book-source" in js_text
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_paints_day_pnl_last_close(js_text: str) -> None:
+    assert "function paintDayPnl" in js_text
+    paint = js_text[
+        js_text.find("function paintDayPnl") : js_text.find("function wantedGotBar")
+    ]
+    assert "metric-pnl-sub" in paint
+    assert "vs last close" in paint
+    assert 'pnl_source === "last_close"' in paint
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "paintDayPnl(" in port
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
