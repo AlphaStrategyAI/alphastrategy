@@ -108,7 +108,8 @@ the screen. **Full runbook** is
 the six runbook sections. `alphastrategy help` prints **Your first paper
 session** first, then **How to** jobs, then screen how-tos, then those
 same sections. F1 shows the lesson plus the jobs for the
-current screen (import, start paper, flatten, tighten, wanted versus got).
+current screen (import, start paper, flatten, tighten, wanted versus got,
+how to read a spent window).
 Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 (every 20s, no orders), not RTH Session OPEN/CLOSED.
@@ -158,7 +159,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   after halt. Persist-before-send flushes the snapshot to disk before
   orders so a host kill still sees interrupted rebalancing, flattening,
   or sleeve isolate. Persist-before-send spends the session event even
-  with 0 fills. Clock Last names that spent window. Audit and runtime
+  with 0 fills. Clock Last names that spent window. Empty Positions names
+  a spent Last. Help includes How to read a spent window. Audit and runtime
   overlays flush to disk with that snapshot family. import-meta flushes
   to disk with that family. Roster names imported at.
 - **Account kill** flattens the whole paper account, clears the last book,

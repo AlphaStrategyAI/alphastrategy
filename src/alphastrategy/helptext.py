@@ -247,10 +247,13 @@ TUTORIALS: list[dict[str, str]] = [
             "1. Run alphastrategy start and open the Quiet cockpit. "
             "You will see empty Portfolio: Start this paper desk, then Book / Flatten budgets / Clock. "
             "2. Open Strategies (Alt+2). Under Import .asb upload the file. "
-            "You will see Inventory Imported count 1. You are not trading yet. "
+            "You will see Inventory Imported count 1. Roster names imported at. "
+            "You are not trading yet. "
             "3. Open Run (Alt+3). Under Start paper pick the bundle, set a small allocation, "
             "check Confirm paper start, then Start paper. "
-            "You will see the sleeve on Run. Portfolio Clock shows Session and Next rebalance. "
+            "You will see the sleeve on Run. Clock is Session / Now / Next / Last. "
+            "Next is the hero. Portfolio Clock shows Next rebalance. "
+            "Last stays an em dash until a session event is spent or finishes. "
             "4. Open Portfolio Positions. Empty rows until the next legal rebalance are expected. "
             "Book Drift stays an em dash or 0 until then. "
             "You finished the lesson when the sleeve is on Run and Clock shows Next rebalance. "
@@ -312,6 +315,19 @@ TASK_HOWTOS: list[dict[str, Any]] = [
         "body": (
             "1. On Portfolio, Positions Wanted versus Got is last combined target versus current weight. "
             "2. On Activity, expand a rebalance blotter row for the Wanted / Got table, not a JSON dump."
+        ),
+    },
+    {
+        "id": "task_spent",
+        "screens": ["portfolio", "activity", "run"],
+        "title": "How to read a spent window",
+        "body": (
+            "1. On Portfolio, Clock Last names the spent window. "
+            "2. On Activity, Tape Rebalances sub names spent. "
+            "3. The deviation banner follows Book Drift and cannot go quiet while "
+            "Drift is above zero. "
+            "4. On Run, After halt names the spent session event. "
+            "Resume does not catch up. Clock Last is spent until a later event finishes."
         ),
     },
 ]

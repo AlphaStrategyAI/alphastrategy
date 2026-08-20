@@ -239,7 +239,9 @@
       let empty = "No positions yet. Import a .asb to begin.";
       if (importedIds().length) {
         empty = hasPaperSleeve()
-          ? "No positions yet. The next legal open or close rebalance will trade."
+          ? state.status && state.status.last_rebalance_complete === false
+            ? "No positions yet. Clock Last is spent. Resume does not catch up."
+            : "No positions yet. The next legal open or close rebalance will trade."
           : "Imported bundles are not trading. Start paper on Run.";
       }
       posBody.innerHTML = `<tr><td colspan='7' class='muted'>${empty}</td></tr>`;
