@@ -129,10 +129,11 @@ Tighten still posts the policy keys.
 
 - **Halt** stops new orders and does not flatten. `paper resume` does
   not catch up; the next legal open/close rebalance does.
-- **Account kill** flattens the whole paper account. On the Web, type
-  `FLATTEN` and confirm. CLI: `alphastrategy paper kill` (omit
-  `--bundle`) types `FLATTEN` on a TTY, or pass `--force` when stdin
-  is not a TTY.
+- **Account kill** flattens the whole paper account. On the Web it lives
+  under **Flatten account** (type `FLATTEN` and confirm). **Resume after
+  halt** lives under **After halt**, not beside flatten. CLI:
+  `alphastrategy paper kill` (omit `--bundle`) types `FLATTEN` on a TTY,
+  or pass `--force` when stdin is not a TTY.
 - **Sleeve kill** (`paper kill --bundle <id>`) trades to the residual
   book when last targets and an open session make isolation clean;
   otherwise it flattens the whole account rather than guess. The CLI

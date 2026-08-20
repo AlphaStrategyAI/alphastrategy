@@ -212,6 +212,26 @@ main {
   margin-top: 0.85rem;
 }
 
+.recover-zone .glance-heading {
+  color: #f59e0b;
+}
+
+.flatten-zone {
+  margin-top: 1.25rem;
+}
+
+.glance-band + .glance-band.flatten-zone {
+  margin-top: 1.25rem;
+}
+
+.flatten-zone .glance-heading {
+  color: #ef4444;
+}
+
+.flatten-zone .panel {
+  border-color: #ef4444;
+}
+
 .metrics {
   display: grid;
   gap: 0.5rem;

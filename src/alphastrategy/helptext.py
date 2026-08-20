@@ -124,10 +124,12 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "screen": "run",
         "title": "On Run",
         "body": (
+            "Run is four bands: Start paper, Sleeves, After halt, Flatten account. "
             "Start paper is a second explicit action. "
             "Stop zeros that sleeve on the next legal rebalance and does not flatten now. "
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
-            "Account kill requires typing FLATTEN. Resume after halt does not catch up."
+            "Resume lives under After halt and does not catch up. "
+            "Account kill lives under Flatten account and requires typing FLATTEN."
         ),
     },
     {

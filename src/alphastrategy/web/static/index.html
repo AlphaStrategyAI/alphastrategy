@@ -158,40 +158,50 @@
     </section>
 
     <section id="screen-run" class="screen" aria-label="Run">
-      <div class="panel">
-        <h2>Paper control</h2>
-        <form id="start-form" class="inline">
-          <label>
-            Bundle
-            <select id="start-bundle" required></select>
-          </label>
-          <label>
-            Allocation
-            <input type="number" id="start-allocation" min="0" max="1" step="0.01" value="0.25" required>
-          </label>
-          <label class="confirm-row">
-            <input type="checkbox" id="start-confirm" required>
-            Confirm paper start
-          </label>
-          <button type="submit" class="action primary">Start paper</button>
-        </form>
-        <div id="run-error" class="error-box hidden"></div>
+      <div id="run-promote" class="glance-band">
+        <h2 class="glance-heading">Start paper</h2>
+        <div class="panel">
+          <form id="start-form" class="inline">
+            <label>
+              Bundle
+              <select id="start-bundle" required></select>
+            </label>
+            <label>
+              Allocation
+              <input type="number" id="start-allocation" min="0" max="1" step="0.01" value="0.25" required>
+            </label>
+            <label class="confirm-row">
+              <input type="checkbox" id="start-confirm" required>
+              Confirm paper start
+            </label>
+            <button type="submit" class="action primary">Start paper</button>
+          </form>
+          <div id="run-error" class="error-box hidden"></div>
+        </div>
       </div>
-
-      <div id="run-sleeves"></div>
-
-      <div class="panel stack">
-        <h2>Account</h2>
-        <label class="confirm-row">
-          <input type="checkbox" id="account-kill-confirm">
-          I understand this flattens the whole paper account
-        </label>
-        <label>
-          Type FLATTEN
-          <input type="text" id="account-kill-phrase" autocomplete="off" placeholder="FLATTEN">
-        </label>
-        <button type="button" id="account-kill" class="action danger account-kill">Kill account — flatten all</button>
-        <button type="button" id="account-resume" class="action warn">Resume after halt</button>
+      <div id="run-book" class="glance-band">
+        <h2 class="glance-heading">Sleeves</h2>
+        <div id="run-sleeves"></div>
+      </div>
+      <div id="run-recover" class="glance-band recover-zone">
+        <h2 class="glance-heading">After halt</h2>
+        <div class="panel">
+          <button type="button" id="account-resume" class="action warn">Resume after halt</button>
+        </div>
+      </div>
+      <div id="run-flatten" class="glance-band flatten-zone">
+        <h2 class="glance-heading">Flatten account</h2>
+        <div class="panel">
+          <label class="confirm-row">
+            <input type="checkbox" id="account-kill-confirm">
+            I understand this flattens the whole paper account
+          </label>
+          <label>
+            Type FLATTEN
+            <input type="text" id="account-kill-phrase" autocomplete="off" placeholder="FLATTEN">
+          </label>
+          <button type="button" id="account-kill" class="action danger account-kill">Kill account — flatten all</button>
+        </div>
       </div>
     </section>
 
