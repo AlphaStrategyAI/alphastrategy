@@ -9,15 +9,24 @@
     const sessionEl = document.getElementById("metric-session");
     const countEl = document.getElementById("metric-countdown");
     const kindEl = document.getElementById("metric-countdown-kind");
-    const clockLine = document.getElementById("clock-line");
+    const nowEl = document.getElementById("metric-clock-now");
+    const nowSub = document.getElementById("metric-clock-now-sub");
+    const lastEl = document.getElementById("metric-last-rebalance");
+    const lastSub = document.getElementById("metric-last-rebalance-sub");
     const clock = state.status && state.status.clock;
     const countdown = state.status && state.status.countdown;
     sessionEl.classList.remove("open");
+    function dashNowLast() {
+      if (nowEl) nowEl.textContent = "—";
+      if (nowSub) nowSub.textContent = "—";
+      if (lastEl) lastEl.textContent = "—";
+      if (lastSub) lastSub.textContent = "—";
+    }
     if (!clock || clock.error) {
       sessionEl.textContent = "UNAVAILABLE";
       countEl.textContent = "—";
       kindEl.textContent = "—";
-      clockLine.textContent = "Clock unavailable";
+      dashNowLast();
       return;
     }
     if (clock.is_open) {
@@ -33,7 +42,30 @@
       countEl.textContent = "—";
       kindEl.textContent = "—";
     }
-    clockLine.textContent = `now ${clock.timestamp || "—"}`;
+    const raw = clock.timestamp || clock.now || "";
+    if (!raw) {
+      if (nowEl) nowEl.textContent = "—";
+      if (nowSub) nowSub.textContent = "—";
+    } else {
+      const s = String(raw);
+      const m = s.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}(?::\d{2})?)/);
+      if (m) {
+        if (nowEl) nowEl.textContent = m[2];
+        if (nowSub) nowSub.textContent = m[1];
+      } else {
+        if (nowEl) nowEl.textContent = s;
+        if (nowSub) nowSub.textContent = "—";
+      }
+    }
+    const last = state.status && state.status.last_rebalance_event;
+    if (!last) {
+      if (lastEl) lastEl.textContent = "—";
+      if (lastSub) lastSub.textContent = "—";
+    } else {
+      const parts = String(last).split(":");
+      if (lastEl) lastEl.textContent = parts.length > 1 ? parts.slice(1).join(":") : String(last);
+      if (lastSub) lastSub.textContent = parts.length > 1 ? parts[0] : "—";
+    }
   }
 
   function renderBookDrift(positions, equity) {

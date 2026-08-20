@@ -97,20 +97,28 @@
       </div>
       <div id="glance-clock" class="glance-band">
         <h2 class="glance-heading">Clock</h2>
-        <div class="metrics metrics-2 nums">
+        <div class="metrics metrics-4 nums">
           <div class="metric">
             <div class="metric-label">Session</div>
             <div id="metric-session" class="metric-value">—</div>
           </div>
           <div class="metric">
-            <div class="metric-label">Next rebalance</div>
+            <div class="metric-label">Now</div>
+            <div id="metric-clock-now" class="metric-value">—</div>
+            <div id="metric-clock-now-sub" class="metric-sub">—</div>
+          </div>
+          <div class="metric hero">
+            <div class="metric-label">Next</div>
             <div id="metric-countdown" class="metric-value">—</div>
             <div id="metric-countdown-kind" class="metric-sub">—</div>
           </div>
+          <div class="metric">
+            <div class="metric-label">Last</div>
+            <div id="metric-last-rebalance" class="metric-value">—</div>
+            <div id="metric-last-rebalance-sub" class="metric-sub">—</div>
+          </div>
         </div>
       </div>
-
-      <p id="clock-line" class="clock-line nums"></p>
 
       <div class="grid book-grid stack">
         <div id="glance-positions" class="glance-band">
