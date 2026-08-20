@@ -124,3 +124,57 @@ def test_save_runtime_source_uses_replace_text() -> None:
     body = src.split("def _save_runtime", 1)[1].split("def _apply_startup_runtime", 1)[0]
     assert "replace_text" in body
     assert "write_text" not in body
+
+
+def test_replace_bytes_source_uses_fsync_and_replace() -> None:
+    from alphastrategy import persist
+
+    src = Path(persist.__file__).read_text(encoding="utf-8")
+    body = src.split("def replace_bytes", 1)[1]
+    assert "os.fsync" in body
+    assert "os.replace" in body
+    assert "write_bytes" not in body
+    assert "wb" in body
+
+
+def test_replace_bytes_fsyncs_file_and_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    kinds: list[str] = []
+    real = os.fsync
+
+    def spy(fd: int) -> None:
+        mode = os.fstat(fd).st_mode
+        if stat.S_ISDIR(mode):
+            kinds.append("dir")
+        elif stat.S_ISREG(mode):
+            kinds.append("file")
+        else:
+            kinds.append("other")
+        real(fd)
+
+    monkeypatch.setattr(os, "fsync", spy)
+    path = tmp_path / "member.bin"
+    from alphastrategy import persist
+
+    persist.replace_bytes(path, b"hello\n", prefix=".member.")
+    assert kinds == ["file", "dir"]
+    assert path.read_bytes() == b"hello\n"
+
+
+def test_replace_bytes_keeps_previous_if_replace_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "member.bin"
+    from alphastrategy import persist
+
+    persist.replace_bytes(path, b"old\n", prefix=".member.")
+
+    def boom(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+        raise OSError("simulated crash before rename")
+
+    monkeypatch.setattr(os, "replace", boom)
+    with pytest.raises(OSError):
+        persist.replace_bytes(path, b"new\n", prefix=".member.")
+    assert path.read_bytes() == b"old\n"
+    assert list(tmp_path.glob(".member.*.tmp")) == []

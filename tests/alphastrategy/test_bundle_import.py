@@ -268,3 +268,45 @@ def test_import_asb_writes_meta_through_persist() -> None:
     assert "replace_text" in body
     assert "fsync_dir" in body
     assert "write_text" not in body
+
+
+def test_import_asb_writes_members_through_persist() -> None:
+    from alphastrategy.bundle import import_bundle as mod
+
+    src = Path(mod.__file__).read_text(encoding="utf-8")
+    body = src.split("def import_asb", 1)[1]
+    assert "replace_bytes" in body
+    assert "replace_text" in body
+    assert "fsync_dir" in body
+    assert "os.replace" in body
+    assert "write_bytes" not in body
+    assert "write_text" not in body
+    assert "shutil.move" not in body
+
+
+def test_import_stages_on_imported_filesystem(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import tempfile
+
+    seen: dict[str, object] = {}
+    real = tempfile.mkdtemp
+
+    def spy(*args: object, **kwargs: object) -> str:
+        seen["kwargs"] = kwargs
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(tempfile, "mkdtemp", spy)
+    dest = tmp_path / "golden.asb"
+    dest.write_bytes(build_golden_asb())
+    home = _home(tmp_path)
+    bundle_id = import_asb(dest, home)
+    kwargs = seen["kwargs"]
+    assert isinstance(kwargs, dict)
+    assert Path(str(kwargs["dir"])) == home.imported_dir()
+    assert kwargs["prefix"] == ".staging."
+    leftovers = [
+        p for p in home.imported_dir().iterdir() if p.name.startswith(".staging.")
+    ]
+    assert leftovers == []
+    assert (home.bundle_dir(bundle_id) / "strategy.dsl.yaml").is_file()

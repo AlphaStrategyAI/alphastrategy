@@ -73,6 +73,8 @@ REQUIRED_PHRASES = (
     "import-meta flushes to disk",
     "How to read a spent window",
     "Clock Last is spent",
+    "imported members flush to disk",
+    "staging lives under imported/",
 )
 
 
