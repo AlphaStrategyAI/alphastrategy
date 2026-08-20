@@ -88,6 +88,8 @@ REQUIRED_PHRASES = (
     "Rebalance flattens a live book that already breaches the spoken cap",
     "Book Drift follows the last fill, not last prices",
     "A live book through the spoken cap warns before the next rebalance flattens",
+    "Clock Next is flatten while the live book is through the spoken cap",
+    "Start paper that flattens names the breached cap",
 )
 
 

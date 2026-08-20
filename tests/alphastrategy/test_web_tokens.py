@@ -541,6 +541,20 @@ def test_js_clock_next_flat_while_flattened(js_text: str) -> None:
     assert "window.confirm" not in js_text
 
 
+def test_js_clock_next_flatten_while_live_limit(js_text: str) -> None:
+    session = js_text[
+        js_text.find("function renderSessionMetrics") : js_text.find("function bookDrift")
+    ]
+    assert "flatten · " in session
+    assert "live_limit" in session
+    assert 'countEl.classList.add("warn")' in session
+    assert "held · " in session
+    assert "flat · " in session
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_css_countdown_fail_uses_kill_token(css_text: str) -> None:
     fail = re.search(r"#metric-countdown\.fail\s*\{[^}]*\}", css_text)
     warn = re.search(r"#metric-countdown\.warn\s*\{[^}]*\}", css_text)
@@ -798,6 +812,9 @@ def test_js_paints_run_start_hint(js_text: str) -> None:
     assert "Start paper while halted waits for resume. Resume does not catch up." in paint
     assert "Start paper after flatten starts the session loop again and does not catch up." in paint
     assert "Start paper is a second explicit action. Import is not permission to trade." in paint
+    assert "last_kill" in paint
+    assert "policyLabel" in paint
+    assert "flattened the paper account" in paint
     assert 'className = "warn"' in paint
     assert 'className = "fail"' in paint
     assert "innerHTML" not in paint
@@ -809,6 +826,21 @@ def test_js_paints_run_start_hint(js_text: str) -> None:
     assert "renderRunStartHint" in refresh
     assert "renderRunStopHint" in refresh
     assert "runFormIsDirty" in refresh
+
+
+def test_js_start_posts_read_flattened(js_text: str) -> None:
+    boot = js_text[
+        js_text.find("async function onStartSubmit") : js_text.find(
+            "async function onRiskAccountSubmit"
+        )
+    ]
+    assert ".flattened" in boot
+    sleeves = js_text[
+        js_text.find("function renderRunSleeves") : js_text.find("function renderRunStartHint")
+    ]
+    assert ".flattened" in sleeves
+    assert "window.confirm" not in js_text
+    assert "Gross cap" not in js_text
 
 
 def test_js_paints_run_stop_hint(js_text: str) -> None:
