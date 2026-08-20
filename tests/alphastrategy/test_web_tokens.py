@@ -1062,6 +1062,25 @@ def test_css_risk_tighten_hint_warn_token(css_text: str) -> None:
     assert warn is not None and "#f59e0b" in warn.group(0).lower()
 
 
+def test_html_risk_overlay_live_book_hint(html_text: str) -> None:
+    risk = html_text[html_text.find('id="screen-risk"') :]
+    overlays = risk[risk.find('id="risk-overlays"') :]
+    assert 'id="risk-overlay-hint"' in overlays
+    assert "A sleeve overlay that breaches the live book flattens now." in overlays
+    assert overlays.find("risk-overlay-idle") < overlays.find('id="risk-overlay-hint"')
+    assert overlays.find('id="risk-overlay-hint"') < overlays.find('id="risk-sleeves"')
+    sleeves_onward = overlays[overlays.find('id="risk-sleeves"') :]
+    assert 'id="risk-overlay-hint"' not in sleeves_onward
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_css_risk_overlay_hint_warn_token(css_text: str) -> None:
+    warn = re.search(r"#risk-overlay-hint\.warn\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
+
+
 def test_css_risk_tighten_groups(css_text: str) -> None:
     assert ".risk-tighten-groups" in css_text
     assert ".risk-group" in css_text

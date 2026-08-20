@@ -424,6 +424,37 @@ def test_paper_start_while_halted_prints_held(
     assert "catch up" in err.lower()
 
 
+def test_paper_start_overlay_breach_prints_flattened(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    import yaml
+
+    bundle_dir = _create_imported_bundle(cli_home)
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+    home = AlphaStrategyHome.from_env()
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+        encoding="utf-8",
+    )
+    supervisor = Supervisor(
+        home=home,
+        broker=FakeBroker(),
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_test": {"AAPL": 1.0}},
+    )
+    supervisor.snapshot.last_got = {"AAPL": 0.15}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor._persist()
+    rc = main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert captured.out.strip() == ""
+    err = captured.err.lower()
+    assert "flattened:" in err
+    assert "sleeve overlay" in err
+    assert "flattens now" in err
+
+
 def test_paper_kill_prints_outcome_json(
     cli_home: Path, patch_alpaca: mock.MagicMock, capsys
 ) -> None:

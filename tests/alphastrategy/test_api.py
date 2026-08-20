@@ -236,6 +236,7 @@ def test_start_while_halted_returns_held(api_stack):
     body = second.json()
     assert body["ok"] is True
     assert body["held"] is True
+    assert body["flattened"] is False
     assert supervisor.state == SupervisorState.HALTED
     assert supervisor.snapshot.sleeves["asb_x"] == 0.2
 
@@ -355,6 +356,72 @@ def test_put_risk_flattens_when_live_book_breaches(api_stack):
     assert response.status == 200
     body = response.json()
     assert body["ok"] is True
+    assert body["flattened"] is True
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+
+
+def test_put_risk_overlay_while_idle_does_not_flatten_live_book(api_stack):
+    client, home, supervisor, broker = api_stack
+    bundle_dir = home.imported_dir() / "asb_x"
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+    broker.positions = {"AAPL": 15.0}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor._persist()
+    response = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_x": {"max_name_weight": 0.05}}},
+    )
+    assert response.status == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["flattened"] is False
+    assert supervisor.state != SupervisorState.STOPPED
+    assert broker.close_all_count == 0
+
+
+def test_put_risk_overlay_while_allocated_flattens_live_book(api_stack):
+    client, home, supervisor, broker = api_stack
+    bundle_dir = home.imported_dir() / "asb_x"
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+    start = client.post("/api/paper/start", json={"bundle_id": "asb_x", "allocation": 0.25})
+    assert start.status == 200
+    broker.positions = {"AAPL": 15.0}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor._persist()
+    response = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_x": {"max_name_weight": 0.05}}},
+    )
+    assert response.status == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["flattened"] is True
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+
+
+def test_start_flattens_when_idle_overlay_breaches_live_book(api_stack):
+    client, home, supervisor, broker = api_stack
+    bundle_dir = home.imported_dir() / "asb_x"
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+    overlay = client.put(
+        "/api/risk",
+        json={"sleeves": {"asb_x": {"max_name_weight": 0.05}}},
+    )
+    assert overlay.status == 200
+    assert overlay.json()["flattened"] is False
+    broker.positions = {"AAPL": 15.0}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor._persist()
+    response = client.post(
+        "/api/paper/start",
+        json={"bundle_id": "asb_x", "allocation": 0.25},
+    )
+    assert response.status == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["held"] is False
     assert body["flattened"] is True
     assert supervisor.state == SupervisorState.STOPPED
     assert broker.close_all_count == 1

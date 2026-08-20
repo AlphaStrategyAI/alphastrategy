@@ -1178,6 +1178,40 @@ def test_set_policy_ok_when_live_book_inside_cap(tmp_path: Path):
     assert broker.close_all_count == 0
 
 
+def test_start_sleeve_flattens_when_idle_overlay_breaches_live_book(tmp_path: Path):
+    broker = FakeBroker(equity=10_000.0)
+    broker.positions = {"AAPL": 15.0}
+    supervisor = _make_supervisor(tmp_path, broker)
+    home = AlphaStrategyHome(root=tmp_path)
+    bundle_dir = home.bundle_dir("asb_test")
+    (bundle_dir / "risk-envelope.yaml").write_text("max_name_weight: 0.20\n", encoding="utf-8")
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+        encoding="utf-8",
+    )
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    held = supervisor.start_sleeve("asb_test", 0.25)
+    assert held is False
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_name_weight"
+    assert supervisor.snapshot.last_kill["flattened"] is True
+
+
+def test_start_sleeve_without_overlay_does_not_flatten_live_book_inside_name_cap(
+    tmp_path: Path,
+):
+    broker = FakeBroker(equity=10_000.0)
+    broker.positions = {"AAPL": 15.0}
+    supervisor = _make_supervisor(tmp_path, broker)
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    held = supervisor.start_sleeve("asb_test", 0.25)
+    assert held is False
+    assert supervisor.state != SupervisorState.STOPPED
+    assert broker.close_all_count == 0
+
+
 def test_tick_stamps_heartbeat_when_halted(tmp_path: Path) -> None:
     supervisor = _make_supervisor(tmp_path, FakeBroker())
     supervisor._snapshot.state = SupervisorState.HALTED

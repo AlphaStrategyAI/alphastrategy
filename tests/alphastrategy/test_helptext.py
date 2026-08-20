@@ -82,6 +82,7 @@ REQUIRED_PHRASES = (
     "Start paper while halted waits for resume",
     "Tighten that breaches the live book flattens now",
     "Each sleeve card names imported, paper, halted, or stopped",
+    "A sleeve overlay that breaches the live book flattens now",
 )
 
 
