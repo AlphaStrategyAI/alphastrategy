@@ -278,6 +278,7 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "last_kill": snapshot.last_kill,
             "utilization": from_supervisor(supervisor, live=True),
             "heartbeat": describe(snapshot.last_heartbeat_at),
+            "book": {"source": supervisor.live_book_source()},
         },
     )
 
@@ -306,6 +307,7 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
             for bundle_id, weights in snapshot.last_sleeve_contribution.items()
         },
         "last_rebalance_event": snapshot.last_rebalance_event,
+        "book": {"source": supervisor.live_book_source()},
     }
     if snapshot.halt_reason:
         payload["halt_reason"] = snapshot.halt_reason

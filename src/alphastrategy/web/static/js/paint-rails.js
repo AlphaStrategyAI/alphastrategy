@@ -3,6 +3,17 @@
     return Number.isFinite(n) ? n : fallback;
   }
 
+  function bookSourceLabel() {
+    const src = state.status && state.status.book && state.status.book.source;
+    const age =
+      state.status && state.status.heartbeat && state.status.heartbeat.age_seconds;
+    if (src === "heartbeat") {
+      return Number.isFinite(age) ? "Beat " + age + "s" : "Beat";
+    }
+    if (src === "glance") return "Glance";
+    return "—";
+  }
+
   function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);

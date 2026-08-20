@@ -119,7 +119,7 @@ class Supervisor:
         self._live_book_cache: (
             tuple[float, dict[str, Any], list[dict[str, Any]], bool] | None
         ) = None
-        self._runtime_doc_cache: tuple[tuple[int, int], dict[str, Any]] | None = None
+        self._runtime_doc_cache: tuple[str, dict[str, Any]] | None = None
         self._envelope_cache: dict[str, tuple[str, dict[str, Any]]] = {}
 
     @property
@@ -608,16 +608,21 @@ class Supervisor:
 
     def _read_runtime(self) -> dict[str, Any]:
         path = self._home.runtime_path()
-        stamp = self._file_stamp(path)
-        cached = self._runtime_doc_cache
-        if cached is not None and cached[0] == stamp:
-            return cached[1]
         if not path.is_file():
+            raw = b""
+            digest = ""
+        else:
+            raw = path.read_bytes()
+            digest = hashlib.sha256(raw).hexdigest()
+        cached = self._runtime_doc_cache
+        if cached is not None and cached[0] == digest:
+            return cached[1]
+        if not raw:
             doc: dict[str, Any] = {}
         else:
-            loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+            loaded = yaml.safe_load(raw.decode("utf-8"))
             doc = loaded if isinstance(loaded, dict) else {}
-        self._runtime_doc_cache = (stamp, doc)
+        self._runtime_doc_cache = (digest, doc)
         return doc
 
     def _file_digest(self, path: Path) -> str:
@@ -649,12 +654,6 @@ class Supervisor:
         envelope = self._bundle_envelope(bundle_id)
         return merge_limits(envelope, self._policy, overlay)
 
-    def _file_stamp(self, path: Path) -> tuple[int, int]:
-        if not path.is_file():
-            return (0, 0)
-        stat = path.stat()
-        return (int(stat.st_mtime_ns), int(stat.st_size))
-
     def _spoken_cache_key(self) -> tuple:
         allocated = tuple(
             sorted(
@@ -671,7 +670,7 @@ class Supervisor:
             for bundle_id, _allocation in allocated
         )
         return (
-            self._file_stamp(self._home.runtime_path()),
+            self._file_digest(self._home.runtime_path()),
             envelopes,
             allocated,
             self._policy,
@@ -689,6 +688,13 @@ class Supervisor:
             positions = self._broker.list_positions()
             self._live_book_cache = (now, account, positions, False)
             return account, positions
+
+    def live_book_source(self) -> str:
+        with self._lock:
+            cached = self._live_book_cache
+            if cached is None:
+                return "none"
+            return "heartbeat" if cached[3] else "glance"
 
     def sleeve_policies(self, bundle_ids: list[str]) -> dict[str, AccountPolicy]:
         with self._lock:

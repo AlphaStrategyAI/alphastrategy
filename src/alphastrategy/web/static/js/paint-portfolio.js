@@ -251,6 +251,8 @@
     const pnl = Number(portfolio.pnl);
 
     document.getElementById("metric-equity").textContent = fmtNum(equity, 2);
+    const eqSub = document.getElementById("metric-equity-sub");
+    if (eqSub) eqSub.textContent = bookSourceLabel();
     document.getElementById("metric-cash").textContent = fmtNum(cash, 2);
 
     const pnlEl = document.getElementById("metric-pnl");
