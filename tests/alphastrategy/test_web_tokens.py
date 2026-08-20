@@ -506,6 +506,26 @@ def test_css_session_warn_uses_halt_token(css_text: str) -> None:
     assert desk_open is not None and "#10b981" in desk_open.group(0).lower()
 
 
+def test_js_clock_next_held_while_halted(js_text: str) -> None:
+    session = js_text[
+        js_text.find("function renderSessionMetrics") : js_text.find("function bookDrift")
+    ]
+    assert "held · " in session
+    assert 'countEl.classList.add("warn")' in session
+    assert "fmtCountdown" in session
+    assert "countdown.next_rebalance" in session
+    assert "halted" in session
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_css_countdown_warn_uses_halt_token(css_text: str) -> None:
+    countdown = re.search(r"#metric-countdown\.warn\s*\{[^}]*\}", css_text)
+    last = re.search(r"#metric-last-rebalance\.warn\s*\{[^}]*\}", css_text)
+    assert countdown is not None and "#f59e0b" in countdown.group(0).lower()
+    assert last is not None and "#f59e0b" in last.group(0).lower()
+
+
 def test_html_glance_bands(html_text: str) -> None:
     assert 'id="glance-book"' in html_text
     assert 'id="glance-risk"' in html_text

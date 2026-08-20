@@ -76,6 +76,7 @@ REQUIRED_PHRASES = (
     "imported members flush to disk",
     "staging lives under imported/",
     "Session OPEN is halt color while Supervisor is HALTED",
+    "Clock Next is held while Supervisor is HALTED",
 )
 
 
