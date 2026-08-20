@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import math
 import threading
 import time
@@ -117,7 +118,7 @@ class Supervisor:
         self._spoken_cache: tuple[tuple, AccountPolicy] | None = None
         self._live_book_cache: tuple[float, dict[str, Any], list[dict[str, Any]]] | None = None
         self._runtime_doc_cache: tuple[tuple[int, int], dict[str, Any]] | None = None
-        self._envelope_cache: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}
+        self._envelope_cache: dict[str, tuple[str, dict[str, Any]]] = {}
 
     @property
     def state(self) -> SupervisorState:
@@ -613,17 +614,24 @@ class Supervisor:
         self._runtime_doc_cache = (stamp, doc)
         return doc
 
+    def _file_digest(self, path: Path) -> str:
+        if not path.is_file():
+            return ""
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
     def _bundle_envelope(self, bundle_id: str) -> dict[str, Any]:
         envelope_path = self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"
-        stamp = self._file_stamp(envelope_path)
-        cached = self._envelope_cache.get(bundle_id)
-        if cached is not None and cached[0] == stamp:
-            return cached[1]
         if not envelope_path.is_file():
-            doc: dict[str, Any] = {}
+            raw = b""
+            digest = ""
         else:
-            doc = load_risk_envelope(envelope_path.read_bytes())
-        self._envelope_cache[bundle_id] = (stamp, doc)
+            raw = envelope_path.read_bytes()
+            digest = hashlib.sha256(raw).hexdigest()
+        cached = self._envelope_cache.get(bundle_id)
+        if cached is not None and cached[0] == digest:
+            return cached[1]
+        doc: dict[str, Any] = load_risk_envelope(raw) if raw else {}
+        self._envelope_cache[bundle_id] = (digest, doc)
         return doc
 
     def _effective_sleeve_policy(
@@ -652,7 +660,7 @@ class Supervisor:
         envelopes = tuple(
             (
                 bundle_id,
-                self._file_stamp(self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"),
+                self._file_digest(self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"),
             )
             for bundle_id, _allocation in allocated
         )

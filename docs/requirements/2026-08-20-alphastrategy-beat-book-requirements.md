@@ -19,14 +19,14 @@ Goal check against current main (`dfb0c11`):
 | --- | --- | --- |
 | 可靠 | The beat’s live account/positions **are** the glance book until TTL/invalidate. | Heartbeat reads the book, updates `last_got`, does not seed `live_book()`. Glance immediately refetches. |
 | 稳定执行 | One Alpaca positions+account pair per beat, reused by GET. | Beat + glance = two pairs. Empty-universe beat skips `get_account` today, so cash on the next glance is a third code path. |
-| 易于维护 | Envelope yaml stamp-cached like `runtime.yaml`. | `_bundle_envelope` `load_risk_envelope` every sleeve, every miss of the spoken merge. |
+| 易于维护 | Envelope yaml digest-cached; parse once until bytes change. | `_bundle_envelope` `load_risk_envelope` every sleeve, every miss of the spoken merge. |
 | 凭直觉交互 | After a beat, Book equity is the equity that produced `last_got`. | Marks from beat equity; NAV from a later `get_account`. |
-| 风险可控 | Heartbeat still does not flatten. Envelope file change still tightens spoken. | Cache must miss when envelope mtime/size changes. |
+| 风险可控 | Heartbeat still does not flatten. Envelope byte change still tightens spoken. | Cache must miss when envelope bytes change, including a same-size rewrite. |
 
 Research applied:
 
 - **Reconciliation writes the working blotter.** EMS heartbeats snapshot positions once and let the UI read that snapshot until the next beat or a trade. They do not list positions again 50ms later for NAV.
-- **Stamp cache immutable research caps.** `risk-envelope.yaml` is import-time. Parse once per stamp. A byte change (tests, operator replace) must miss.
+- **Digest cache immutable research caps.** `risk-envelope.yaml` is import-time. Parse once per SHA-256 of the file bytes. A byte change (tests, operator replace, same-size rewrite) must miss. mtime+size is not enough: a same-length rewrite can keep the same stamp.
 - **Do not flatten on the beat.** Unchanged. Do not use `live_book()` inside `_enforce_live_book` / `_equity()` for orders.
 
 Out: heartbeat flatten; GET flatten; JS paint; merging HTTP routes; live; `app.js`.
@@ -41,7 +41,7 @@ Out: heartbeat flatten; GET flatten; JS paint; merging HTTP routes; live; `app.j
 
 `live_book()` unchanged: TTL hit returns the seeded pair.
 
-`_bundle_envelope`: cache `dict[bundle_id, (stamp, doc)]` via `_file_stamp`. Missing file → `{}` and stamp `(0, 0)`. File change misses. `sleeve_policies` / `_rebalance_policy` keep calling it; they must not re-parse unchanged bytes.
+`_bundle_envelope`: cache `dict[bundle_id, (digest, doc)]` via SHA-256 of the envelope bytes. Missing file → `{}` and digest `""`. Byte change misses. Spoken cache keys use the same digest so a same-size rewrite is not treated as unchanged. `sleeve_policies` / `_rebalance_policy` keep calling it; they must not re-parse unchanged bytes.
 
 GET status/risk still must not `close_all`. Flatten/place still `_invalidate_live_book()`.
 
@@ -54,7 +54,7 @@ Keep “Heartbeat refreshes last prices and does not flatten”. Keep live-glanc
 
 ## 4. In / out
 
-**In:** heartbeat seeds `live_book`; empty universe still seeds; envelope stamp cache; help/README; tests.
+**In:** heartbeat seeds `live_book`; empty universe still seeds; envelope digest cache; help/README; tests.
 
 **Out:** heartbeat flatten; GET flatten; JS; live; `app.js`.
 

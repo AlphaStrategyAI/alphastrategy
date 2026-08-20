@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (this cycle chose executing-plans). Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Heartbeat seeds `live_book()` with the same account/positions it used for `last_got`; sleeve envelopes parse once per file stamp.
+**Goal:** Heartbeat seeds `live_book()` with the same account/positions it used for `last_got`; sleeve envelopes parse once per file digest.
 
-**Architecture:** `_heartbeat_health_check` fetches once and writes `_live_book_cache`. `_bundle_envelope` stamp-caches parsed dicts. Order paths still hit the broker.
+**Architecture:** `_heartbeat_health_check` fetches once and writes `_live_book_cache`. `_bundle_envelope` digest-caches parsed dicts (SHA-256 of bytes, not mtime+size). Order paths still hit the broker.
 
 **Tech Stack:** Supervisor, pytest, helptext, README.
 
@@ -159,24 +159,35 @@ git commit -m "test: heartbeat seeds live book; envelope stamp cache"
 
 Rewrite `_heartbeat_health_check` to fetch `raw_positions` then `account`, seed `_live_book_cache`, then existing mark logic using `float(account.get("equity", 0))` instead of `_equity()`. Empty universe returns **after** the seed.
 
-- [ ] **Step 2: Envelope stamp cache**
+- [ ] **Step 2: Envelope digest cache**
 
-In `__init__`: `self._envelope_cache: dict[str, tuple[tuple[int, int], dict[str, Any]]] = {}`
+mtime+size is not enough: `test_spoken_policy_sees_envelope_yaml_write` rewrites `0.10` → `0.05` at the same byte length. Spoken keys and `_bundle_envelope` must use SHA-256 of the file bytes.
+
+In `__init__`: `self._envelope_cache: dict[str, tuple[str, dict[str, Any]]] = {}`
 
 ```python
+    def _file_digest(self, path: Path) -> str:
+        if not path.is_file():
+            return ""
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
     def _bundle_envelope(self, bundle_id: str) -> dict[str, Any]:
         envelope_path = self._home.bundle_dir(bundle_id) / "risk-envelope.yaml"
-        stamp = self._file_stamp(envelope_path)
-        cached = self._envelope_cache.get(bundle_id)
-        if cached is not None and cached[0] == stamp:
-            return cached[1]
         if not envelope_path.is_file():
-            doc: dict[str, Any] = {}
+            raw = b""
+            digest = ""
         else:
-            doc = load_risk_envelope(envelope_path.read_bytes())
-        self._envelope_cache[bundle_id] = (stamp, doc)
+            raw = envelope_path.read_bytes()
+            digest = hashlib.sha256(raw).hexdigest()
+        cached = self._envelope_cache.get(bundle_id)
+        if cached is not None and cached[0] == digest:
+            return cached[1]
+        doc: dict[str, Any] = load_risk_envelope(raw) if raw else {}
+        self._envelope_cache[bundle_id] = (digest, doc)
         return doc
 ```
+
+`_spoken_cache_key` envelope tuple uses `_file_digest(...)`, not `_file_stamp`.
 
 - [ ] **Step 3: Help / README**
 
