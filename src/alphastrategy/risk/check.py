@@ -12,15 +12,15 @@ def check_book(
     del equity  # reserved for future notional checks; weights drive v1 book checks
 
     if policy.long_only and any(w < 0 for w in combined.values()):
-        raise FlattenRequested("account")
+        raise FlattenRequested("account", reason="long_only")
 
     gross = sum(abs(w) for w in combined.values())
     if gross > policy.max_gross:
-        raise FlattenRequested("account")
+        raise FlattenRequested("account", reason="max_gross")
 
     if any(abs(w) > policy.max_name_weight for w in combined.values()):
-        raise FlattenRequested("account")
+        raise FlattenRequested("account", reason="max_name_weight")
 
     names = sum(1 for w in combined.values() if w != 0.0)
     if names > policy.max_names:
-        raise FlattenRequested("account")
+        raise FlattenRequested("account", reason="max_names")

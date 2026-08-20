@@ -133,9 +133,14 @@
 
     if (flattened) {
       flattenEl.classList.remove("hidden");
+      const capFlat =
+        killReason === "long_only" ||
+        (killReason && NUMERIC_CAPS.indexOf(killReason) !== -1);
       flattenEl.textContent =
         killReason === "flatten_interrupted"
           ? "FLAT: interrupted flattening — paper account flattened"
+          : capFlat
+            ? "FLAT: " + policyLabel(killReason) + " — paper account flattened"
           : killReason === "limit"
             ? "FLAT: limit breach — paper account flattened"
             : "FLAT: paper account flattened";

@@ -34,6 +34,9 @@
         if (ev.reason === "flatten_interrupted") {
           return "interrupted flattening";
         }
+        if (ev.reason === "long_only" || NUMERIC_CAPS.indexOf(ev.reason) !== -1) {
+          return policyLabel(ev.reason) + " breach";
+        }
         if (ev.reason === "limit") {
           return "limit breach";
         }

@@ -47,14 +47,14 @@ def plan_orders(
         if notional < min_delta:
             continue
         if notional > max_order_notional:
-            raise FlattenRequested("account")
+            raise FlattenRequested("account", reason="max_order_notional_frac")
         side = "buy" if delta > 0 else "sell"
         plans.append(OrderPlan(symbol=symbol, qty=int(abs(delta)), side=side))
 
     if len(plans) > policy.max_orders_per_rebalance:
-        raise FlattenRequested("account")
+        raise FlattenRequested("account", reason="max_orders_per_rebalance")
     if orders_already_today + len(plans) > policy.max_orders_per_day:
-        raise FlattenRequested("account")
+        raise FlattenRequested("account", reason="max_orders_per_day")
 
     return plans
 

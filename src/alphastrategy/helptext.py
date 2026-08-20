@@ -48,7 +48,9 @@ SECTIONS: list[dict[str, str]] = [
             "The flatten banner names interrupted flattening when the host died "
             "mid-close_all. "
             "The flatten banner names a limit breach when a cap flattened the "
-            "paper account. Activity flatten rows say limit breach. "
+            "paper account. The flatten banner names the breached cap in desk "
+            "words (Gross cap, Name cap, Names, Orders today). "
+            "Activity flatten rows say limit breach or that cap plus breach. "
             "If the host dies during a sleeve isolate, the desk treats that as "
             "interrupted sleeve isolate: it flattens the whole paper account "
             "rather than guess the residual. "
@@ -196,6 +198,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Time-ordered audit. Empty copy names the two legal rebalances. "
             "Kill rows say isolated residual or flattened account. "
             "Flatten rows say interrupted flattening or limit breach. "
+            "The flatten banner names the breached cap. "
             "Expand a blotter row for a Wanted / Got table, not a JSON dump."
         ),
     },
