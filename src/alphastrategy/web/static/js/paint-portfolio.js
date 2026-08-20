@@ -161,6 +161,7 @@
     posBody.innerHTML = "";
     const positions = portfolio.positions || [];
     renderBookDrift(positions, equity);
+    renderPositionsGlance(positions);
     if (!positions.length) {
       let empty = "No positions yet. Import a .asb to begin.";
       if (importedIds().length) {
@@ -225,6 +226,33 @@
     if (raw == null || raw === "" || raw === "—") return "—";
     if (map[raw]) return map[raw];
     return String(raw).replace(/_/g, " ").toUpperCase();
+  }
+
+  function renderPositionsGlance(positions) {
+    const rowsEl = document.getElementById("pos-count-rows");
+    const wantedEl = document.getElementById("pos-count-wanted");
+    const gotEl = document.getElementById("pos-count-got");
+    const capEl = document.getElementById("pos-count-cap");
+    const rows = positions || [];
+    const cap =
+      Number(state.risk && state.risk.account && state.risk.account.max_name_weight) || 0.2;
+    let wantedN = 0;
+    let gotN = 0;
+    let atCap = 0;
+    for (const pos of rows) {
+      if (pos.wanted != null && pos.wanted !== undefined && Number(pos.wanted) > 0) {
+        wantedN += 1;
+      }
+      if (Number(pos.qty) !== 0) gotN += 1;
+      if (cap > 0 && Number(pos.weight) >= cap) atCap += 1;
+    }
+    if (rowsEl) rowsEl.textContent = String(rows.length);
+    if (wantedEl) wantedEl.textContent = String(wantedN);
+    if (gotEl) gotEl.textContent = String(gotN);
+    if (capEl) {
+      capEl.textContent = String(atCap);
+      capEl.classList.toggle("fail", atCap > 0);
+    }
   }
 
   function renderDeskPulse() {

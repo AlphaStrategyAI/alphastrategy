@@ -113,25 +113,51 @@
       <p id="clock-line" class="clock-line nums"></p>
 
       <div class="grid book-grid stack">
-        <div class="panel">
-          <h2>Positions</h2>
-          <table id="positions-table">
-            <thead>
-              <tr><th>Symbol</th><th>Qty</th><th>Notional</th><th>Wanted</th><th>Got</th><th>Book</th><th>Cap</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div id="glance-positions" class="glance-band">
+          <h2 class="glance-heading">Positions</h2>
+          <div class="metrics metrics-4 nums">
+            <div class="metric">
+              <div class="metric-label">Rows</div>
+              <div id="pos-count-rows" class="metric-value">—</div>
+            </div>
+            <div class="metric hero">
+              <div class="metric-label">Wanted</div>
+              <div id="pos-count-wanted" class="metric-value">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Got</div>
+              <div id="pos-count-got" class="metric-value">—</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">At cap</div>
+              <div id="pos-count-cap" class="metric-value">—</div>
+            </div>
+          </div>
+          <div class="panel">
+            <table id="positions-table">
+              <thead>
+                <tr><th>Symbol</th><th>Qty</th><th>Notional</th><th>Wanted</th><th>Got</th><th>Book</th><th>Cap</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
-        <div class="panel">
-          <h2>Sleeves</h2>
+        <div id="glance-sleeves" class="glance-band">
+          <h2 class="glance-heading">Sleeves</h2>
           <p id="sleeve-alloc-label" class="muted hidden"></p>
           <div id="sleeve-alloc-track" class="util-track hidden" aria-hidden="true"></div>
-          <table id="sleeves-table">
-            <thead>
-              <tr><th>Bundle</th><th>Allocation</th><th>Contribution</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <div class="panel">
+            <table id="sleeves-table">
+              <thead>
+                <tr>
+                  <th>Bundle</th>
+                  <th>Allocation</th>
+                  <th>Contribution</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>

@@ -307,6 +307,10 @@ main {
   color: #ef4444;
 }
 
+#pos-count-cap.fail {
+  color: #ef4444;
+}
+
 .stack {
   margin-top: 0.75rem;
 }
