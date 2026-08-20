@@ -1050,6 +1050,8 @@ def test_html_activity_tape_bands(html_text: str) -> None:
     assert "hero" in beat
     assert ">Pulse<" in beat
     assert 'id="act-count-rebalance"' in tape
+    assert 'id="act-count-spent"' in tape
+    assert ">Rebalances<" in tape
     assert 'id="act-count-halt"' in tape
     assert 'id="act-count-deviation"' in tape
     assert 'id="act-count-kill"' in tape
@@ -1066,6 +1068,7 @@ def test_js_paints_activity_tape(js_text: str) -> None:
         js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
     ]
     assert '"act-count-rebalance"' in paint
+    assert '"act-count-spent"' in paint
     assert '"act-count-halt"' in paint
     assert '"act-count-deviation"' in paint
     assert '"act-count-kill"' in paint
@@ -1079,15 +1082,27 @@ def test_js_paints_activity_tape(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
-def test_js_activity_incomplete_rebalance(js_text: str) -> None:
-    paint = js_text[
+def test_js_activity_spent_rebalance(js_text: str) -> None:
+    summary = js_text[
         js_text.find("function eventSummary") : js_text.find("function renderActivity")
     ]
-    assert "complete === false" in paint
-    assert "incomplete" in paint
-    assert "Complete" in paint
+    paint = js_text[
+        js_text.find("function renderActivity") : js_text.find("RISK_TIGHTEN_GROUPS")
+    ]
+    assert "complete === false" in summary
+    assert "spent" in summary
+    assert "incomplete" not in summary
+    assert '["Spent"' in summary or '"Spent"' in summary
+    assert "act-count-spent" in paint
+    assert "warn" in paint
+    assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_css_rebalance_spent_warn_token(css_text: str) -> None:
+    reb = re.search(r"#act-count-rebalance\.warn\s*\{[^}]*\}", css_text)
+    assert reb is not None and "#f59e0b" in reb.group(0).lower()
 
 
 def test_js_paints_activity_beat(js_text: str) -> None:

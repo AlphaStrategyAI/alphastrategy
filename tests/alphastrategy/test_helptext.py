@@ -67,6 +67,7 @@ REQUIRED_PHRASES = (
     "Tighten this sleeve stays open across the refresh",
     "Clock Last names the spent window",
     "even with 0 fills",
+    "Tape Rebalances sub names spent",
 )
 
 
