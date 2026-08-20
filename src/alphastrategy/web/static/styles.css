@@ -457,7 +457,6 @@ button.action.account-kill {
 
 .activity-detail {
   display: none;
-  white-space: pre-wrap;
   color: #9ba3b4;
   margin: 0.35rem 0 0;
   font: inherit;
@@ -465,6 +464,27 @@ button.action.account-kill {
 
 .activity-list li.expanded .activity-detail {
   display: block;
+}
+
+.activity-book {
+  margin: 0.15rem 0 0.5rem;
+}
+
+.activity-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.2rem 0.75rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.activity-fields dt {
+  color: #9ba3b4;
+}
+
+.activity-fields dd {
+  margin: 0;
+  color: #e5e9f0;
 }
 
 .status-stopped {

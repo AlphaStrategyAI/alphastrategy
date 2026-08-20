@@ -129,6 +129,7 @@ Tighten still posts the policy keys.
 Risk is four bands: **Caps**, **Headroom**, **Tighten**, and **Sleeve overlays**.
 Caps and Headroom stay sticky. Tighten groups **Gross / Names / Orders / Deltas**.
 Activity is three bands: **Beat**, **Tape** (Rebalances is the hero), and **Blotter**.
+Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
 
 ---
 
