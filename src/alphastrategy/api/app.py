@@ -10,6 +10,7 @@ from alphastrategy.api.handlers import _apply_startup_runtime, dispatch
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.supervisor.heartbeat import INTERVAL_SEC as HEARTBEAT_INTERVAL_SEC
 from alphastrategy.supervisor.loop import Supervisor
+from alphastrategy.web.cockpit import cockpit_js
 
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "web" / "static"
 
@@ -17,9 +18,7 @@ _STATIC_ROUTES: dict[str, str] = {
     "/": "index.html",
     "/index.html": "index.html",
     "/styles.css": "styles.css",
-    "/app.js": "app.js",
     "/static/styles.css": "styles.css",
-    "/static/app.js": "app.js",
 }
 
 _CONTENT_TYPES = {
@@ -38,6 +37,14 @@ class _ApiContext:
 
 
 def _serve_static(handler: BaseHTTPRequestHandler, path: str) -> bool:
+    if path in ("/app.js", "/static/app.js"):
+        body = cockpit_js().encode("utf-8")
+        handler.send_response(200)
+        handler.send_header("Content-Type", _CONTENT_TYPES[".js"])
+        handler.send_header("Content-Length", str(len(body)))
+        handler.end_headers()
+        handler.wfile.write(body)
+        return True
     filename = _STATIC_ROUTES.get(path)
     if filename is None:
         return False

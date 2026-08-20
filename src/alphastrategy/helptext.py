@@ -72,6 +72,8 @@ SECTIONS: list[dict[str, str]] = [
             "Alt+1 through Alt+5 switch screens. "
             "F1 is how-to for the current screen. The six runbook sections "
             "match alphastrategy help. "
+            "Quiet cockpit JS is assembled from js/ parts. The browser still "
+            "loads /app.js. "
             "Help is this aside, not a sixth screen."
         ),
     },

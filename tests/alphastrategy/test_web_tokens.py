@@ -10,7 +10,6 @@ STATIC_DIR = (
 )
 HTML_PATH = STATIC_DIR / "index.html"
 CSS_PATH = STATIC_DIR / "styles.css"
-JS_PATH = STATIC_DIR / "app.js"
 
 NAV_LABELS = ("Portfolio", "Strategies", "Run", "Activity", "Risk")
 
@@ -50,13 +49,19 @@ def css_text() -> str:
 
 @pytest.fixture
 def js_text() -> str:
-    return JS_PATH.read_text(encoding="utf-8")
+    from alphastrategy.web.cockpit import cockpit_js
+
+    return cockpit_js()
 
 
 def test_static_files_exist() -> None:
+    from alphastrategy.web.cockpit import JS_PARTS
+
     assert HTML_PATH.is_file()
     assert CSS_PATH.is_file()
-    assert JS_PATH.is_file()
+    for rel in JS_PARTS:
+        assert (STATIC_DIR / rel).is_file(), rel
+    assert not (STATIC_DIR / "app.js").is_file()
 
 
 def test_css_contains_locked_tokens(css_text: str) -> None:
@@ -190,7 +195,9 @@ def test_js_renders_kill_outcome_from_last_kill(js_text: str) -> None:
     assert "unknown sleeve" in js_text
 
 def test_js_sleeve_kill_does_not_require_flatten_phrase(js_text: str) -> None:
-    kill_fn = js_text.split("async function killSleeve")[1].split("async function onImportSubmit")[0]
+    start = js_text.index("async function killSleeve")
+    nxt = js_text.find("\n  async function ", start + 1)
+    kill_fn = js_text[start : nxt if nxt != -1 else None]
     assert "FLATTEN" not in kill_fn
     assert "data-kill-confirm" in js_text
 

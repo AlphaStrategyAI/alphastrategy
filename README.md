@@ -84,7 +84,7 @@ alphastrategy/
 ├── supervisor/   # session loop; sole order placer
 ├── live/         # Alpaca paper adapter (hard-walled)
 ├── api/          # localhost control plane
-├── web/static/   # Quiet cockpit (Portfolio, Strategies, Run, Activity, Risk)
+├── web/static/   # Quiet cockpit HTML/CSS; js/ parts assembled as GET /app.js
 ├── helptext.py   # operator runbook (CLI, GET /api/help, cockpit Help)
 └── cli/          # alphastrategy command
 ```
