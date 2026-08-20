@@ -1214,6 +1214,130 @@ def test_start_sleeve_without_overlay_does_not_flatten_live_book_inside_name_cap
     assert broker.close_all_count == 0
 
 
+def test_set_policy_flattens_sticky_book_not_mutated_broker(tmp_path: Path) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.live_book_source() == "heartbeat"
+    assert broker.positions.get("AAPL") == pytest.approx(15.0)
+    broker.positions = {"AAPL": 5.0}
+    supervisor.set_policy({"max_name_weight": 0.10})
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_name_weight"
+
+
+def test_set_policy_keeps_sticky_book_inside_cap_when_broker_mutates(
+    tmp_path: Path,
+) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(
+        tmp_path, allocation=0.05
+    )
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.live_book_source() == "heartbeat"
+    assert broker.positions.get("AAPL") == pytest.approx(5.0)
+    broker.positions = {"AAPL": 15.0}
+    supervisor.set_policy({"max_name_weight": 0.10})
+    assert supervisor.state != SupervisorState.STOPPED
+    assert broker.close_all_count == 0
+
+
+def test_set_policy_after_heartbeat_does_not_refetch_live_book(tmp_path: Path) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    broker.advance_now(open_time + timedelta(minutes=10))
+    accounts = {"n": 0}
+    positions = {"n": 0}
+    inner_account = broker.get_account
+    inner_positions = broker.list_positions
+
+    def counted_account() -> dict:
+        accounts["n"] += 1
+        return inner_account()
+
+    def counted_positions() -> list:
+        positions["n"] += 1
+        return inner_positions()
+
+    broker.get_account = counted_account  # type: ignore[method-assign]
+    broker.list_positions = counted_positions  # type: ignore[method-assign]
+    supervisor.tick()
+    after_tick_accounts = accounts["n"]
+    after_tick_positions = positions["n"]
+    supervisor.set_policy({"min_delta_dollar": 5.0})
+    assert accounts["n"] == after_tick_accounts
+    assert positions["n"] == after_tick_positions
+    assert supervisor.state != SupervisorState.STOPPED
+
+
+def test_start_sleeve_flattens_sticky_book_not_mutated_broker(tmp_path: Path) -> None:
+    open_time, _session_close, broker, supervisor = _open_then_idle(tmp_path)
+    home = AlphaStrategyHome(root=tmp_path)
+    (home.bundle_dir("asb_test") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.10}}}),
+        encoding="utf-8",
+    )
+    supervisor.stop_sleeve("asb_test")
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.live_book_source() == "heartbeat"
+    broker.positions = {"AAPL": 5.0}
+    held = supervisor.start_sleeve("asb_test", 0.25)
+    assert held is False
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_name_weight"
+
+
+def test_rebalance_live_flatten_uses_this_fetch_not_sticky_book(tmp_path: Path) -> None:
+    open_time, session_close, broker, supervisor = _open_then_idle(
+        tmp_path, allocation=0.05
+    )
+    broker.advance_now(open_time + timedelta(minutes=10))
+    supervisor.tick()
+    assert supervisor.live_book_source() == "heartbeat"
+    assert broker.positions.get("AAPL") == pytest.approx(5.0)
+    broker.positions = {"AAPL": 15.0}
+    supervisor.set_policy({"max_name_weight": 0.10})
+    assert supervisor.state != SupervisorState.STOPPED
+    broker.advance_now(session_close - timedelta(minutes=10))
+    supervisor.tick()
+    assert broker.close_all_count == 1
+    assert supervisor.state == SupervisorState.STOPPED
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_name_weight"
+
+
+def test_start_sleeve_while_halted_flattens_when_overlay_breaches_live_book(
+    tmp_path: Path,
+) -> None:
+    broker = FakeBroker(equity=10_000.0, is_open=True)
+    broker.positions = {"AAPL": 15.0}
+    supervisor = _make_supervisor(tmp_path, broker)
+    home = AlphaStrategyHome(root=tmp_path)
+    (home.bundle_dir("asb_test") / "risk-envelope.yaml").write_text(
+        "max_name_weight: 0.20\n", encoding="utf-8"
+    )
+    home.runtime_path().write_text(
+        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+        encoding="utf-8",
+    )
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    supervisor._halt("stale bars")
+    assert supervisor.state == SupervisorState.HALTED
+    held = supervisor.start_sleeve("asb_test", 0.25)
+    assert held is False
+    assert supervisor.state == SupervisorState.STOPPED
+    assert broker.close_all_count == 1
+    assert supervisor.snapshot.last_kill is not None
+    assert supervisor.snapshot.last_kill["reason"] == "max_name_weight"
+
+
 def test_spoken_policy_reads_runtime_once_while_unchanged(tmp_path: Path) -> None:
     supervisor = _make_supervisor(tmp_path, FakeBroker())
     home = AlphaStrategyHome(root=tmp_path)

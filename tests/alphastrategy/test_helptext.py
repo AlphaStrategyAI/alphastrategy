@@ -102,6 +102,7 @@ REQUIRED_PHRASES = (
     "Book Equity names Beat or Glance",
     "Book, Beat, and Headroom name Beat or Glance",
     "status names BOOK heartbeat or glance",
+    "Tighten and Start paper flatten the same live book as Book",
 )
 
 
