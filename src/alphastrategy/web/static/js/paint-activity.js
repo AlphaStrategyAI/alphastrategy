@@ -8,7 +8,8 @@
         const wantedN = ev.wanted && typeof ev.wanted === "object" ? Object.keys(ev.wanted).length : 0;
         const gotN = ev.got && typeof ev.got === "object" ? Object.keys(ev.got).length : 0;
         const orders = ev.orders == null ? "" : `${ev.orders} orders`;
-        return `${ev.session_event || ""} · ${orders} · wanted ${wantedN} got ${gotN}`.trim();
+        const incomplete = ev.complete === false ? "incomplete" : "";
+        return `${ev.session_event || ""} · ${orders} · wanted ${wantedN} got ${gotN} ${incomplete}`.trim();
       }
       case "execution_deviation":
         return `${ev.asset || ""} wanted ${ev.wanted} got ${ev.got}`;
@@ -91,6 +92,7 @@
         detailList([
           ["Session", ev.session_event],
           ["Orders", ev.orders],
+          ["Complete", ev.complete === false ? "no" : "yes"],
         ])
       );
       return wrap;

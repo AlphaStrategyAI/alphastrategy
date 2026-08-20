@@ -26,6 +26,8 @@ SECTIONS: list[dict[str, str]] = [
             "Heartbeat every 20 seconds does not place orders. At most two RTH "
             "rebalances fire: open plus 3 minutes, and 12 minutes before close. "
             "combined[asset] = sum(allocation_i * weight_i[asset]). Residual is cash. "
+            "An incomplete rebalance still writes Wanted / Got, counts those orders, "
+            "and health-halts. It does not flatten and does not retry that event. "
             "Header LIVE, STALE, or DEAD is the Supervisor beat, not RTH Session OPEN."
         ),
     },

@@ -288,18 +288,13 @@ class Supervisor:
             policy,
             orders_already_today=already,
         )
-        for plan in plans:
-            self._broker.place_order(plan.symbol, plan.qty, plan.side)
-            self._audit(
-                "order",
-                symbol=plan.symbol,
-                qty=plan.qty,
-                side=plan.side,
-                reason="sleeve_kill",
-            )
+        placed, place_error = self._place_batch(
+            plans, already, extra_audit={"reason": "sleeve_kill"}
+        )
+        if place_error is not None:
+            raise place_error
         if session_date:
             self._snapshot.orders_date = session_date
-            self._snapshot.orders_today = already + len(plans)
         self._snapshot.last_combined = dict(residual)
         self._snapshot.last_sleeve_contribution.pop(bundle_id, None)
         self._snapshot.last_sleeve_weights.pop(bundle_id, None)
@@ -562,6 +557,47 @@ class Supervisor:
             prices[symbol] = price
         return prices
 
+    def _place_batch(
+        self,
+        plans: list,
+        already: int,
+        extra_audit: dict | None = None,
+    ) -> tuple[int, Exception | None]:
+        placed = 0
+        extra = extra_audit or {}
+        for plan in plans:
+            try:
+                self._broker.place_order(plan.symbol, plan.qty, plan.side)
+            except Exception as exc:
+                return placed, exc
+            self._audit(
+                "order",
+                symbol=plan.symbol,
+                qty=plan.qty,
+                side=plan.side,
+                **extra,
+            )
+            placed += 1
+            self._snapshot.orders_today = already + placed
+        return placed, None
+
+    def _snapshot_got(
+        self,
+        combined: dict[str, float],
+        prices: dict[str, float],
+        equity: float,
+    ) -> dict[str, float]:
+        positions_after = _positions_map(self._broker.list_positions())
+        got = {
+            symbol: (qty * prices[symbol]) / equity
+            for symbol, qty in positions_after.items()
+            if symbol in prices and equity > 0
+        }
+        self._snapshot.last_got = dict(got)
+        for deviation in deviations_after(combined, got, equity, prices):
+            self._audit("execution_deviation", **deviation)
+        return got
+
     def _rebalance(self, cur: ClockSnapshot, event: str) -> None:
         collected = self._collect_sleeves()
         self._snapshot.state = SupervisorState.REBALANCING
@@ -594,34 +630,21 @@ class Supervisor:
             orders_already_today=already,
         )
 
-        for plan in plans:
-            self._broker.place_order(plan.symbol, plan.qty, plan.side)
-            self._audit(
-                "order",
-                symbol=plan.symbol,
-                qty=plan.qty,
-                side=plan.side,
-            )
-        self._snapshot.orders_today = already + len(plans)
-
-        positions_after = _positions_map(self._broker.list_positions())
-        got = {
-            symbol: (qty * prices[symbol]) / equity
-            for symbol, qty in positions_after.items()
-            if symbol in prices and equity > 0
-        }
-        self._snapshot.last_got = dict(got)
-        for deviation in deviations_after(combined, got, equity, prices):
-            self._audit("execution_deviation", **deviation)
-
+        placed, place_error = self._place_batch(plans, already)
+        got = self._snapshot_got(combined, prices, equity)
         self._snapshot.last_rebalance_event = f"{session_date}:{event}"
         self._audit(
             "rebalance",
             session_event=event,
-            orders=len(plans),
+            orders=placed,
             wanted=dict(combined),
             got=dict(got),
+            complete=place_error is None,
         )
+        if place_error is not None:
+            raise HaltRequested(
+                f"place_order failed after {placed} of {len(plans)}: {place_error}"
+            ) from place_error
         self._set_idle_state(cur)
 
     def _halt(self, reason: str) -> None:
