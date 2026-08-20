@@ -141,6 +141,21 @@
     return wrap;
   }
 
+  function supervisorLabel(raw) {
+    const map = {
+      idle_in_session: "IN SESSION",
+      idle_out_of_session: "OUT OF SESSION",
+      rebalancing: "REBALANCING",
+      halted: "HALTED",
+      flattening: "FLATTENING",
+      stopped: "STOPPED",
+      starting: "STARTING",
+    };
+    if (raw == null || raw === "" || raw === "—") return "—";
+    if (map[raw]) return map[raw];
+    return String(raw).replace(/_/g, " ").toUpperCase();
+  }
+
   function renderActivity() {
     const list = document.getElementById("activity-list");
     list.innerHTML = "";
@@ -149,10 +164,30 @@
     const pulse = hb.pulse || "missing";
     const beatLine = document.getElementById("activity-heartbeat");
     if (beatLine) {
+      beatLine.textContent = pulseLabel(pulse);
+      beatLine.classList.remove("live", "stale", "dead", "missing");
+      beatLine.classList.add(pulse);
+    }
+    const ageEl = document.getElementById("act-beat-age");
+    if (ageEl) {
       const age = hb.age_seconds;
-      const st = (state.status && state.status.state) || "—";
-      const ageText = age == null || age === undefined ? "—" : age + "s ago";
-      beatLine.textContent = `Beat ${pulseLabel(pulse)} · ${ageText} · ${st}`;
+      ageEl.textContent = age == null || age === undefined ? "—" : age + "s";
+    }
+    const intervalEl = document.getElementById("act-beat-interval");
+    if (intervalEl) {
+      const interval =
+        hb.interval_seconds == null || hb.interval_seconds === undefined
+          ? 20
+          : hb.interval_seconds;
+      intervalEl.textContent = interval + "s";
+    }
+    const stateEl = document.getElementById("act-beat-state");
+    if (stateEl) {
+      const raw = (state.status && state.status.state) || "";
+      stateEl.textContent = raw ? supervisorLabel(raw) : "—";
+      stateEl.title = raw || "";
+      stateEl.classList.toggle("halt", raw === "halted");
+      stateEl.classList.toggle("fail", raw === "flattening" || raw === "stopped");
     }
     const counts = { rebalance: 0, halt: 0, deviation: 0, kill: 0 };
     for (const ev of events) {

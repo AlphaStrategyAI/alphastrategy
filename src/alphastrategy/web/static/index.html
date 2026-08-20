@@ -244,7 +244,24 @@
     <section id="screen-activity" class="screen" aria-label="Activity">
       <div id="act-beat" class="glance-band">
         <h2 class="glance-heading">Beat</h2>
-        <p id="activity-heartbeat" class="muted"></p>
+        <div class="metrics metrics-4 nums">
+          <div class="metric hero">
+            <div class="metric-label">Pulse</div>
+            <div id="activity-heartbeat" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Age</div>
+            <div id="act-beat-age" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Interval</div>
+            <div id="act-beat-interval" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Supervisor</div>
+            <div id="act-beat-state" class="metric-value">—</div>
+          </div>
+        </div>
       </div>
       <div id="act-tape" class="glance-band">
         <h2 class="glance-heading">Tape</h2>

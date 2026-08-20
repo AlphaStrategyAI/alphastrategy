@@ -117,6 +117,24 @@ header {
   }
 }
 
+#activity-heartbeat.live {
+  color: #10b981;
+}
+
+#activity-heartbeat.stale,
+#act-beat-state.halt {
+  color: #f59e0b;
+}
+
+#activity-heartbeat.dead,
+#act-beat-state.fail {
+  color: #ef4444;
+}
+
+#activity-heartbeat.missing {
+  color: #5c6573;
+}
+
 .kbd-hint {
   font-size: 0.72rem;
   color: #5c6573;

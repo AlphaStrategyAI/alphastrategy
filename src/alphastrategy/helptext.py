@@ -77,6 +77,7 @@ SECTIONS: list[dict[str, str]] = [
             "residual or flattened account. status includes last_kill even "
             "when the control plane is down. Activity empty copy names the two "
             "legal rebalances. Activity is three bands Beat / Tape / Blotter. "
+            "Beat is Pulse / Age / Interval / Supervisor. "
             "Expanding a blotter row shows Wanted versus Got, not a JSON dump. "
             "Header LIVE is the Supervisor beat, not Session. "
             "Alt+1 through Alt+5 switch screens. "
@@ -156,7 +157,9 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "screen": "activity",
         "title": "On Activity",
         "body": (
-            "Three bands: Beat / Tape / Blotter. Rebalances is the hero count. "
+            "Three bands: Beat / Tape / Blotter. "
+            "Beat is four tiles Pulse / Age / Interval / Supervisor. Pulse is the hero. "
+            "Rebalances is the hero count. "
             "Halt, deviation, and kill tiles are not quiet when above zero. "
             "Time-ordered audit. Empty copy names the two legal rebalances. "
             "Kill rows say isolated residual or flattened account. "
