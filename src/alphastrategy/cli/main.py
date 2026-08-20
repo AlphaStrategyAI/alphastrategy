@@ -268,11 +268,30 @@ def _status_book_line(payload: dict[str, Any]) -> str | None:
     return _BOOK_STATUS.format(source=source)
 
 
+def _status_pnl_line(payload: dict[str, Any]) -> str | None:
+    raw = payload.get("pnl") if "pnl" in payload else None
+    if raw is None or raw == "":
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if value != value or value in (float("inf"), float("-inf")):
+        return None
+    line = f"PNL: {value:.2f}"
+    if payload.get("pnl_source") == "last_close":
+        line += " vs last close"
+    return line
+
+
 def _print_status(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, separators=(",", ":")))
     book_line = _status_book_line(payload)
     if book_line:
         print(book_line, file=sys.stderr)
+    pnl_line = _status_pnl_line(payload)
+    if pnl_line:
+        print(pnl_line, file=sys.stderr)
     line = _status_limit_line(payload)
     if line:
         print(line, file=sys.stderr)
@@ -302,6 +321,8 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         "utilization": from_supervisor(supervisor, live=False),
         "heartbeat": describe(snapshot.last_heartbeat_at),
         "book": {"source": supervisor.live_book_source()},
+        "pnl": None,
+        "pnl_source": None,
     }
     _print_status(payload)
     return 0

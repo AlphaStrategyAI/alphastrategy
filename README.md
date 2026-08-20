@@ -206,6 +206,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   HALTED. Spoken Supervisor is the runtime state. `status`
   includes `heartbeat`. status names LIMIT while the live book is
   through the spoken cap. status names BOOK heartbeat or glance.
+  status names Day PnL.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio. The deviation banner
   follows Book Drift and cannot go quiet while Drift is above zero.

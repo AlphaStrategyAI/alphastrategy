@@ -160,6 +160,7 @@ SECTIONS: list[dict[str, str]] = [
             "last book is clean; otherwise it flattens the account rather than guess. "
             "status names LIMIT while the live book is through the spoken cap. "
             "status names BOOK heartbeat or glance. "
+            "status names Day PnL. "
         ),
     },
     {

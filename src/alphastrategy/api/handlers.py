@@ -261,6 +261,12 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
     except Exception as exc:
         clock = {"error": str(exc)}
     halted = snapshot.state == SupervisorState.HALTED
+    utilization = from_supervisor(supervisor, live=True)
+    try:
+        account, _positions = supervisor.live_book()
+        pnl, pnl_source = _account_day_pnl(account)
+    except Exception:
+        pnl, pnl_source = None, None
     _json_response(
         handler,
         200,
@@ -275,9 +281,11 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "flattened": snapshot.state
             in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
             "last_kill": snapshot.last_kill,
-            "utilization": from_supervisor(supervisor, live=True),
+            "utilization": utilization,
             "heartbeat": describe(snapshot.last_heartbeat_at),
             "book": {"source": supervisor.live_book_source()},
+            "pnl": pnl,
+            "pnl_source": pnl_source,
         },
     )
 
