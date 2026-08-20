@@ -342,6 +342,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="desk-session"' in html
         assert 'id="glance-book"' in html
         assert 'id="run-flatten"' in html
+        assert 'id="run-remaining"' in html
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
         assert 'id="act-tape"' in html

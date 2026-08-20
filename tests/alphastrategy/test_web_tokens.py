@@ -506,6 +506,13 @@ def test_html_run_kill_switch_zones(html_text: str) -> None:
     assert 'id="start-form"' in promote
     assert 'id="run-error"' in promote
     assert 'id="run-sleeves"' in book
+    assert 'id="run-remaining"' in book
+    assert 'id="run-spoken"' in book
+    assert 'id="run-count-live"' in book
+    assert 'id="run-count-idle"' in book
+    assert "metrics-4" in book
+    assert "hero" in book
+    assert ">Remaining<" in book
     assert 'id="account-resume"' in recover
     assert 'id="account-kill"' not in recover
     assert 'id="account-kill"' in flatten
@@ -522,6 +529,26 @@ def test_css_run_kill_switch_zones(css_text: str) -> None:
     assert ".recover-zone" in css_text
     assert ".flatten-zone .panel" in css_text
     assert ".flatten-zone .glance-heading" in css_text
+
+
+def test_js_paints_run_capacity(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRunSleeves") : js_text.find("function eventSummary")
+    ]
+    assert "run-remaining" in paint
+    assert "run-spoken" in paint
+    assert "run-count-live" in paint
+    assert "run-count-idle" in paint
+    assert "No sleeves yet" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_run_remaining_tokens(css_text: str) -> None:
+    warn = re.search(r"#run-remaining\.warn\s*\{[^}]*\}", css_text)
+    fail = re.search(r"#run-remaining\.fail\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
+    assert fail is not None and "#ef4444" in fail.group(0).lower()
 
 
 def test_html_run_band_errors(html_text: str) -> None:
