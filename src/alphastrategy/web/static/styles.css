@@ -441,7 +441,8 @@ button.action.account-kill {
 }
 
 .first-run.hidden,
-.util-track.hidden {
+.util-track.hidden,
+#sleeve-alloc-label.hidden {
   display: none;
 }
 
@@ -492,4 +493,22 @@ button.action.account-kill {
 
 .wg-cell {
   min-width: 88px;
+}
+
+.metric-sub {
+  font-size: 0.72rem;
+  color: #9ba3b4;
+  margin-top: 0.15rem;
+  text-transform: lowercase;
+}
+
+nav button:focus-visible,
+button.action:focus-visible,
+#help-toggle:focus-visible {
+  outline: 2px solid #9ba3b4;
+  outline-offset: 2px;
+}
+
+#metric-session.open {
+  color: #10b981;
 }

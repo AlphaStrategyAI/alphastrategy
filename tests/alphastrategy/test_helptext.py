@@ -23,6 +23,7 @@ REQUIRED_PHRASES = (
     "Alt+1",
     "Wanted",
     "Got",
+    "Next rebalance",
 )
 
 
@@ -48,7 +49,7 @@ def test_help_text_contains_required_phrases() -> None:
             assert "FLATTEN" in text
         elif phrase == "--force":
             assert "--force" in text
-        elif phrase in ("Wanted", "Got"):
+        elif phrase in ("Wanted", "Got", "Next rebalance"):
             assert phrase in text
         else:
             assert phrase.lower() in lower

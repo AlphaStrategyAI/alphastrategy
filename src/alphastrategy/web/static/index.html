@@ -56,6 +56,15 @@
           <div id="metric-gross" class="metric-value">—</div>
           <div id="metric-gross-bar" class="util-track hidden" aria-hidden="true"></div>
         </div>
+        <div class="metric">
+          <div class="metric-label">Session</div>
+          <div id="metric-session" class="metric-value">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Next rebalance</div>
+          <div id="metric-countdown" class="metric-value">—</div>
+          <div id="metric-countdown-kind" class="metric-sub">—</div>
+        </div>
       </div>
 
       <p id="clock-line" class="clock-line nums"></p>
@@ -65,13 +74,15 @@
           <h2>Positions</h2>
           <table id="positions-table">
             <thead>
-              <tr><th>Symbol</th><th>Qty</th><th>Notional</th><th>Wanted</th><th>Got</th><th>Book</th></tr>
+              <tr><th>Symbol</th><th>Qty</th><th>Notional</th><th>Wanted</th><th>Got</th><th>Book</th><th>Cap</th></tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="panel">
           <h2>Sleeves</h2>
+          <p id="sleeve-alloc-label" class="muted hidden"></p>
+          <div id="sleeve-alloc-track" class="util-track hidden" aria-hidden="true"></div>
           <table id="sleeves-table">
             <thead>
               <tr><th>Bundle</th><th>Allocation</th><th>Contribution</th></tr>

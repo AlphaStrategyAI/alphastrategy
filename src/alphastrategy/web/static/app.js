@@ -185,6 +185,74 @@
     bar.removeAttribute("aria-hidden");
   }
 
+  function renderSessionMetrics() {
+    const sessionEl = document.getElementById("metric-session");
+    const countEl = document.getElementById("metric-countdown");
+    const kindEl = document.getElementById("metric-countdown-kind");
+    const clockLine = document.getElementById("clock-line");
+    const clock = state.status && state.status.clock;
+    const countdown = state.status && state.status.countdown;
+    sessionEl.classList.remove("open");
+    if (!clock || clock.error) {
+      sessionEl.textContent = "UNAVAILABLE";
+      countEl.textContent = "—";
+      kindEl.textContent = "—";
+      clockLine.textContent = "Clock unavailable";
+      return;
+    }
+    if (clock.is_open) {
+      sessionEl.textContent = "OPEN";
+      sessionEl.classList.add("open");
+    } else {
+      sessionEl.textContent = "CLOSED";
+    }
+    if (countdown) {
+      countEl.textContent = fmtCountdown(countdown.seconds);
+      kindEl.textContent = countdown.next_rebalance || "—";
+    } else {
+      countEl.textContent = "—";
+      kindEl.textContent = "—";
+    }
+    clockLine.textContent = `now ${clock.timestamp || "—"}`;
+  }
+
+  function nameCapBar(got, cap) {
+    const g = Math.max(0, Number(got) || 0);
+    const limit = Number(cap) > 0 ? Number(cap) : 0.2;
+    const ratio = g / limit;
+    const pct = Math.min(100, Math.max(0, ratio * 100));
+    let cls = "util-track";
+    if (ratio >= 1) cls += " fail";
+    else if (ratio >= 0.9) cls += " warn";
+    return (
+      `<div class="wg-cell"><div class="${cls}" aria-label="name ${fmtPct(g)} of cap ${fmtPct(limit)}">` +
+      `<span class="util-fill" style="width:${pct}%"></span></div></div>`
+    );
+  }
+
+  function renderSleeveAllocBook(sleeves) {
+    const track = document.getElementById("sleeve-alloc-track");
+    const label = document.getElementById("sleeve-alloc-label");
+    const ids = Object.keys(sleeves || {});
+    if (!track || !label) return;
+    if (!ids.length) {
+      track.classList.add("hidden");
+      label.classList.add("hidden");
+      track.innerHTML = "";
+      return;
+    }
+    const spoken = ids.reduce((sum, id) => sum + (Number(sleeves[id]) || 0), 0);
+    const pct = Math.min(100, Math.max(0, spoken * 100));
+    track.classList.remove("hidden", "warn", "fail");
+    label.classList.remove("hidden");
+    if (spoken >= 1) track.classList.add("fail");
+    else if (spoken >= 0.9) track.classList.add("warn");
+    track.innerHTML = `<span class="util-fill" style="width:${pct}%"></span>`;
+    track.removeAttribute("aria-hidden");
+    track.setAttribute("aria-label", `spoken ${fmtPct(spoken)} of paper book`);
+    label.textContent = `Spoken ${fmtPct(spoken)} of paper book`;
+  }
+
   function renderBanners() {
     const haltEl = document.getElementById("halt-banner");
     const flattenEl = document.getElementById("flatten-banner");
@@ -222,18 +290,18 @@
 
     const killEl = document.getElementById("kill-outcome-banner");
     const lastKill = state.status && state.status.last_kill;
-    const reason = lastKill && lastKill.reason;
-    if (reason === "isolated") {
+    const killReason = lastKill && lastKill.reason;
+    if (killReason === "isolated") {
       killEl.className = "banner halt";
       killEl.textContent =
         "SLEEVE KILL: isolated residual for " +
         (lastKill.bundle_id || "sleeve") +
         " — other sleeves still live";
-    } else if (reason === "fallback_not_ready" || reason === "fallback_error") {
+    } else if (killReason === "fallback_not_ready" || killReason === "fallback_error") {
       killEl.className = "banner fail";
       killEl.textContent =
         "SLEEVE KILL: could not isolate — whole paper account flattened";
-    } else if (reason === "unknown_sleeve") {
+    } else if (killReason === "unknown_sleeve") {
       killEl.className = "banner halt";
       killEl.textContent =
         "SLEEVE KILL: unknown sleeve " + (lastKill.bundle_id || "");
@@ -262,21 +330,7 @@
     document.getElementById("metric-gross").textContent = fmtPct(gross);
     renderGrossUtilization(gross);
     renderFirstRun();
-
-    const clock = state.status && state.status.clock;
-    const countdown = state.status && state.status.countdown;
-    const clockLine = document.getElementById("clock-line");
-    if (clock && !clock.error) {
-      const open = clock.is_open ? "OPEN" : "CLOSED";
-      let line = `Market ${open}`;
-      if (countdown) {
-        line += ` · next ${countdown.next_rebalance} rebalance ${fmtCountdown(countdown.seconds)} at ${countdown.at || "—"}`;
-      }
-      line += ` · now ${clock.timestamp || "—"}`;
-      clockLine.textContent = line;
-    } else {
-      clockLine.textContent = "Clock unavailable";
-    }
+    renderSessionMetrics();
 
     const posBody = document.querySelector("#positions-table tbody");
     posBody.innerHTML = "";
@@ -288,7 +342,7 @@
           ? "No positions yet. The next legal open or close rebalance will trade."
           : "Imported bundles are not trading. Start paper on Run.";
       }
-      posBody.innerHTML = `<tr><td colspan='6' class='muted'>${empty}</td></tr>`;
+      posBody.innerHTML = `<tr><td colspan='7' class='muted'>${empty}</td></tr>`;
     } else {
       const cap =
         (state.risk && state.risk.account && state.risk.account.max_name_weight) || 0.2;
@@ -300,7 +354,8 @@
         tr.innerHTML =
           `<td>${pos.symbol || "—"}</td><td class="nums">${fmtNum(pos.qty, 4)}</td>` +
           `<td class="nums">${notional}</td><td class="nums">${wanted}</td>` +
-          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap)}</td>`;
+          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap)}</td>` +
+          `<td>${nameCapBar(pos.weight, cap)}</td>`;
         posBody.appendChild(tr);
       }
     }
@@ -319,6 +374,7 @@
         sleeveBody.appendChild(tr);
       }
     }
+    renderSleeveAllocBook(sleeves);
 
     renderBanners();
   }

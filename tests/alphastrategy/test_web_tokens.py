@@ -258,3 +258,33 @@ def test_js_alt_digit_and_f1_accelerators(js_text: str) -> None:
     assert "altKey" in js_text
     assert "preventDefault" in js_text
     assert 'ev.key === "1"' not in js_text
+
+
+def test_js_render_banners_declares_reason_once(js_text: str) -> None:
+    block = js_text.split("function renderBanners")[1].split("function renderPortfolio")[0]
+    assert block.count("const reason") == 1
+    assert "killReason" in block
+
+
+def test_html_session_and_cap_mounts(html_text: str) -> None:
+    assert 'id="metric-session"' in html_text
+    assert 'id="metric-countdown"' in html_text
+    assert 'id="metric-countdown-kind"' in html_text
+    assert 'id="sleeve-alloc-track"' in html_text
+    assert ">Cap<" in html_text
+    portfolio_at = html_text.find('id="screen-portfolio"')
+    assert html_text.find('id="metric-session"') > portfolio_at
+
+
+def test_css_focus_visible_and_metric_sub(css_text: str) -> None:
+    assert ":focus-visible" in css_text
+    assert ".metric-sub" in css_text
+
+
+def test_js_session_name_and_alloc_rails(js_text: str) -> None:
+    assert "function renderSessionMetrics" in js_text
+    assert "function nameCapBar" in js_text
+    assert "function renderSleeveAllocBook" in js_text
+    assert "Spoken " in js_text
+    assert "colspan='7'" in js_text
+    assert "window.confirm" not in js_text
