@@ -11,12 +11,14 @@
     const names = document.getElementById("risk-cap-names");
     const orders = document.getElementById("risk-cap-orders");
     const longEl = document.getElementById("risk-cap-long");
+    const orderEl = document.getElementById("risk-cap-order");
     if (!policy) {
       if (gross) gross.textContent = "—";
       if (name) name.textContent = "—";
       if (names) names.textContent = "—";
       if (orders) orders.textContent = "—";
       if (longEl) longEl.textContent = "—";
+      if (orderEl) orderEl.textContent = "—";
       return;
     }
     if (gross) gross.textContent = fmtPct(policy.max_gross);
@@ -40,6 +42,10 @@
           ? "—"
           : policyLabel("long_only") + " " + flag;
     }
+    if (orderEl) {
+      orderEl.textContent =
+        policyLabel("max_order_notional_frac") + " " + fmtPct(policy.max_order_notional_frac);
+    }
     function markTighter(el, spokenVal, accountVal) {
       if (!el) return;
       el.classList.remove("warn");
@@ -54,6 +60,11 @@
     markTighter(name, policy.max_name_weight, account && account.max_name_weight);
     markTighter(names, policy.max_names, account && account.max_names);
     markTighter(orders, policy.max_orders_per_day, account && account.max_orders_per_day);
+    markTighter(
+      orderEl,
+      policy.max_order_notional_frac,
+      account && account.max_order_notional_frac
+    );
     const flattened =
       Boolean(state.status && state.status.flattened) ||
       (state.status &&
@@ -70,6 +81,7 @@
     markLimit(names, "max_names");
     markLimit(orders, "max_orders_per_day");
     markLimit(longEl, "long_only");
+    markLimit(orderEl, "max_order_notional_frac");
   }
 
   function buildRiskInputs(prefix, policy, current) {

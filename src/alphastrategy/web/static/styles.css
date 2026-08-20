@@ -940,6 +940,14 @@ button.action:focus-visible,
   color: #ef4444;
 }
 
+#risk-cap-order.warn {
+  color: #f59e0b;
+}
+
+#risk-cap-order.fail {
+  color: #ef4444;
+}
+
 #risk-sleeves .tighter-line.warn {
   color: #f59e0b;
 }

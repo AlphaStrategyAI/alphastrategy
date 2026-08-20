@@ -5,6 +5,7 @@ from typing import Any
 from alphastrategy.errors import FlattenRequested
 from alphastrategy.risk.check import check_book
 from alphastrategy.risk.policy import AccountPolicy
+from alphastrategy.supervisor.orders import plan_orders
 
 _EPS = 1e-12
 
@@ -13,6 +14,41 @@ def _nonzero_weight_count(weights: dict[str, float] | None) -> int:
     if not weights:
         return 0
     return sum(1 for value in weights.values() if abs(float(value)) > _EPS)
+
+
+def _next_send_limit(
+    *,
+    policy: AccountPolicy,
+    combined: dict[str, float] | None,
+    prices: dict[str, float] | None,
+    positions: list[dict[str, Any]] | None,
+    equity: float | None,
+    orders_today: int,
+) -> dict[str, str] | None:
+    if equity is None or equity <= 0:
+        return None
+    if not combined or not prices:
+        return None
+    qty: dict[str, float] = {}
+    for pos in positions or []:
+        symbol = str(pos.get("symbol") or "")
+        if not symbol:
+            continue
+        qty[symbol] = float(pos.get("qty") or 0)
+    try:
+        plan_orders(
+            dict(combined),
+            qty,
+            dict(prices),
+            float(equity),
+            policy,
+            orders_already_today=int(orders_today),
+        )
+    except FlattenRequested as exc:
+        return {"reason": str(exc.reason or "limit")}
+    except Exception:
+        return None
+    return None
 
 
 def summarize(
@@ -86,7 +122,7 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
             cash = None
             positions = None
             live_weights = None
-    return summarize(
+    out = summarize(
         policy=supervisor.spoken_policy(),
         orders_today=snapshot.orders_today,
         equity=equity,
@@ -95,3 +131,13 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
         last_combined=snapshot.last_combined,
         last_got=live_weights or snapshot.last_got,
     )
+    if live and out.get("live_limit") is None:
+        out["live_limit"] = _next_send_limit(
+            policy=supervisor.spoken_policy(),
+            combined=snapshot.last_combined,
+            prices=getattr(snapshot, "last_prices", None),
+            positions=positions,
+            equity=equity,
+            orders_today=snapshot.orders_today,
+        )
+    return out

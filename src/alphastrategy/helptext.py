@@ -65,6 +65,7 @@ SECTIONS: list[dict[str, str]] = [
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
             "Caps LIMIT follows the same live book as Tighten. "
+            "Caps LIMIT follows a next send through Order size. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap. "
@@ -294,6 +295,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
             "Caps LIMIT follows the same live book as Tighten. "
+            "Caps LIMIT follows a next send through Order size. "
             "A sleeve overlay that breaches the live book flattens now. "
             "Rebalance flattens a live book that already breaches the spoken cap."
         ),
@@ -376,6 +378,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "Tighten that breaches the live book flattens now. "
             "Tighten and Start paper flatten the same live book as Book. "
             "Caps LIMIT follows the same live book as Tighten. "
+            "Caps LIMIT follows a next send through Order size. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "A sleeve overlay that breaches the live book flattens now."
         ),
