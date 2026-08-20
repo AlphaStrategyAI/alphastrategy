@@ -34,6 +34,7 @@ REQUIRED_PHRASES = (
     "On Portfolio",
     "Flatten account",
     "own error",
+    "assembled from js/",
 )
 
 

@@ -405,6 +405,9 @@ def test_get_static_assets(api_client: ApiClient):
     assert js.status == 200
     assert b"javascript" in js.headers.get("Content-Type", "").encode()
     assert b"/api/status" in js.body
+    from alphastrategy.web.cockpit import cockpit_js
+
+    assert js.body == cockpit_js().encode("utf-8")
 
     static_css = api_client.get("/static/styles.css")
     assert static_css.status == 200

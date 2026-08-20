@@ -495,3 +495,29 @@ def test_js_set_run_error_by_band(js_text: str) -> None:
     assert 'setRunError("sleeves"' in js_text
     assert 'setRunError("promote"' in js_text
     assert "window.confirm" not in js_text
+
+
+def test_cockpit_js_assembled_from_parts() -> None:
+    from alphastrategy.web.cockpit import JS_PARTS, STATIC_DIR, cockpit_js
+
+    assert JS_PARTS == (
+        "js/core.js",
+        "js/paint-portfolio.js",
+        "js/paint-strategies.js",
+        "js/paint-run.js",
+        "js/paint-activity.js",
+        "js/paint-risk.js",
+        "js/boot.js",
+    )
+    for rel in JS_PARTS:
+        path = STATIC_DIR / rel
+        assert path.is_file(), rel
+        nlines = path.read_text(encoding="utf-8").count("\n")
+        assert nlines <= 400, f"{rel} has {nlines} newlines"
+    assert not (STATIC_DIR / "app.js").is_file()
+    blob = cockpit_js()
+    assert blob.startswith("(function () {")
+    assert blob.rstrip().endswith("})();")
+    assert "function setRunError" in blob
+    assert "function renderPortfolio" in blob
+    assert "window.confirm" not in blob
