@@ -232,6 +232,9 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         "clock": {"error": "control plane unavailable"},
         "halted": halted,
         "halt_reason": snapshot.halt_reason,
+        "last_rebalance_event": snapshot.last_rebalance_event,
+        "flattened": snapshot.state
+        in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
     }
     print(json.dumps(payload, separators=(",", ":")))
     return 0

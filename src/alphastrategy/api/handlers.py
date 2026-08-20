@@ -55,7 +55,9 @@ def _enrich_positions(
     positions: list[dict[str, Any]],
     equity: float,
     prices: dict[str, float],
+    last_combined: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
+    combined = last_combined or {}
     out: list[dict[str, Any]] = []
     for pos in positions:
         item = dict(pos)
@@ -66,6 +68,8 @@ def _enrich_positions(
             notional = qty * price
             item["notional"] = notional
             item["weight"] = (notional / equity) if equity else 0.0
+        if symbol in combined:
+            item["wanted"] = combined[symbol]
         out.append(item)
     return out
 
@@ -234,6 +238,8 @@ def handle_get_status(handler: Any, home: AlphaStrategyHome, supervisor: Supervi
             "halt_reason": snapshot.halt_reason,
             "last_rebalance_event": snapshot.last_rebalance_event,
             "countdown": _countdown_payload(clock, snapshot.last_rebalance_event),
+            "flattened": snapshot.state
+            in (SupervisorState.FLATTENING, SupervisorState.STOPPED),
         },
     )
 
@@ -247,6 +253,7 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
         supervisor.broker.list_positions(),
         equity,
         snapshot.last_prices,
+        snapshot.last_combined,
     )
     payload: dict[str, Any] = {
         "equity": equity,

@@ -204,6 +204,8 @@ def test_status_prints_json(cli_home: Path, patch_alpaca: mock.MagicMock, capsys
     assert payload["state"] == "idle_out_of_session"
     assert "clock" in payload
     assert payload["halted"] is False
+    assert payload["flattened"] is False
+    assert "last_rebalance_event" in payload
 
 
 def test_weight_fn_uses_last_fetched_bar_and_long_lookback(tmp_path: Path) -> None:

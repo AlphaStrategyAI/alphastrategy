@@ -216,6 +216,15 @@ def test_status_returns_state_clock_and_halt(api_client: ApiClient):
     assert isinstance(body["clock"], dict)
     assert "is_open" in body["clock"]
     assert "halted" in body
+    assert body["flattened"] is False
+
+
+def test_status_flattened_true_after_account_kill(api_stack):
+    client, _home, supervisor, _broker = api_stack
+    supervisor.kill_account()
+    body = client.get("/api/status").json()
+    assert body["state"] == "stopped"
+    assert body["flattened"] is True
 
 
 def test_handlers_never_set_paper_false():
@@ -447,6 +456,7 @@ def test_portfolio_includes_contribution_and_position_weight(api_stack):
     assert float(pos["qty"]) == 10.0
     assert pos["notional"] == pytest.approx(1000.0)
     assert pos["weight"] == pytest.approx(0.1)
+    assert pos["wanted"] == pytest.approx(0.4)
 
 
 def test_bundles_lists_stopped(api_stack):
