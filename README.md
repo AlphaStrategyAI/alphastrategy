@@ -118,7 +118,8 @@ The header **LIVE / STALE / DEAD** pulse is the Supervisor beat
 Portfolio is three bands: **Book** (Equity is the hero, with Cash, Day PnL,
 and **Drift**), **Flatten budgets** (Gross, Names, Orders today), and
 **Clock** (**Session / Now / Next / Last**; Next is the hero; Next is held
-while Supervisor is HALTED and flat while the paper account is flattened), then
+while Supervisor is HALTED, flat while the paper account is flattened, and
+flatten while the live book is through the spoken cap), then
 **Positions** (**Rows / Wanted / Got / At cap**; Wanted is the hero) and
 **Sleeves**.
 Strategies is three bands: **Inventory** (Imported / Paper / Halted / Stopped;
@@ -173,7 +174,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   start. Roster names imported at.
 - **Account kill** flattens the whole paper account, clears the last book,
   and zeros live sleeves. **Start paper after flatten** starts the session
-  loop again and does not catch up. On the Web, flatten lives
+  loop again and does not catch up. Start paper that flattens names the
+  breached cap. On the Web, flatten lives
   under **Flatten account** (type `FLATTEN` and confirm). **Resume after
   halt** lives under **After halt**, not beside flatten. CLI:
   `alphastrategy paper kill` (omit `--bundle`) types `FLATTEN` on a TTY,

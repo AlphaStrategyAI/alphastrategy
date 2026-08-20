@@ -65,6 +65,12 @@
       } else if (flattened) {
         countEl.classList.add("fail");
         kindEl.textContent = "flat · " + kind;
+      } else if (
+        utilization().live_limit &&
+        utilization().live_limit.reason
+      ) {
+        countEl.classList.add("warn");
+        kindEl.textContent = "flatten · " + kind;
       } else {
         kindEl.textContent = kind;
       }

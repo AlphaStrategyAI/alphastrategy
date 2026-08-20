@@ -111,7 +111,12 @@
       return;
     }
     try {
-      await api("POST", "/api/paper/start", { bundle_id: bundleId, allocation });
+      const started = await api("POST", "/api/paper/start", {
+        bundle_id: bundleId,
+        allocation,
+      });
+      void (started && started.flattened);
+      void (started && started.held);
       setRunError("promote", "");
       document.getElementById("start-confirm").checked = false;
       await refresh();

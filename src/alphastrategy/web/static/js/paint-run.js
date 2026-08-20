@@ -102,7 +102,12 @@
           return;
         }
         try {
-          await api("POST", "/api/paper/start", { bundle_id: bundleId, allocation });
+          const started = await api("POST", "/api/paper/start", {
+            bundle_id: bundleId,
+            allocation,
+          });
+          void (started && started.flattened);
+          void (started && started.held);
           setRunError("sleeves", "");
           const allocInput = form.querySelector('[name="allocation"]');
           form.querySelector('[name="confirm"]').checked = false;
@@ -149,8 +154,16 @@
     }
     if (flattened) {
       el.className = "fail";
-      el.textContent =
+      const kill = state.status && state.status.last_kill;
+      const killReason = kill && kill.reason;
+      const capFlat =
+        killReason === "long_only" ||
+        (killReason && NUMERIC_CAPS.indexOf(killReason) !== -1);
+      const restart =
         "Start paper after flatten starts the session loop again and does not catch up.";
+      el.textContent = capFlat
+        ? policyLabel(killReason) + " flattened the paper account. " + restart
+        : restart;
       return;
     }
     el.className = "muted";
