@@ -407,3 +407,147 @@ def test_paper_kill_prints_outcome_json(
     assert payload["flattened"] is True
     assert payload["isolated"] is False
 
+
+def test_paper_kill_help_mentions_force(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["paper", "kill", "--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.lower()
+    assert "--force" in out
+    assert "tty" in out
+
+
+def test_cli_account_kill_without_force_on_non_tty_does_not_flatten(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    _create_imported_bundle(cli_home)
+    assert main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"]) == 0
+    rc = main(["paper", "kill"])
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "pass --force" in err
+    state = json.loads((cli_home / "supervisor-state.json").read_text(encoding="utf-8"))
+    assert state["sleeves"]["asb_test"] == 0.25
+    patch_alpaca.assert_not_called()
+
+
+def test_cli_account_kill_with_force_prints_account_outcome(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    _create_imported_bundle(cli_home)
+    assert main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"]) == 0
+    rc = main(["paper", "kill", "--force"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["reason"] == "account"
+    assert payload["flattened"] is True
+    assert payload["isolated"] is False
+    assert payload["scope"] == "account"
+
+
+def test_cli_account_kill_tty_flatten_without_force(
+    cli_home: Path, patch_alpaca: mock.MagicMock, monkeypatch, capsys
+) -> None:
+    from io import StringIO
+
+    from alphastrategy.cli import confirm as confirm_mod
+
+    _create_imported_bundle(cli_home)
+    assert main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"]) == 0
+
+    stdin = StringIO("FLATTEN\n")
+    stderr = StringIO()
+
+    def _tty_confirm(*, force: bool, **_kwargs):
+        return confirm_mod.confirm_account_kill(
+            force=force, stdin=stdin, stderr=stderr, isatty=lambda: True
+        )
+
+    monkeypatch.setattr("alphastrategy.cli.main.confirm_account_kill", _tty_confirm)
+    rc = main(["paper", "kill"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["reason"] == "account"
+    assert "Type FLATTEN" in stderr.getvalue()
+
+
+def test_cli_account_kill_tty_wrong_phrase_does_not_flatten(
+    cli_home: Path, patch_alpaca: mock.MagicMock, monkeypatch, capsys
+) -> None:
+    from io import StringIO
+
+    from alphastrategy.cli import confirm as confirm_mod
+
+    _create_imported_bundle(cli_home)
+    assert main(["paper", "start", "--bundle", "asb_test", "--allocation", "0.25"]) == 0
+
+    stdin = StringIO("yes\n")
+    stderr = StringIO()
+
+    def _tty_confirm(*, force: bool, **_kwargs):
+        return confirm_mod.confirm_account_kill(
+            force=force, stdin=stdin, stderr=stderr, isatty=lambda: True
+        )
+
+    monkeypatch.setattr("alphastrategy.cli.main.confirm_account_kill", _tty_confirm)
+    rc = main(["paper", "kill"])
+    assert rc == 1
+    state = json.loads((cli_home / "supervisor-state.json").read_text(encoding="utf-8"))
+    assert state["sleeves"]["asb_test"] == 0.25
+    patch_alpaca.assert_not_called()
+
+
+def test_cli_account_kill_control_plane_without_force_does_not_post(
+    cli_home: Path, patch_alpaca: mock.MagicMock
+) -> None:
+    _create_imported_bundle(cli_home, "asb_test")
+    home = AlphaStrategyHome.from_env()
+    broker = FakeBroker()
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_test": {"AAPL": 1.0}},
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rc = main(["paper", "kill", "--port", str(server.server_port)])
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+    assert rc == 1
+    assert supervisor.snapshot.sleeves["asb_test"] == 0.25
+    assert supervisor.snapshot.last_kill is None
+
+
+def test_cli_account_kill_control_plane_with_force_flattens(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    _create_imported_bundle(cli_home, "asb_test")
+    home = AlphaStrategyHome.from_env()
+    broker = FakeBroker()
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        policy=AccountPolicy.defaults(),
+        evaluators={"asb_test": {"AAPL": 1.0}},
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rc = main(
+            ["paper", "kill", "--force", "--port", str(server.server_port)]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["reason"] == "account"
+    assert supervisor.snapshot.last_kill["reason"] == "account"
+

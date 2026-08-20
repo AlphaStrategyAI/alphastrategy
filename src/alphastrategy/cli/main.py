@@ -17,6 +17,7 @@ import yaml
 from alphastrategy.api.app import make_server, start_heartbeat
 from alphastrategy.bundle.import_bundle import import_asb
 from alphastrategy.errors import HaltRequested, ImportRejected
+from alphastrategy.cli.confirm import confirm_account_kill
 from alphastrategy.helptext import help_text
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.dsl.sandbox import run_sandbox
@@ -298,7 +299,12 @@ def _cmd_paper_kill(
     broker: Any | None,
     bundle_id: str | None,
     port: int = DEFAULT_PORT,
+    force: bool = False,
 ) -> int:
+    if not bundle_id:
+        refused = confirm_account_kill(force=force)
+        if refused is not None:
+            return refused
     response = _control_request(
         "POST",
         "/api/paper/kill",
@@ -382,6 +388,11 @@ def create_parser() -> argparse.ArgumentParser:
         help="bundle id (omit to flatten the whole paper account)",
     )
     paper_kill.add_argument("--port", type=int, default=DEFAULT_PORT, help="control plane port")
+    paper_kill.add_argument(
+        "--force",
+        action="store_true",
+        help="skip account-kill confirmation (required when stdin is not a TTY)",
+    )
 
     paper_resume = paper_sub.add_parser(
         "resume",
@@ -434,7 +445,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.paper_command == "stop":
             return _cmd_paper_stop(home, None, args.bundle, args.port)
         if args.paper_command == "kill":
-            return _cmd_paper_kill(home, None, args.bundle, args.port)
+            return _cmd_paper_kill(
+                home, None, args.bundle, args.port, args.force
+            )
         if args.paper_command == "resume":
             return _cmd_paper_resume(home, None, args.port)
         parser.error("paper subcommand required")
