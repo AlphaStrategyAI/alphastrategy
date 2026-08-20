@@ -814,6 +814,29 @@ def test_heartbeat_live_book_holds_past_ttl_for_status_and_portfolio(
     assert broker.position_reads == positions
 
 
+def test_status_book_source_glance_without_tick(api_stack) -> None:
+    client, _home, _supervisor, _broker = api_stack
+    body = client.get("/api/status").json()
+    assert body["book"]["source"] == "glance"
+
+
+def test_status_book_source_heartbeat_after_tick(api_stack) -> None:
+    client, _home, supervisor, _broker = api_stack
+    supervisor.tick()
+    body = client.get("/api/status").json()
+    assert body["book"]["source"] == "heartbeat"
+
+
+def test_status_book_source_glance_after_kill(api_stack) -> None:
+    client, _home, supervisor, broker = api_stack
+    broker.positions = {"AAPL": 15.0}
+    supervisor.tick()
+    killed = client.post("/api/paper/kill", json={})
+    assert killed.status == 200
+    body = client.get("/api/status").json()
+    assert body["book"]["source"] == "glance"
+
+
 def test_portfolio_after_account_kill_is_not_stale_live_book(api_stack) -> None:
     client, _home, supervisor, broker = api_stack
     broker.positions = {"AAPL": 15.0}

@@ -573,6 +573,7 @@ def test_html_glance_bands(html_text: str) -> None:
     risk = html_text[html_text.find('id="glance-risk"') : html_text.find('id="glance-clock"')]
     clock = html_text[html_text.find('id="glance-clock"') : html_text.find('id="glance-positions"')]
     assert 'id="metric-equity"' in book
+    assert 'id="metric-equity-sub"' in book
     assert 'id="metric-cash"' in book
     assert 'id="metric-pnl"' in book
     assert "hero" in book
@@ -1213,6 +1214,17 @@ def test_js_paints_risk_caps_tiles(js_text: str) -> None:
     assert "max_name_weight" in paint
     assert "max_orders_per_day" in paint
     assert "fmtPct" in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_paints_book_equity_beat_or_glance(js_text: str) -> None:
+    assert "function bookSourceLabel" in js_text
+    rails = js_text[js_text.find("function bookSourceLabel") :]
+    assert 'src === "heartbeat"' in rails
+    assert "Beat " in rails
+    assert "Glance" in rails
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text

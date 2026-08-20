@@ -1246,16 +1246,21 @@ def test_spoken_policy_sees_runtime_yaml_write(tmp_path: Path) -> None:
     (home.bundle_dir("asb_test") / "risk-envelope.yaml").write_text(
         "max_name_weight: 0.20\n", encoding="utf-8"
     )
-    home.runtime_path().write_text(
-        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.10}}}),
+    runtime = home.runtime_path()
+    runtime.write_text(
+        "sleeve_overlays:\n  asb_test:\n    max_name_weight: 0.10\n",
         encoding="utf-8",
     )
     supervisor.start_sleeve("asb_test", 0.25)
     assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.10)
-    home.runtime_path().write_text(
-        yaml.safe_dump({"sleeve_overlays": {"asb_test": {"max_name_weight": 0.05}}}),
+    prior = runtime.stat()
+    runtime.write_text(
+        "sleeve_overlays:\n  asb_test:\n    max_name_weight: 0.05\n",
         encoding="utf-8",
     )
+    os.utime(runtime, ns=(prior.st_atime_ns, prior.st_mtime_ns))
+    assert runtime.stat().st_size == prior.st_size
+    assert runtime.stat().st_mtime_ns == prior.st_mtime_ns
     assert supervisor.spoken_policy().max_name_weight == pytest.approx(0.05)
 
 
@@ -1294,6 +1299,32 @@ def test_sleeve_policies_read_runtime_once(tmp_path: Path) -> None:
     policies = supervisor.sleeve_policies(["asb_a", "asb_b"])
     assert set(policies) == {"asb_a", "asb_b"}
     assert reads["n"] == 1
+
+
+def test_read_runtime_parses_once_while_unchanged(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    loads = {"n": 0}
+    orig = yaml.safe_load
+
+    def counted(data):
+        loads["n"] += 1
+        return orig(data)
+
+    monkeypatch.setattr("alphastrategy.supervisor.loop.yaml.safe_load", counted)
+    home = AlphaStrategyHome(root=tmp_path)
+    supervisor = _make_supervisor(tmp_path, FakeBroker())
+    home.runtime_path().write_text(
+        "sleeve_overlays:\n  asb_test:\n    max_name_weight: 0.10\n",
+        encoding="utf-8",
+    )
+    supervisor.start_sleeve("asb_test", 0.25)
+    supervisor.spoken_policy()
+    after = loads["n"]
+    supervisor.spoken_policy()
+    supervisor.sleeve_policies(["asb_test"])
+    assert loads["n"] == after
+    assert after >= 1
 
 
 def test_heartbeat_seeds_live_book_without_extra_broker_reads(tmp_path: Path) -> None:
