@@ -140,3 +140,67 @@ def test_v1_done_path(tmp_path: Path) -> None:
     assert "PK_" not in audit_text
     assert "SK_" not in audit_text
     assert '"secret"' not in audit_text.lower()
+
+
+def test_operator_desk_portfolio_after_rebalance(tmp_path: Path) -> None:
+    home = AlphaStrategyHome(root=tmp_path)
+    home.root.mkdir(parents=True, exist_ok=True)
+
+    open_time = datetime(2024, 1, 31, 14, 30)
+    session_close = datetime(2024, 1, 31, 21, 0)
+    broker = FakeBroker(
+        is_open=False,
+        next_open=open_time,
+        next_close=session_close,
+        now=open_time,
+    )
+    _setup_broker_bars(broker)
+
+    bundle_id = import_asb(GOLDEN_ASB, home)
+    supervisor = _make_supervisor(home, broker)
+    supervisor.start_sleeve(bundle_id, 0.4)
+
+    broker.set_session_open(
+        open_time=open_time,
+        session_close=session_close,
+        now=open_time + timedelta(minutes=3),
+    )
+    supervisor.tick()
+
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        conn = http.client.HTTPConnection("127.0.0.1", server.server_port)
+        conn.request("GET", "/api/portfolio")
+        response = conn.getresponse()
+        portfolio = json.loads(response.read().decode("utf-8"))
+        assert response.status == 200
+        assert portfolio["sleeve_contribution"][bundle_id]["AAPL"] == 0.2
+        assert portfolio["sleeve_contribution"][bundle_id]["MSFT"] == 0.2
+        assert portfolio["last_combined"]["AAPL"] == 0.2
+        assert portfolio["last_combined"]["MSFT"] == 0.2
+
+        conn.request("GET", "/api/status")
+        response = conn.getresponse()
+        status = json.loads(response.read().decode("utf-8"))
+        assert response.status == 200
+        assert status["countdown"]["next_rebalance"] in ("open", "close")
+        assert "seconds" in status["countdown"]
+        assert status["last_rebalance_event"] == "2024-01-31:open"
+
+        supervisor.stop_sleeve(bundle_id)
+
+        conn.request("GET", "/api/bundles")
+        response = conn.getresponse()
+        bundles = json.loads(response.read().decode("utf-8"))
+        assert bundle_id in bundles["stopped"]
+        assert bundle_id not in bundles["paper"]
+
+        conn.request("GET", "/api/portfolio")
+        response = conn.getresponse()
+        after_stop = json.loads(response.read().decode("utf-8"))
+        assert after_stop["sleeve_contribution"] == portfolio["sleeve_contribution"]
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
