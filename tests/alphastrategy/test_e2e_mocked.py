@@ -330,7 +330,10 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert help_resp.status == 200
         assert help_body["sections"][2]["id"] == "halt_flatten"
         assert help_body["howtos"][0]["id"] == "how_portfolio"
+        assert "empty Portfolio" in help_body["howtos"][0]["body"]
         assert help_body["tasks"][0]["id"] == "task_import"
+        cockpit = next(s for s in help_body["sections"] if s["id"] == "cockpit")
+        assert "not a global panel" in cockpit["body"]
         conn.request("GET", "/")
         html_resp = conn.getresponse()
         html = html_resp.read().decode("utf-8")
@@ -344,11 +347,15 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
         assert 'id="act-tape"' in html
+        port = html[html.find('id="screen-portfolio"') : html.find('id="screen-strategies"')]
+        assert 'id="first-run"' in port
+        assert '<h2 class="glance-heading">Start this paper desk</h2>' in port
         conn.request("GET", "/app.js")
         js_resp = conn.getresponse()
         js_body = js_resp.read().decode("utf-8")
         assert js_resp.status == 200
         assert "function bookTable" in js_body
+        assert "function renderRiskUtilization" in js_body
         assert "JSON.stringify(payload" not in js_body
         conn.request("GET", "/api/risk")
         risk_resp = conn.getresponse()

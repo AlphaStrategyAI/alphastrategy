@@ -40,6 +40,7 @@ REQUIRED_PHRASES = (
     "Beat / Tape / Blotter",
     "not a JSON dump",
     "How to import a qualified .asb",
+    "empty Portfolio",
 )
 
 

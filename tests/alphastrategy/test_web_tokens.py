@@ -211,10 +211,16 @@ def test_js_activity_kill_summary_distinguishes_isolated(js_text: str) -> None:
 
 def test_html_first_run_and_book_column(html_text: str) -> None:
     assert 'id="first-run"' in html_text
-    first_at = html_text.find('id="first-run"')
-    portfolio_at = html_text.find('id="screen-portfolio"')
-    assert 0 <= first_at < portfolio_at
-    assert "Start this paper desk" in html_text
+    port = html_text[
+        html_text.find('id="screen-portfolio"') : html_text.find('id="screen-strategies"')
+    ]
+    assert 'id="first-run"' in port
+    assert port.find('id="first-run"') < port.find('id="glance-book"')
+    banners = html_text[
+        html_text.find('id="desk-banners"') : html_text.find('id="screen-portfolio"')
+    ]
+    assert 'id="first-run"' not in banners
+    assert '<h2 class="glance-heading">Start this paper desk</h2>' in port
     assert "Import is not permission to trade" in html_text
     assert 'data-go-screen="strategies"' in html_text
     assert 'data-go-screen="run"' in html_text
@@ -509,6 +515,7 @@ def test_cockpit_js_assembled_from_parts() -> None:
 
     assert JS_PARTS == (
         "js/core.js",
+        "js/paint-rails.js",
         "js/paint-portfolio.js",
         "js/paint-strategies.js",
         "js/paint-run.js",
@@ -531,6 +538,23 @@ def test_cockpit_js_assembled_from_parts() -> None:
     assert "window.state" not in blob
     html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
     assert '<script src="app.js"></script>' in html
+
+
+def test_cockpit_js_includes_paint_rails() -> None:
+    from alphastrategy.web.cockpit import JS_PARTS, STATIC_DIR, cockpit_js
+
+    assert JS_PARTS[0] == "js/core.js"
+    assert JS_PARTS[1] == "js/paint-rails.js"
+    assert JS_PARTS[2] == "js/paint-portfolio.js"
+    rails = (STATIC_DIR / "js/paint-rails.js").read_text(encoding="utf-8")
+    port = (STATIC_DIR / "js/paint-portfolio.js").read_text(encoding="utf-8")
+    assert "function renderRiskUtilization" in rails
+    assert "function wantedGotBar" in rails
+    assert "function renderRiskUtilization" not in port
+    assert "function renderPortfolio" in port
+    assert "function renderFirstRun" in port
+    assert rails.count("\n") <= 400
+    assert "window.state" not in cockpit_js()
 
 
 def test_html_strategies_inventory_bands(html_text: str) -> None:
