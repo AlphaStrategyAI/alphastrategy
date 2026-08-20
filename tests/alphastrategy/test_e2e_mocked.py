@@ -345,6 +345,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         assert 'id="run-remaining"' in html
         assert 'id="strat-inventory"' in html
         assert 'id="risk-tighten"' in html
+        assert 'id="risk-tighten-tight"' in html
         assert 'id="risk-overlay-spoken"' in html
         assert 'id="risk-cap-gross"' in html
         assert 'id="risk-head-names"' in html
@@ -368,6 +369,7 @@ def test_control_plane_serves_help(tmp_path: Path) -> None:
         risk_body = json.loads(risk_resp.read().decode("utf-8"))
         assert risk_resp.status == 200
         assert risk_body["labels"]["max_gross"] == "Gross cap"
+        assert risk_body["defaults"]["max_gross"] == 1.0
     finally:
         server.shutdown()
         thread.join(timeout=2)

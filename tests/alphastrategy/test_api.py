@@ -596,6 +596,32 @@ def test_get_risk_includes_spoken_labels(api_client: ApiClient) -> None:
     assert risk["labels"]["max_gross"] == "Gross cap"
 
 
+def test_get_risk_includes_v1_defaults(api_client: ApiClient) -> None:
+    from dataclasses import asdict
+
+    from alphastrategy.risk.policy import AccountPolicy
+
+    risk = api_client.get("/api/risk").json()
+    assert risk["defaults"] == asdict(AccountPolicy.defaults())
+    assert risk["account"]["max_gross"] == risk["defaults"]["max_gross"]
+
+
+def test_put_risk_ignores_defaults_payload(api_client: ApiClient) -> None:
+    before = api_client.get("/api/risk").json()
+    response = api_client.put(
+        "/api/risk",
+        json={
+            "defaults": {"max_gross": 0.01},
+            "account": {"max_name_weight": 0.15},
+        },
+    )
+    assert response.status == 200
+    after = api_client.get("/api/risk").json()
+    assert after["defaults"] == before["defaults"]
+    assert after["account"]["max_name_weight"] == 0.15
+    assert after["account"]["max_gross"] == before["account"]["max_gross"]
+
+
 def test_get_help_returns_operator_sections(api_client: ApiClient) -> None:
     from alphastrategy.helptext import help_payload
 

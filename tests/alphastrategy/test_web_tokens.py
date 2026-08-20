@@ -811,6 +811,16 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert ">Target cash<" in head
     assert 'id="risk-account-form"' in tighten
     assert 'id="risk-error"' in tighten
+    assert 'id="risk-tighten-tight"' in tighten
+    assert 'id="risk-tighten-delta-dollar"' in tighten
+    assert 'id="risk-tighten-delta-frac"' in tighten
+    assert 'id="risk-tighten-fields"' in tighten
+    assert "metrics-4" in tighten
+    assert "hero" in tighten
+    assert ">Tight<" in tighten
+    assert ">Delta $<" in tighten
+    assert ">Delta %<" in tighten
+    assert ">Fields<" in tighten
     assert 'id="risk-sleeves"' in overlays
     assert 'id="risk-overlay-spoken"' in overlays
     assert 'id="risk-overlay-count"' in overlays
@@ -848,6 +858,37 @@ def test_js_paints_risk_overlay_glance(js_text: str) -> None:
     assert "tighter than account" in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_paints_risk_tighten_glance(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderTightenGlance") : js_text.find(
+            "function renderOverlayGlance"
+        )
+    ]
+    assert "function renderTightenGlance" in js_text
+    assert "risk-tighten-tight" in paint
+    assert "risk-tighten-delta-dollar" in paint
+    assert "risk-tighten-delta-frac" in paint
+    assert "risk-tighten-fields" in paint
+    assert "overlayTighterCount" in paint
+    assert "min_delta_dollar" in paint
+    assert "min_delta_frac" in paint
+    assert "NUMERIC_CAPS.length" in paint
+    assert "fmtNum" in paint
+    assert "fmtPct" in paint
+    risk_fn = js_text[js_text.find("function renderRisk") :]
+    glance = risk_fn.find("renderTightenGlance")
+    dirty = risk_fn.find("if (riskFormIsDirty())")
+    assert glance != -1 and dirty != -1 and glance < dirty
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_risk_tighten_tokens(css_text: str) -> None:
+    tight = re.search(r"#risk-tighten-tight\.warn\s*\{[^}]*\}", css_text)
+    assert tight is not None and "#f59e0b" in tight.group(0).lower()
 
 
 def test_css_risk_overlay_tokens(css_text: str) -> None:
