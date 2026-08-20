@@ -116,7 +116,9 @@ class Supervisor:
         self._recover_interrupted_flatten()
         self._recover_interrupted_isolate()
         self._spoken_cache: tuple[tuple, AccountPolicy] | None = None
-        self._live_book_cache: tuple[float, dict[str, Any], list[dict[str, Any]]] | None = None
+        self._live_book_cache: (
+            tuple[float, dict[str, Any], list[dict[str, Any]], bool] | None
+        ) = None
         self._runtime_doc_cache: tuple[tuple[int, int], dict[str, Any]] | None = None
         self._envelope_cache: dict[str, tuple[str, dict[str, Any]]] = {}
 
@@ -553,7 +555,7 @@ class Supervisor:
                     if symbol in prices and qty != 0.0
                 }
         finally:
-            self._live_book_cache = (time.monotonic(), account, raw_positions)
+            self._live_book_cache = (time.monotonic(), account, raw_positions, True)
 
     def _set_idle_state(self, cur: ClockSnapshot) -> None:
         if self._snapshot.state == SupervisorState.HALTED:
@@ -679,11 +681,13 @@ class Supervisor:
         with self._lock:
             now = time.monotonic()
             cached = self._live_book_cache
-            if cached is not None and (now - cached[0]) < self.LIVE_BOOK_TTL_SEC:
+            if cached is not None and (
+                cached[3] or (now - cached[0]) < self.LIVE_BOOK_TTL_SEC
+            ):
                 return cached[1], cached[2]
             account = self._broker.get_account()
             positions = self._broker.list_positions()
-            self._live_book_cache = (now, account, positions)
+            self._live_book_cache = (now, account, positions, False)
             return account, positions
 
     def sleeve_policies(self, bundle_ids: list[str]) -> dict[str, AccountPolicy]:
@@ -701,7 +705,7 @@ class Supervisor:
         cached = self._live_book_cache
         if cached is None:
             return
-        self._live_book_cache = (time.monotonic(), cached[1], cached[2])
+        self._live_book_cache = (time.monotonic(), cached[1], cached[2], cached[3])
 
     def spoken_policy(self) -> AccountPolicy:
         with self._lock:
