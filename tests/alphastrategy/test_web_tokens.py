@@ -459,6 +459,8 @@ def test_js_paints_header_chips(js_text: str) -> None:
     assert "desk-session" in paint
     assert "desk-supervisor" in paint
     assert "function supervisorLabel" in js_text
+    assert "function applySessionChip" in js_text
+    assert "applySessionChip" in paint
     assert "RTH session" in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
@@ -471,6 +473,37 @@ def test_css_header_chip_tokens(css_text: str) -> None:
     assert session is not None and "#10b981" in session.group(0).lower()
     assert halt is not None and "#f59e0b" in halt.group(0).lower()
     assert fail is not None and "#ef4444" in fail.group(0).lower()
+
+
+def test_js_session_chip_warns_when_halted_open(js_text: str) -> None:
+    assert "function applySessionChip" in js_text
+    body = js_text[
+        js_text.find("function applySessionChip") : js_text.find(
+            "function renderSessionMetrics"
+        )
+    ]
+    assert "halted" in body
+    assert '"warn"' in body
+    assert '"open"' in body
+    session = js_text[
+        js_text.find("function renderSessionMetrics") : js_text.find("function pulseLabel")
+    ]
+    assert "applySessionChip" in session
+    pulse = js_text[
+        js_text.find("function renderDeskPulse") : js_text.find("function renderStrategies")
+    ]
+    assert "applySessionChip" in pulse
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+
+
+def test_css_session_warn_uses_halt_token(css_text: str) -> None:
+    desk_warn = re.search(r"#desk-session\.warn\s*\{[^}]*\}", css_text)
+    metric_warn = re.search(r"#metric-session\.warn\s*\{[^}]*\}", css_text)
+    desk_open = re.search(r"#desk-session\.open\s*\{[^}]*\}", css_text)
+    assert desk_warn is not None and "#f59e0b" in desk_warn.group(0).lower()
+    assert metric_warn is not None and "#f59e0b" in metric_warn.group(0).lower()
+    assert desk_open is not None and "#10b981" in desk_open.group(0).lower()
 
 
 def test_html_glance_bands(html_text: str) -> None:
