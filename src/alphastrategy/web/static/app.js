@@ -917,8 +917,30 @@
   });
 
   document.addEventListener("keydown", (ev) => {
-    if (ev.key !== "Escape") return;
-    setHelpOpen(false);
+    if (ev.key === "Escape") {
+      setHelpOpen(false);
+      return;
+    }
+    if (ev.ctrlKey || ev.metaKey) return;
+    if (ev.key === "F1") {
+      ev.preventDefault();
+      const open =
+        document.getElementById("help-toggle").getAttribute("aria-expanded") === "true";
+      setHelpOpen(!open);
+      return;
+    }
+    if (!ev.altKey) return;
+    const SCREEN_KEYS = {
+      Digit1: "portfolio",
+      Digit2: "strategies",
+      Digit3: "run",
+      Digit4: "activity",
+      Digit5: "risk",
+    };
+    const screen = SCREEN_KEYS[ev.code];
+    if (!screen) return;
+    ev.preventDefault();
+    showScreen(screen);
   });
 
   refresh();

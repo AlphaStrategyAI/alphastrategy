@@ -10,13 +10,16 @@
   <header>
     <div class="brand">alphastrategy · paper</div>
     <nav id="nav" aria-label="Screens">
-      <button type="button" data-screen="portfolio" class="active">Portfolio</button>
-      <button type="button" data-screen="strategies">Strategies</button>
-      <button type="button" data-screen="run">Run</button>
-      <button type="button" data-screen="activity">Activity</button>
-      <button type="button" data-screen="risk">Risk</button>
+      <button type="button" data-screen="portfolio" class="active" aria-keyshortcuts="Alt+1">Portfolio</button>
+      <button type="button" data-screen="strategies" aria-keyshortcuts="Alt+2">Strategies</button>
+      <button type="button" data-screen="run" aria-keyshortcuts="Alt+3">Run</button>
+      <button type="button" data-screen="activity" aria-keyshortcuts="Alt+4">Activity</button>
+      <button type="button" data-screen="risk" aria-keyshortcuts="Alt+5">Risk</button>
     </nav>
-    <button type="button" id="help-toggle" aria-expanded="false" aria-controls="help-panel">Help</button>
+    <div class="header-actions">
+      <span id="kbd-hint" class="kbd-hint">Alt+1–5 · F1 help</span>
+      <button type="button" id="help-toggle" aria-expanded="false" aria-controls="help-panel" aria-keyshortcuts="F1">Help</button>
+    </div>
   </header>
 
   <div class="shell">

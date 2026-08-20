@@ -101,6 +101,7 @@ orders through Alpaca. Strategy code never sees broker credentials.
 shows portfolio state, running sleeves, activity, and risk — not
 backtests or strategy editing. **Help** (header control, not a sixth
 screen) loads the same operator runbook as `alphastrategy help`.
+Header hint: **Alt+1–5** switches screens; **F1** toggles Help.
 
 Portfolio is the home screen: RTH countdown to the next legal
 rebalance, sleeve contribution, and **wanted vs got** weights. An

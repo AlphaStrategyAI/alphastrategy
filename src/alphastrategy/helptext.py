@@ -54,7 +54,8 @@ SECTIONS: list[dict[str, str]] = [
             "lists each sleeve allocation as text. A red FLAT banner means "
             "the paper account was flattened. Activity kill rows say isolated "
             "residual or flattened account. status includes last_kill even "
-            "when the control plane is down. Help is this aside, not a sixth screen."
+            "when the control plane is down. Alt+1 through Alt+5 switch screens. "
+            "F1 toggles Help. Help is this aside, not a sixth screen."
         ),
     },
     {

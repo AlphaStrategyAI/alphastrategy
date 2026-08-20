@@ -57,6 +57,18 @@ header {
   color: #9ba3b4;
 }
 
+.kbd-hint {
+  font-size: 0.72rem;
+  color: #5c6573;
+  letter-spacing: 0.02em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 nav {
   display: flex;
   gap: 0.25rem;

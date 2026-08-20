@@ -237,3 +237,24 @@ def test_js_first_glance_behaviors(js_text: str) -> None:
     assert "util-fill" in js_text
     assert "Allocation " in js_text
     assert "window.confirm" not in js_text
+
+
+def test_html_keyboard_accelerators(html_text: str) -> None:
+    assert 'id="kbd-hint"' in html_text
+    assert "Alt+1–5" in html_text or "Alt+1-5" in html_text
+    assert "F1 help" in html_text
+    assert 'aria-keyshortcuts="Alt+1"' in html_text
+    assert 'aria-keyshortcuts="Alt+5"' in html_text
+    assert 'aria-keyshortcuts="F1"' in html_text
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_alt_digit_and_f1_accelerators(js_text: str) -> None:
+    assert "Digit1" in js_text
+    assert "Digit5" in js_text
+    assert 'ev.key === "F1"' in js_text
+    assert "altKey" in js_text
+    assert "preventDefault" in js_text
+    assert 'ev.key === "1"' not in js_text

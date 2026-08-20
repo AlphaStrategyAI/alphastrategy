@@ -20,6 +20,7 @@ REQUIRED_PHRASES = (
     "--force",
     "isolated residual",
     "Start this paper desk",
+    "Alt+1",
     "Wanted",
     "Got",
 )
