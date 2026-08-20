@@ -706,6 +706,14 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert ">Gross cap<" in caps
     assert ">Name cap<" in caps
     assert 'id="risk-utilization"' in head
+    assert 'id="risk-head-names"' in head
+    assert 'id="risk-head-orders"' in head
+    assert 'id="risk-head-cash"' in head
+    assert 'id="risk-head-target"' in head
+    assert "metrics-4" in head
+    assert "hero" in head
+    assert ">Names<" in head
+    assert ">Target cash<" in head
     assert 'id="risk-account-form"' in tighten
     assert 'id="risk-error"' in tighten
     assert 'id="risk-sleeves"' in overlays
@@ -772,6 +780,29 @@ def test_js_paints_risk_caps_tiles(js_text: str) -> None:
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_paints_risk_headroom_tiles(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRiskUtilization") : js_text.find("function nameCapBar")
+    ]
+    assert "risk-head-names" in paint
+    assert "risk-head-orders" in paint
+    assert "risk-head-cash" in paint
+    assert "risk-head-target" in paint
+    assert "target_cash_weight" in paint
+    assert "paintUtilTrack" in paint
+    assert 'innerHTML = ""' not in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_risk_headroom_fail_tokens(css_text: str) -> None:
+    names = re.search(r"#risk-head-names\.fail\s*\{[^}]*\}", css_text)
+    orders = re.search(r"#risk-head-orders\.fail\s*\{[^}]*\}", css_text)
+    assert names is not None and "#ef4444" in names.group(0).lower()
+    assert orders is not None and "#ef4444" in orders.group(0).lower()
 
 
 def test_js_risk_tighten_groups(js_text: str) -> None:

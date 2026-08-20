@@ -49,6 +49,7 @@ REQUIRED_PHRASES = (
     "Remaining / Spoken / Active / Idle",
     "Spoken / Overlays / Tighter / Idle",
     "Gross cap / Name cap / Names / Orders today",
+    "Names / Orders today / Cash / Target cash",
 )
 
 
