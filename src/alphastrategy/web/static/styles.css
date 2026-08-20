@@ -906,6 +906,26 @@ button.action:focus-visible,
   color: #f59e0b;
 }
 
+#risk-cap-gross.fail {
+  color: #ef4444;
+}
+
+#risk-cap-name.fail {
+  color: #ef4444;
+}
+
+#risk-cap-names.fail {
+  color: #ef4444;
+}
+
+#risk-cap-orders.fail {
+  color: #ef4444;
+}
+
+#risk-cap-long.fail {
+  color: #ef4444;
+}
+
 #risk-sleeves .tighter-line.warn {
   color: #f59e0b;
 }

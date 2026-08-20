@@ -107,6 +107,7 @@ SECTIONS: list[dict[str, str]] = [
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
             "Caps is Gross cap / Name cap / Names / Orders today. "
             "Caps is the spoken book. Tighten still edits the account form. "
+            "Caps names the cap the live book is through. "
             "Headroom is Names / Orders today / Cash / Target cash. "
             "Risk is four bands Caps / Headroom / Tighten plus Sleeve overlays. "
             "Tighten is Tight / Delta $ / Delta % / Fields. "
@@ -142,7 +143,8 @@ SECTIONS: list[dict[str, str]] = [
             "the whole paper account. That CLI account kill prompts for FLATTEN "
             "on a TTY and refuses on a non-TTY unless --force is passed. "
             "paper kill --bundle isolates when the "
-            "last book is clean; otherwise it flattens the account rather than guess."
+            "last book is clean; otherwise it flattens the account rather than guess. "
+            "status names LIMIT while the live book is through the spoken cap."
         ),
     },
     {
@@ -242,6 +244,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Four bands: Caps / Headroom / Tighten, then Sleeve overlays. "
             "Caps is four tiles Gross cap / Name cap / Names / Orders today. Gross cap is the hero. "
             "Caps is the spoken book. Tighten still edits the account form. "
+            "Caps names the cap the live book is through. "
             "Headroom is four tiles Names / Orders today / Cash / Target cash. Names is the hero. "
             "Tighten is four tiles Tight / Delta $ / Delta % / Fields. Tight is the hero. "
             "Tight counts account caps stricter than v1 defaults. "

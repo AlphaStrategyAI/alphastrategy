@@ -148,6 +148,7 @@ Tighten still posts the policy keys.
 Risk is four bands: **Caps**, **Headroom**, **Tighten**, and **Sleeve overlays**.
 Caps is **Gross cap / Name cap / Names / Orders today** (Gross cap is the hero).
 Caps is the spoken book. Tighten still edits the account form.
+Caps names the cap the live book is through.
 Headroom is **Names / Orders today / Cash / Target cash** (Names is the hero).
 Caps and Headroom stay sticky. Tighten is **Tight / Delta $ / Delta % / Fields**
 (Tight is the hero), then groups **Gross / Names / Orders / Deltas**.
@@ -191,7 +192,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   DEAD** is the Supervisor beat, not RTH session. Header **OPEN / CLOSED**
   is the RTH session. Session OPEN is halt color while Supervisor is
   HALTED. Spoken Supervisor is the runtime state. `status`
-  includes `heartbeat`.
+  includes `heartbeat`. status names LIMIT while the live book is
+  through the spoken cap.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio. The deviation banner
   follows Book Drift and cannot go quiet while Drift is above zero.

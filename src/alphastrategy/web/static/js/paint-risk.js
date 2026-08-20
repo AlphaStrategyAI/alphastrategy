@@ -54,6 +54,22 @@
     markTighter(name, policy.max_name_weight, account && account.max_name_weight);
     markTighter(names, policy.max_names, account && account.max_names);
     markTighter(orders, policy.max_orders_per_day, account && account.max_orders_per_day);
+    const flattened =
+      Boolean(state.status && state.status.flattened) ||
+      (state.status &&
+        (state.status.state === "stopped" || state.status.state === "flattening"));
+    function markLimit(el, key) {
+      if (!el) return;
+      el.classList.remove("fail");
+      if (flattened) return;
+      const limit = utilization().live_limit;
+      if (limit && limit.reason === key) el.classList.add("fail");
+    }
+    markLimit(gross, "max_gross");
+    markLimit(name, "max_name_weight");
+    markLimit(names, "max_names");
+    markLimit(orders, "max_orders_per_day");
+    markLimit(longEl, "long_only");
   }
 
   function buildRiskInputs(prefix, policy, current) {

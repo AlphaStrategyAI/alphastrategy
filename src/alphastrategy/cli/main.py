@@ -24,6 +24,7 @@ from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.dsl.sandbox import run_sandbox
 from alphastrategy.live.alpaca import AlpacaAdapter
 from alphastrategy.live.broker import CONFIRM_LIVE_FLAG
+from alphastrategy.risk.labels import label_for
 from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.risk.utilization import from_supervisor
 from alphastrategy.supervisor.heartbeat import describe
@@ -38,6 +39,9 @@ _HELD_START = (
 )
 _FLAT_START = (
     "flattened: a sleeve overlay that breaches the live book flattens now."
+)
+_LIMIT_STATUS = (
+    "LIMIT: live book through {label} — next rebalance will flatten"
 )
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
@@ -240,13 +244,33 @@ def _cmd_start(home: AlphaStrategyHome, broker: Any, host: str, port: int) -> in
     return 0
 
 
+def _status_limit_line(payload: dict[str, Any]) -> str | None:
+    if payload.get("flattened"):
+        return None
+    util = payload.get("utilization") if isinstance(payload.get("utilization"), dict) else {}
+    limit = util.get("live_limit") if isinstance(util, dict) else None
+    if not isinstance(limit, dict):
+        return None
+    reason = limit.get("reason")
+    if not reason:
+        return None
+    return _LIMIT_STATUS.format(label=label_for(str(reason)))
+
+
+def _print_status(payload: dict[str, Any]) -> None:
+    print(json.dumps(payload, separators=(",", ":")))
+    line = _status_limit_line(payload)
+    if line:
+        print(line, file=sys.stderr)
+
+
 def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT_PORT) -> int:
     response = _control_request("GET", "/api/status", port)
     if response is not None:
         status, payload = response
         if not 200 <= status < 300:
             return _control_result(response)
-        print(json.dumps(payload, separators=(",", ":")))
+        _print_status(payload)
         return 0
     supervisor = _make_supervisor(home, broker)
     snapshot = supervisor.snapshot
@@ -264,7 +288,7 @@ def _cmd_status(home: AlphaStrategyHome, broker: Any | None, port: int = DEFAULT
         "utilization": from_supervisor(supervisor, live=False),
         "heartbeat": describe(snapshot.last_heartbeat_at),
     }
-    print(json.dumps(payload, separators=(",", ":")))
+    _print_status(payload)
     return 0
 
 
