@@ -141,21 +141,6 @@
     return wrap;
   }
 
-  function supervisorLabel(raw) {
-    const map = {
-      idle_in_session: "IN SESSION",
-      idle_out_of_session: "OUT OF SESSION",
-      rebalancing: "REBALANCING",
-      halted: "HALTED",
-      flattening: "FLATTENING",
-      stopped: "STOPPED",
-      starting: "STARTING",
-    };
-    if (raw == null || raw === "" || raw === "—") return "—";
-    if (map[raw]) return map[raw];
-    return String(raw).replace(/_/g, " ").toUpperCase();
-  }
-
   function renderActivity() {
     const list = document.getElementById("activity-list");
     list.innerHTML = "";

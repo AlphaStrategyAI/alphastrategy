@@ -212,15 +212,53 @@
     return "NO BEAT";
   }
 
+  function supervisorLabel(raw) {
+    const map = {
+      idle_in_session: "IN SESSION",
+      idle_out_of_session: "OUT OF SESSION",
+      rebalancing: "REBALANCING",
+      halted: "HALTED",
+      flattening: "FLATTENING",
+      stopped: "STOPPED",
+      starting: "STARTING",
+    };
+    if (raw == null || raw === "" || raw === "—") return "—";
+    if (map[raw]) return map[raw];
+    return String(raw).replace(/_/g, " ").toUpperCase();
+  }
+
   function renderDeskPulse() {
     const wrap = document.getElementById("desk-pulse");
     const label = document.getElementById("desk-pulse-label");
-    if (!wrap || !label) return;
-    const hb = (state.status && state.status.heartbeat) || {};
-    const pulse = hb.pulse || "missing";
-    wrap.className = "desk-pulse " + pulse;
-    label.textContent = pulseLabel(pulse);
-    const age = hb.age_seconds;
-    const ageText = age == null || age === undefined ? "no stamp" : age + "s ago";
-    wrap.title = "Supervisor beat " + pulseLabel(pulse) + " · " + ageText;
+    if (wrap && label) {
+      const hb = (state.status && state.status.heartbeat) || {};
+      const pulse = hb.pulse || "missing";
+      wrap.className = "desk-pulse " + pulse;
+      label.textContent = pulseLabel(pulse);
+      const age = hb.age_seconds;
+      const ageText = age == null || age === undefined ? "no stamp" : age + "s ago";
+      wrap.title = "Supervisor beat " + pulseLabel(pulse) + " · " + ageText;
+    }
+    const sessionEl = document.getElementById("desk-session");
+    if (sessionEl) {
+      const clock = state.status && state.status.clock;
+      sessionEl.classList.remove("open");
+      sessionEl.title = "RTH session";
+      if (!clock || clock.error) {
+        sessionEl.textContent = "UNAVAILABLE";
+      } else if (clock.is_open) {
+        sessionEl.textContent = "OPEN";
+        sessionEl.classList.add("open");
+      } else {
+        sessionEl.textContent = "CLOSED";
+      }
+    }
+    const stateEl = document.getElementById("desk-supervisor");
+    if (stateEl) {
+      const raw = (state.status && state.status.state) || "";
+      stateEl.textContent = raw ? supervisorLabel(raw) : "—";
+      stateEl.title = raw || "";
+      stateEl.classList.toggle("halt", raw === "halted");
+      stateEl.classList.toggle("fail", raw === "flattening" || raw === "stopped");
+    }
   }

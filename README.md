@@ -158,8 +158,9 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   prints JSON (`isolated` vs `flattened`). A desk banner reports the
   same outcome.
 - Heartbeat every 20s does not place orders. Header **LIVE / STALE /
-  DEAD** is the Supervisor beat, not RTH session. `status` includes
-  `heartbeat`.
+  DEAD** is the Supervisor beat, not RTH session. Header **OPEN / CLOSED**
+  is the RTH session. Spoken Supervisor is the runtime state. `status`
+  includes `heartbeat`.
 - Halt, flatten, deviation, control-plane, and sleeve-kill banners stay
   visible on every screen, not only Portfolio.
 - Activity kill rows say **isolated residual** or **flattened account**.

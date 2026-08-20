@@ -79,6 +79,7 @@ SECTIONS: list[dict[str, str]] = [
             "legal rebalances. Activity is three bands Beat / Tape / Blotter. "
             "Beat is Pulse / Age / Interval / Supervisor. "
             "Expanding a blotter row shows Wanted versus Got, not a JSON dump. "
+            "Header shows Pulse, Session, and Supervisor. "
             "Header LIVE is the Supervisor beat, not Session. "
             "Alt+1 through Alt+5 switch screens. "
             "F1 opens Help. Help starts with Your first paper session, then "
