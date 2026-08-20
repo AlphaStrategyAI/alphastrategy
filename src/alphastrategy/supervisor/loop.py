@@ -106,6 +106,7 @@ class Supervisor:
         if self._snapshot.state == SupervisorState.STARTING:
             self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
         self._recover_interrupted_rebalance()
+        self._recover_interrupted_flatten()
 
     @property
     def state(self) -> SupervisorState:
@@ -139,6 +140,7 @@ class Supervisor:
             if self._snapshot.state == SupervisorState.STARTING:
                 self._snapshot.state = SupervisorState.IDLE_OUT_OF_SESSION
             self._recover_interrupted_rebalance()
+            self._recover_interrupted_flatten()
 
     def _persist(self) -> None:
         save_state(self._home.state_path(), self._snapshot)
@@ -341,7 +343,11 @@ class Supervisor:
             self._snapshot.last_heartbeat_at = (
                 datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             )
-            if self._snapshot.state in (SupervisorState.STOPPED, SupervisorState.FLATTENING):
+            if self._snapshot.state == SupervisorState.STOPPED:
+                self._persist()
+                return
+            if self._snapshot.state == SupervisorState.FLATTENING:
+                self._flatten_account()
                 self._persist()
                 return
             if self._snapshot.state == SupervisorState.HALTED:
@@ -627,6 +633,11 @@ class Supervisor:
             complete=False,
         )
         self._halt(f"interrupted rebalancing after {placed} orders")
+
+    def _recover_interrupted_flatten(self) -> None:
+        if self._snapshot.state != SupervisorState.FLATTENING:
+            return
+        self._flatten_account()
 
     def _rebalance(self, cur: ClockSnapshot, event: str) -> None:
         collected = self._collect_sleeves()

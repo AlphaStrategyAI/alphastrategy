@@ -39,6 +39,9 @@ SECTIONS: list[dict[str, str]] = [
         "title": "Halt is not flatten",
         "body": (
             "Halt is not flatten. Halt stops new orders and holds positions. "
+            "If the host dies while flattening, the desk treats that as "
+            "interrupted flattening: it retries cancel and close_all. If the "
+            "broker is unreachable it health-halts. "
             "Flatten cancels open orders and trades the paper account (or an "
             "isolated sleeve residual) toward flat. Stop zeros a sleeve on the "
             "next legal rebalance and does not flatten now. Resume after halt "
