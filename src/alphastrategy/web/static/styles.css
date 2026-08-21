@@ -904,7 +904,10 @@ button.action.account-kill {
   color: #f59e0b;
 }
 
-.sleeve-card .metric-sub.warn,
+.sleeve-card .metric-sub.warn {
+  color: #f59e0b;
+}
+
 #risk-sleeves .metric-sub.warn {
   color: #f59e0b;
 }
