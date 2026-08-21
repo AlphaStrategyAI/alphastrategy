@@ -46,6 +46,20 @@
     return `<td class="nums${cls}">${has ? fmtNum(n, 2) : "—"}</td>`;
   }
 
+  function formatNextCell(next, wanted) {
+    const n = Number(next);
+    const has = next != null && next !== "" && Number.isFinite(n);
+    const w = Number(wanted);
+    const differs =
+      has &&
+      wanted != null &&
+      wanted !== "" &&
+      Number.isFinite(w) &&
+      Math.abs(n - w) > 1e-9;
+    const cls = differs ? " warn" : "";
+    return `<td class="nums${cls}">${has ? fmtPct(n) : "—"}</td>`;
+  }
+
   function wantedGotBar(wanted, got, cap, fill) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);

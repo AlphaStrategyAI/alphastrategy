@@ -121,7 +121,8 @@ and **Drift**; **Day PnL is equity minus last close**), **Flatten budgets** (Gro
 while Supervisor is HALTED, flat while the paper account is flattened, and
 flatten while the live book is through the spoken cap), then
 **Positions** (**Rows / Wanted / Got / At cap**; Wanted is the hero;
-**Positions Day is that name since last close**) and
+**Positions Day is that name since last close**;
+**Positions Next follows current allocations on last sleeve weights**) and
 **Sleeves**.
 Strategies is three bands: **Inventory** (Imported / Paper / Halted / Stopped;
 Paper is the hero), **Import .asb**, and **Roster**. Import is not permission

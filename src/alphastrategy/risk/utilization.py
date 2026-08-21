@@ -126,6 +126,12 @@ def sleeve_contribution_glance(snapshot: Any) -> dict[str, dict[str, float]]:
     return out
 
 
+def next_send_combined_glance(snapshot: Any) -> dict[str, float] | None:
+    if not _next_send_ready(snapshot):
+        return None
+    return _next_send_combined(snapshot)
+
+
 def summarize(
     *,
     policy: AccountPolicy,

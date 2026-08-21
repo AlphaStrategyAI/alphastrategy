@@ -406,6 +406,10 @@ main {
   color: #ef4444;
 }
 
+#positions-table td.warn {
+  color: #f59e0b;
+}
+
 .panel {
   background: #11151d;
   border: 1px solid #2a3142;

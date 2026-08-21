@@ -15,7 +15,11 @@ from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.labels import POLICY_LABELS
 from alphastrategy.risk.policy import AccountPolicy
-from alphastrategy.risk.utilization import from_supervisor, sleeve_contribution_glance
+from alphastrategy.risk.utilization import (
+    from_supervisor,
+    next_send_combined_glance,
+    sleeve_contribution_glance,
+)
 from alphastrategy.supervisor.heartbeat import describe
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
@@ -106,9 +110,11 @@ def _enrich_positions(
     prices: dict[str, float],
     last_combined: dict[str, float] | None = None,
     last_fill_got: dict[str, float] | None = None,
+    next_combined: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     combined = last_combined or {}
     filled = last_fill_got or {}
+    nxt = next_combined or {}
     out: list[dict[str, Any]] = []
     for pos in positions:
         item = dict(pos)
@@ -123,6 +129,8 @@ def _enrich_positions(
             item["wanted"] = combined[symbol]
         if symbol in filled:
             item["fill"] = float(filled[symbol])
+        if symbol in nxt:
+            item["next"] = float(nxt[symbol])
         item["day_pnl"] = _position_day_pnl(item, qty=qty, prices=prices)
         out.append(item)
     seen = {str(item.get("symbol", "")) for item in out}
@@ -138,6 +146,26 @@ def _enrich_positions(
             "notional": 0.0,
             "weight": 0.0,
             "wanted": wanted,
+        }
+        if symbol in filled:
+            row["fill"] = float(filled[symbol])
+        if symbol in nxt:
+            row["next"] = float(nxt[symbol])
+        row["day_pnl"] = None
+        out.append(row)
+        seen.add(symbol)
+    for symbol, weight in sorted(nxt.items()):
+        if symbol in seen:
+            continue
+        nxt_w = float(weight)
+        if abs(nxt_w) <= 0:
+            continue
+        row = {
+            "symbol": symbol,
+            "qty": 0.0,
+            "notional": 0.0,
+            "weight": 0.0,
+            "next": nxt_w,
         }
         if symbol in filled:
             row["fill"] = float(filled[symbol])
@@ -327,6 +355,7 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
         snapshot.last_prices,
         snapshot.last_combined,
         snapshot.last_fill_got,
+        next_send_combined_glance(snapshot),
     )
     pnl, pnl_source = _account_day_pnl(account)
     payload: dict[str, Any] = {

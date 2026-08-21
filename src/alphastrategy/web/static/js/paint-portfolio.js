@@ -279,7 +279,7 @@
             : "No positions yet. The next legal open or close rebalance will trade."
           : "Imported bundles are not trading. Start paper on Run.";
       }
-      posBody.innerHTML = `<tr><td colspan='8' class='muted'>${empty}</td></tr>`;
+      posBody.innerHTML = `<tr><td colspan='9' class='muted'>${empty}</td></tr>`;
     } else {
       const cap = spokenNameCap();
       for (const pos of positions) {
@@ -292,6 +292,7 @@
           `<td class="nums">${notional}</td>` +
           formatDayPnlCell(pos.day_pnl) +
           `<td class="nums">${wanted}</td>` +
+          formatNextCell(pos.next, pos.wanted) +
           `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap, pos.fill)}</td>` +
           `<td>${nameCapBar(pos.weight, cap)}</td>`;
         posBody.appendChild(tr);

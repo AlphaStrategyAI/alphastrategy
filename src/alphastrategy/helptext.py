@@ -32,6 +32,7 @@ SECTIONS: list[dict[str, str]] = [
             "Caps LIMIT follows current allocations on last sleeve weights. "
             "Headroom Target cash follows current allocations on last sleeve weights. "
             "Sleeves contribution follows current allocations on last sleeve weights. "
+            "Positions Next follows current allocations on last sleeve weights. "
             "Caps LIMIT waits when a paper sleeve has no last weights. "
             "Runtime overlays load once until the file changes. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
@@ -105,7 +106,9 @@ SECTIONS: list[dict[str, str]] = [
         "body": (
             "Five screens: Portfolio, Strategies, Run, Activity, Risk. "
             "Wanted is the last combined target weight; Got is the current "
-            "position weight. An empty Portfolio shows Start this paper desk "
+            "position weight. "
+            "Positions Next follows current allocations on last sleeve weights. "
+            "An empty Portfolio shows Start this paper desk "
             "as its first glance band, not a global panel. Portfolio home is "
             "Book / Flatten budgets / Clock, then Positions / Sleeves. "
             "Positions is Rows / Wanted / Got / At cap. Equity is the hero. "
@@ -223,6 +226,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Positions include wanted names with no fill. "
             "The Positions Book column is wanted versus got. "
             "Sleeves contribution follows current allocations on last sleeve weights. "
+            "Positions Next follows current allocations on last sleeve weights. "
             "Header LIVE is the Supervisor beat, not Session OPEN. "
             "Session OPEN is halt color while Supervisor is HALTED."
         ),
@@ -415,6 +419,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "1. On Portfolio, Positions Wanted versus Got is last combined target versus current weight. "
             "Got is the current mark. Book Drift follows the last fill, not last prices. "
             "Positions Day is that name since last close. "
+            "Positions Next follows current allocations on last sleeve weights. "
             "2. On Activity, expand a rebalance blotter row for the Wanted / Got table, not a JSON dump."
         ),
     },
