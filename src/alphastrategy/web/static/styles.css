@@ -912,6 +912,10 @@ button.action.account-kill {
   color: #f59e0b;
 }
 
+#risk-sleeves .sleeve-head h3 {
+  font-size: 0.95rem;
+}
+
 #strategies-table .util-track {
   margin-top: 0.35rem;
   max-width: 8rem;

@@ -301,6 +301,7 @@
         `<span class="muted nums">Allocation ${fmtPct(alloc)}</span>`;
       panel.appendChild(allocRow);
       const track = document.createElement("div");
+      track.className = "util-track";
       paintUtilTrack(track, alloc, 1, `allocation ${fmtPct(alloc)}`);
       panel.appendChild(track);
       const contribEl = document.createElement("div");

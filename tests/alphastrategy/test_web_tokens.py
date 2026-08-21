@@ -1327,6 +1327,7 @@ def test_js_overlay_cards_name_contribution(js_text: str) -> None:
     assert "formatContributionInner" in cards
     assert "sleeve_contribution" in cards
     assert "last_sleeve_contribution" in cards
+    assert 'className = "util-track"' in cards
     glance = js_text[
         js_text.find("function renderOverlayGlance") : js_text.find("function riskFormIsDirty")
     ]
@@ -1400,9 +1401,13 @@ def test_css_risk_overlay_card_tokens(css_text: str) -> None:
     wait = re.search(
         r"#risk-sleeves\s+\.metric-sub\.warn\s*\{[^}]*\}", css_text
     )
+    heading = re.search(
+        r"#risk-sleeves\s+\.sleeve-head\s+h3\s*\{[^}]*\}", css_text
+    )
     summary = re.search(r"\.risk-sleeve-tighten\s+summary\s*\{[^}]*\}", css_text)
     assert tight is not None and "#f59e0b" in tight.group(0).lower()
     assert wait is not None and "#f59e0b" in wait.group(0).lower()
+    assert heading is not None and "0.95rem" in heading.group(0)
     assert summary is not None and "#9ba3b4" in summary.group(0).lower()
 
 
