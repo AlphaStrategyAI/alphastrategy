@@ -1395,6 +1395,26 @@ def test_js_wanted_got_bar_names_next(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_paints_sleeves_contribution_last(js_text: str) -> None:
+    assert "function formatContributionCell" in js_text
+    helper = js_text[
+        js_text.find("function formatContributionCell") : js_text.find("async function api")
+    ]
+    assert "fmtContribution" in helper
+    assert '"last "' in helper
+    assert "metric-sub" in helper
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "formatContributionCell(contrib[id], lastContrib[id])" in port
+    assert "last_sleeve_contribution" in port
+    assert "colspan='9'" in port
+    assert "Gross cap" not in js_text
+    assert "Order size" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_css_positions_book_next_warn_token(css_text: str) -> None:
     sub = re.search(r"#pos-count-wanted-sub\.warn\s*\{[^}]*\}", css_text)
     mark = re.search(r"\.wg-next\s*\{[^}]*\}", css_text)

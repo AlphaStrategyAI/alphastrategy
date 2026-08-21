@@ -114,6 +114,7 @@ REQUIRED_PHRASES = (
     "Clock Next is weights while a paper sleeve has no last weights",
     "Headroom Target cash follows current allocations on last sleeve weights",
     "Sleeves contribution follows current allocations on last sleeve weights",
+    "Sleeves Contribution names last against next",
     "Positions Next follows current allocations on last sleeve weights",
     "Positions Book names Next against Wanted",
     "Book takes LIMIT color while a next rebalance will flatten",
