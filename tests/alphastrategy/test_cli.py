@@ -425,6 +425,32 @@ def test_status_prints_halt_reason_on_stderr(
     patch_alpaca.assert_not_called()
 
 
+def test_status_prints_resume_seed_halt_on_stderr(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = {
+        "state": "halted",
+        "clock": {},
+        "halted": True,
+        "halt_reason": "no evaluator for sleeve asb_z",
+        "flattened": False,
+        "utilization": {},
+        "book": {"source": "glance"},
+    }
+    monkeypatch.setattr(
+        "alphastrategy.cli.main._control_request",
+        lambda *args, **kwargs: (200, payload),
+    )
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert captured.err.splitlines() == [
+        "BOOK: glance",
+        "HALT: resume does not seed last weights",
+    ]
+    patch_alpaca.assert_not_called()
+
+
 def test_status_omits_pnl_when_null(
     cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
 ) -> None:

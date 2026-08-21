@@ -264,6 +264,24 @@ def test_start_paper_seed_failure_returns_held_with_halt_reason(api_stack):
     assert supervisor.state.value == "halted"
 
 
+def test_resume_after_seed_failure_keeps_unknown_limit(api_stack):
+    client, home, supervisor, broker = api_stack
+    home.bundle_dir("asb_z").mkdir(parents=True, exist_ok=True)
+    close_all_before = broker.close_all_count
+    started = client.post("/api/paper/start", json={"bundle_id": "asb_z", "allocation": 0.18})
+    assert started.status == 200
+    assert started.json()["held"] is True
+    resumed = client.post("/api/paper/resume", json={})
+    assert resumed.status == 200
+    body = client.get("/api/status").json()
+    assert body["halted"] is False
+    assert body["utilization"]["live_limit"]["kind"] == "unknown"
+    assert supervisor.snapshot.sleeves["asb_z"] == pytest.approx(0.18)
+    assert not (supervisor.snapshot.last_sleeve_weights.get("asb_z") or {})
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "halted"
+
+
 def test_status_returns_state_clock_and_halt(api_client: ApiClient):
     response = api_client.get("/api/status")
     assert response.status == 200

@@ -115,6 +115,8 @@ REQUIRED_PHRASES = (
     "Start paper that cannot seed last weights holds",
     "HALT names Start paper that cannot seed last weights holds",
     "After halt is four tiles Reason / Spent / Next / Resume",
+    "Resume does not seed last weights",
+    "Activity halt rows name Start paper that cannot seed last weights holds",
     "status names HALT",
     "Clock Next is weights while a paper sleeve has no last weights",
     "Headroom Target cash follows current allocations on last sleeve weights",

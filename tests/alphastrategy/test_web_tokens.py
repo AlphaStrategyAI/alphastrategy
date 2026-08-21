@@ -214,6 +214,14 @@ def test_js_activity_kill_summary_distinguishes_isolated(js_text: str) -> None:
     assert "interrupted sleeve isolate" in kill_branch
 
 
+def test_js_activity_halt_names_seed_hold(js_text: str) -> None:
+    halt_branch = js_text.split('case "halt":')[1].split('case "rebalance":')[0]
+    assert "formatHaltBanner" in halt_branch
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_html_first_run_and_book_column(html_text: str) -> None:
     assert 'id="first-run"' in html_text
     port = html_text[
@@ -875,6 +883,8 @@ def test_js_paints_run_start_hint(js_text: str) -> None:
     assert "run-start-hint" in paint
     assert "Start paper while halted waits for resume. Resume does not catch up." in paint
     assert "Start paper that cannot seed last weights holds. Resume does not catch up." in paint
+    assert "Resume does not seed last weights. Start paper seeds last sleeve weights." in paint
+    assert 'kind === "unknown"' in paint
     assert "start paper seeds last sleeve weights" in paint
     assert "halt_reason" in paint
     assert "Start paper after flatten starts the session loop again and does not catch up." in paint
@@ -944,6 +954,9 @@ def test_js_paints_run_halt_reason(js_text: str) -> None:
     assert "spent" in paint
     assert '"held"' in paint
     assert '"wait"' in paint
+    assert "Resume does not seed last weights. Start paper seeds last sleeve weights." in paint
+    assert 'kind === "unknown"' in paint
+    assert '"weights"' in paint
     assert "innerHTML" not in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
@@ -960,6 +973,8 @@ def test_js_paints_halt_banner_seed_hold(js_text: str) -> None:
     ]
     assert "start paper that cannot seed last weights holds" in mapper
     assert "start paper seeds last sleeve weights" in mapper
+    assert "resume does not seed last weights" in mapper
+    assert "no evaluator for sleeve" in mapper
     assert "Gross cap" not in js_text
     assert "Order size" not in js_text
     assert "window.confirm" not in js_text
