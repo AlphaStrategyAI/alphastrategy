@@ -769,6 +769,7 @@ def test_html_run_kill_switch_zones(html_text: str) -> None:
     assert 'id="run-error"' in promote
     assert 'id="run-sleeves"' in book
     assert 'id="run-remaining"' in book
+    assert 'id="run-remaining-bar"' in book
     assert 'id="run-spoken"' in book
     assert 'id="run-count-active"' in book
     assert 'id="run-count-idle"' in book
@@ -830,6 +831,21 @@ def test_js_paints_run_capacity(js_text: str) -> None:
     assert "run-count-active" in paint
     assert "run-count-idle" in paint
     assert "No sleeves yet" in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_run_sleeves_name_contribution(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderRunSleeves") : js_text.find("function renderRunStartHint")
+    ]
+    assert "formatContributionInner" in paint
+    assert "sleeve_contribution" in paint
+    assert "last_sleeve_contribution" in paint
+    assert "run-remaining-bar" in paint
+    assert "paintUtilTrack" in paint
+    assert "spoken " in paint
+    assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 
@@ -1518,10 +1534,11 @@ def test_js_wanted_got_bar_names_next(js_text: str) -> None:
 
 
 def test_js_paints_sleeves_contribution_last(js_text: str) -> None:
-    assert "function formatContributionCell" in js_text
+    assert "function formatContributionInner" in js_text
     helper = js_text[
-        js_text.find("function formatContributionCell") : js_text.find("async function api")
+        js_text.find("function formatContributionInner") : js_text.find("async function api")
     ]
+    assert "function formatContributionCell" in helper
     assert "fmtContribution" in helper
     assert '"last "' in helper
     assert "metric-sub" in helper
@@ -1717,6 +1734,23 @@ def test_js_paints_activity_tape(js_text: str) -> None:
     assert 'event === "rebalance"' in paint
     assert 'event === "execution_deviation"' in paint
     assert 'event === "flatten"' in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_activity_paper_start_names_allocation(js_text: str) -> None:
+    summary = js_text[
+        js_text.find("function eventSummary") : js_text.find("function formatField")
+    ]
+    start = summary.split('case "paper_start":')[1].split('case "paper_stop":')[0]
+    assert "fmtPct(ev.allocation)" in start
+    detail = js_text[
+        js_text.find("function eventDetail") : js_text.find("function renderActivity")
+    ]
+    block = detail.split('kind === "paper_start"')[1].split('kind === "paper_stop"')[0]
+    assert '["Allocation"' in block
+    assert "fmtPct(ev.allocation)" in block
+    assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 
