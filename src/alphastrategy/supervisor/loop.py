@@ -636,7 +636,7 @@ class Supervisor:
             weights = self._sleeve_weights(bundle_id)
             self._validate_weights(weights)
         except (HaltRequested, IllegalWeights) as exc:
-            self._halt(str(exc))
+            self._halt("start paper seeds last sleeve weights: " + str(exc))
             return
         self._snapshot.last_sleeve_weights[bundle_id] = dict(weights)
 

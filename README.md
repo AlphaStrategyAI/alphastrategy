@@ -204,6 +204,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Sleeves Contribution names last against next.
   Caps LIMIT waits when a paper sleeve has no last weights.
   Start paper seeds last sleeve weights.
+  Start paper that cannot seed last weights holds.
   Caps LIMIT follows a next send through Orders / rebalance.
   Clock Next is flatten send while a next send will flatten.
   Clock Next is weights while a paper sleeve has no last weights.

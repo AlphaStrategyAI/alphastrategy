@@ -433,9 +433,10 @@ def handle_post_paper_start(handler: Any, home: AlphaStrategyHome, supervisor: S
             SupervisorState.FLATTENING,
             SupervisorState.STOPPED,
         )
-        _json_response(
-            handler, 200, {"ok": True, "held": held, "flattened": flattened}
-        )
+        payload = {"ok": True, "held": held, "flattened": flattened}
+        if held and supervisor.snapshot.halt_reason:
+            payload["halt_reason"] = supervisor.snapshot.halt_reason
+        _json_response(handler, 200, payload)
     except ValueError as exc:
         _error(handler, 409, str(exc))
     except (json.JSONDecodeError, TypeError) as exc:

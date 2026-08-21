@@ -148,8 +148,13 @@
         (state.status.state === "flattening" || state.status.state === "stopped"));
     if (halted) {
       el.className = "warn";
-      el.textContent =
-        "Start paper while halted waits for resume. Resume does not catch up.";
+      const reason =
+        (state.status && state.status.halt_reason) ||
+        (state.portfolio && state.portfolio.halt_reason) ||
+        "";
+      el.textContent = /start paper seeds last sleeve weights/i.test(String(reason))
+        ? "Start paper that cannot seed last weights holds. Resume does not catch up."
+        : "Start paper while halted waits for resume. Resume does not catch up.";
       return;
     }
     if (flattened) {

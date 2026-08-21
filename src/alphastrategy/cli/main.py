@@ -37,9 +37,19 @@ DEFAULT_PORT = 7460
 _HELD_START = (
     "held: start paper while halted waits for resume. Resume does not catch up."
 )
+_SEED_HELD_START = (
+    "held: start paper that cannot seed last weights holds. Resume does not catch up."
+)
 _FLAT_START = (
     "flattened: a sleeve overlay that breaches the live book flattens now."
 )
+
+
+def _held_start_line(halt_reason: Any) -> str:
+    text = str(halt_reason or "").lower()
+    if "start paper seeds last sleeve weights" in text:
+        return _SEED_HELD_START
+    return _HELD_START
 _LIMIT_STATUS = (
     "LIMIT: live book through {label} — next rebalance will flatten"
 )
@@ -356,7 +366,7 @@ def _cmd_paper_start(
             if payload.get("flattened"):
                 print(_FLAT_START, file=sys.stderr)
             elif payload.get("held"):
-                print(_HELD_START, file=sys.stderr)
+                print(_held_start_line(payload.get("halt_reason")), file=sys.stderr)
             return 0
         return _control_result(response)
     supervisor = _make_supervisor(home, broker)
@@ -369,7 +379,7 @@ def _cmd_paper_start(
         if flattened:
             print(_FLAT_START, file=sys.stderr)
         elif held:
-            print(_HELD_START, file=sys.stderr)
+            print(_held_start_line(supervisor.snapshot.halt_reason), file=sys.stderr)
         return 0
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
