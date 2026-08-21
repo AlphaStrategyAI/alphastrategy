@@ -1151,6 +1151,26 @@ def test_css_roster_weights_wait_token(css_text: str) -> None:
     assert card is not None and "#f59e0b" in card.group(0).lower()
 
 
+def test_js_paper_count_warns_without_last_weights(js_text: str) -> None:
+    paint = js_text[
+        js_text.find("function renderStrategies") : js_text.find("function runFormIsDirty")
+    ]
+    assert "sleeveHasLastWeights" in paint
+    assert '"strat-count-paper"' in paint
+    assert '"warn"' in paint
+    assert "status-running" in paint
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_sleeves_weights_wait_token(css_text: str) -> None:
+    sleeves = re.search(r"#sleeves-table \.metric-sub\.warn\s*\{[^}]*\}", css_text)
+    paper = re.search(r"#strat-count-paper\.warn\s*\{[^}]*\}", css_text)
+    assert sleeves is not None and "#f59e0b" in sleeves.group(0).lower()
+    assert paper is not None and "#f59e0b" in paper.group(0).lower()
+
+
 def test_html_risk_glance_bands(html_text: str) -> None:
     assert 'id="risk-caps"' in html_text
     assert 'id="risk-headroom"' in html_text
@@ -1505,12 +1525,14 @@ def test_js_paints_sleeves_contribution_last(js_text: str) -> None:
     assert "fmtContribution" in helper
     assert '"last "' in helper
     assert "metric-sub" in helper
+    assert "formatWeightsWaitSub" in helper
     port = js_text[
         js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
     ]
-    assert "formatContributionCell(contrib[id], lastContrib[id])" in port
+    assert "formatContributionCell(contrib[id], lastContrib[id], id, sleeves[id])" in port
     assert "last_sleeve_contribution" in port
     assert "colspan='9'" in port
+    assert "colspan='3'" in port
     assert "Gross cap" not in js_text
     assert "Order size" not in js_text
     assert "window.confirm" not in js_text

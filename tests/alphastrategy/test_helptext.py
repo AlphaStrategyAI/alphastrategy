@@ -71,6 +71,8 @@ REQUIRED_PHRASES = (
     "deviation banner follows Book Drift",
     "Roster names imported at",
     "Roster names when a paper sleeve has no last weights",
+    "Sleeves names when a paper sleeve has no last weights",
+    "Paper count warns when a paper sleeve has no last weights",
     "import-meta flushes to disk",
     "How to read a spent window",
     "Clock Last is spent",
