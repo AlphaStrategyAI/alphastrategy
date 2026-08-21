@@ -197,6 +197,33 @@ def test_from_supervisor_live_limit_next_send_order_size() -> None:
     assert out["live_limit"]["kind"] == "send"
 
 
+def test_from_supervisor_live_limit_next_send_orders_per_rebalance() -> None:
+    from alphastrategy.risk.utilization import from_supervisor
+
+    class Snap:
+        orders_today = 0
+        last_combined = {"AAA": 0.01, "BBB": 0.01, "CCC": 0.01}
+        last_got = {}
+        last_prices = {"AAA": 100.0, "BBB": 100.0, "CCC": 100.0}
+
+    class Fake:
+        snapshot = Snap()
+
+        def spoken_policy(self):
+            return replace(AccountPolicy.defaults(), max_orders_per_rebalance=2)
+
+        def live_book(self):
+            return {"equity": 10_000.0, "cash": 10_000.0}, []
+
+        def live_cap_weights(self, equity, positions):
+            del equity, positions
+            return {}
+
+    out = from_supervisor(Fake(), live=True)
+    assert out["live_limit"]["reason"] == "max_orders_per_rebalance"
+    assert out["live_limit"]["kind"] == "send"
+
+
 def test_summarize_live_limit_from_marked_name() -> None:
     out = summarize(
         policy=AccountPolicy.defaults(),

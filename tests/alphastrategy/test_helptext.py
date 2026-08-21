@@ -107,6 +107,8 @@ REQUIRED_PHRASES = (
     "Caps LIMIT follows the same live book as Tighten",
     "Caps LIMIT follows a next send through Order size",
     "LIMIT names a next send through Order size",
+    "Caps LIMIT follows a next send through Orders / rebalance",
+    "Clock Next is flatten send while a next send will flatten",
     "Book takes LIMIT color while a next rebalance will flatten",
     "Header Pulse, Session, and Supervisor are instruments",
     "Day PnL is equity minus last close",
