@@ -706,6 +706,26 @@ def test_status_live_limit_next_send_order_size(api_stack):
     assert supervisor.state.value != "stopped"
 
 
+def test_status_live_limit_next_send_follows_current_allocation(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.set_policy({"max_order_notional_frac": 0.10})
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.10}
+    supervisor.snapshot.last_sleeve_weights = {"asb_x": {"AAPL": 1.0}}
+    supervisor.snapshot.sleeves = {"asb_x": 0.18}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    assert body["utilization"]["live_limit"]["kind"] == "send"
+    risk = client.get("/api/risk").json()
+    assert risk["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
 def test_status_live_limit_next_send_orders_per_rebalance(api_stack):
     client, home, supervisor, broker = api_stack
     supervisor.set_policy({"max_orders_per_rebalance": 2})
