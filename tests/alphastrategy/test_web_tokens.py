@@ -646,6 +646,7 @@ def test_html_positions_glance_bands(html_text: str) -> None:
     sleeves = port[port.find('id="glance-sleeves"') :]
     assert 'id="pos-count-rows"' in pos
     assert 'id="pos-count-wanted"' in pos
+    assert 'id="pos-count-wanted-sub"' in pos
     assert 'id="pos-count-got"' in pos
     assert 'id="pos-count-cap"' in pos
     assert "metrics-4" in pos
@@ -674,6 +675,7 @@ def test_js_paints_positions_glance_tiles(js_text: str) -> None:
     ]
     assert "pos-count-rows" in paint
     assert "pos-count-wanted" in paint
+    assert "paintPositionsWantedNextSub" in paint
     assert "pos-count-got" in paint
     assert "pos-count-cap" in paint
     assert "spokenNameCap" in paint
@@ -1340,6 +1342,64 @@ def test_js_paints_positions_next(js_text: str) -> None:
 def test_css_positions_next_warn_token(css_text: str) -> None:
     warn = re.search(r"#positions-table td\.warn\s*\{[^}]*\}", css_text)
     assert warn is not None and "#f59e0b" in warn.group(0).lower()
+
+
+def test_html_positions_wanted_next_sub(html_text: str) -> None:
+    port = html_text[
+        html_text.find('id="screen-portfolio"') : html_text.find('id="screen-strategies"')
+    ]
+    pos = port[port.find('id="glance-positions"') : port.find('id="glance-sleeves"')]
+    wanted = pos[pos.find('id="pos-count-wanted"') :]
+    assert 'id="pos-count-wanted-sub"' in wanted
+    assert "metrics-4" in pos
+    assert wanted.find('id="pos-count-wanted"') < wanted.find('id="pos-count-wanted-sub"')
+    nav = re.search(r'<nav id="nav"[^>]*>(.*?)</nav>', html_text, re.DOTALL)
+    screens = re.findall(r'data-screen="([^"]+)"', nav.group(1))
+    assert screens == ["portfolio", "strategies", "run", "activity", "risk"]
+
+
+def test_js_paints_positions_wanted_next_sub(js_text: str) -> None:
+    assert "function paintPositionsWantedNextSub" in js_text
+    helper = js_text[
+        js_text.find("function paintPositionsWantedNextSub") : js_text.find(
+            "function paintUtilTrack"
+        )
+    ]
+    assert "pos-count-wanted-sub" in helper
+    assert '"next "' in helper
+    assert 'classList.toggle("warn"' in helper
+    glance = js_text[
+        js_text.find("function renderPositionsGlance") : js_text.find("function renderDeskPulse")
+    ]
+    assert "paintPositionsWantedNextSub(" in glance
+    assert "Gross cap" not in js_text
+    assert "Order size" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_wanted_got_bar_names_next(js_text: str) -> None:
+    rails = js_text[
+        js_text.find("function wantedGotBar") : js_text.find("function paintUtilTrack")
+    ]
+    assert "wg-next" in rails
+    assert "fill" in rails
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "wantedGotBar(pos.wanted, pos.weight, cap, pos.fill, pos.next)" in port
+    assert "colspan='9'" in port
+    assert "Gross cap" not in js_text
+    assert "Order size" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_positions_book_next_warn_token(css_text: str) -> None:
+    sub = re.search(r"#pos-count-wanted-sub\.warn\s*\{[^}]*\}", css_text)
+    mark = re.search(r"\.wg-next\s*\{[^}]*\}", css_text)
+    assert sub is not None and "#f59e0b" in sub.group(0).lower()
+    assert mark is not None and "#f59e0b" in mark.group(0).lower()
 
 
 def test_css_positions_day_signed_tokens(css_text: str) -> None:
