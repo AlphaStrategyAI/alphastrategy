@@ -617,7 +617,31 @@ def test_paper_start_seed_failure_prints_seed_hold(
 ) -> None:
     home = AlphaStrategyHome.from_env()
     home.bundle_dir("asb_z").mkdir(parents=True, exist_ok=True)
-    rc = main(["paper", "start", "--bundle", "asb_z", "--allocation", "0.18"])
+    supervisor = Supervisor(
+        home=home,
+        broker=FakeBroker(),
+        policy=AccountPolicy.defaults(),
+        evaluators={},
+    )
+    server = make_server(home, supervisor, bind="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rc = main(
+            [
+                "paper",
+                "start",
+                "--bundle",
+                "asb_z",
+                "--allocation",
+                "0.18",
+                "--port",
+                str(server.server_port),
+            ]
+        )
+    finally:
+        server.shutdown()
+        thread.join(timeout=2)
     assert rc == 0
     err = capsys.readouterr().err.lower()
     assert "held:" in err
