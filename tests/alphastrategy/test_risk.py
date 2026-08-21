@@ -226,6 +226,35 @@ def test_from_supervisor_live_limit_next_send_follows_current_allocation() -> No
     assert out["live_limit"]["kind"] == "send"
 
 
+def test_from_supervisor_target_cash_follows_current_allocation() -> None:
+    from alphastrategy.risk.utilization import from_supervisor
+
+    class Snap:
+        orders_today = 0
+        last_combined = {"AAPL": 0.10}
+        last_got = {}
+        last_prices = {"AAPL": 100.0}
+        last_sleeve_weights = {"asb_x": {"AAPL": 1.0}}
+        sleeves = {"asb_x": 0.18}
+
+    class Fake:
+        snapshot = Snap()
+
+        def spoken_policy(self):
+            return AccountPolicy.defaults()
+
+        def live_book(self):
+            return {"equity": 10_000.0, "cash": 10_000.0}, []
+
+        def live_cap_weights(self, equity, positions):
+            del equity, positions
+            return {}
+
+    out = from_supervisor(Fake(), live=True)
+    assert out["target_cash_weight"] == pytest.approx(0.82)
+    assert out["last_target_cash_weight"] == pytest.approx(0.90)
+
+
 def test_from_supervisor_live_limit_unknown_when_paper_sleeve_has_no_last_weights() -> None:
     from alphastrategy.risk.utilization import from_supervisor
 

@@ -726,6 +726,26 @@ def test_status_live_limit_next_send_follows_current_allocation(api_stack):
     assert supervisor.state.value != "stopped"
 
 
+def test_status_target_cash_follows_current_allocation(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.10}
+    supervisor.snapshot.last_sleeve_weights = {"asb_x": {"AAPL": 1.0}}
+    supervisor.snapshot.sleeves = {"asb_x": 0.18}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["target_cash_weight"] == pytest.approx(0.82)
+    assert body["utilization"]["last_target_cash_weight"] == pytest.approx(0.90)
+    risk = client.get("/api/risk").json()
+    assert risk["utilization"]["target_cash_weight"] == pytest.approx(0.82)
+    assert risk["utilization"]["last_target_cash_weight"] == pytest.approx(0.90)
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
 def test_status_live_limit_unknown_when_paper_sleeve_has_no_last_weights(api_stack):
     client, home, supervisor, broker = api_stack
     supervisor.set_policy({"max_order_notional_frac": 0.10})
@@ -970,6 +990,25 @@ def test_portfolio_includes_contribution_and_position_weight(api_stack):
     assert pos["notional"] == pytest.approx(1000.0)
     assert pos["weight"] == pytest.approx(0.1)
     assert pos["wanted"] == pytest.approx(0.4)
+
+
+def test_portfolio_contribution_follows_current_allocation(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.10}
+    supervisor.snapshot.last_sleeve_weights = {"asb_x": {"AAPL": 1.0}}
+    supervisor.snapshot.last_sleeve_contribution = {"asb_x": {"AAPL": 0.10}}
+    supervisor.snapshot.sleeves = {"asb_x": 0.18}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/portfolio").json()
+    assert body["sleeve_contribution"]["asb_x"]["AAPL"] == pytest.approx(0.18)
+    pos = next(item for item in body["positions"] if item["symbol"] == "AAPL")
+    assert pos["wanted"] == pytest.approx(0.10)
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
 
 
 def test_portfolio_includes_wanted_name_with_no_fill(api_stack):

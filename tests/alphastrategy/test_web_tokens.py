@@ -1077,6 +1077,7 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert 'id="risk-head-orders"' in head
     assert 'id="risk-head-cash"' in head
     assert 'id="risk-head-target"' in head
+    assert 'id="risk-head-target-sub"' in head
     assert "metrics-4" in head
     assert "hero" in head
     assert ">Names<" in head
@@ -1400,6 +1401,8 @@ def test_js_paints_risk_headroom_tiles(js_text: str) -> None:
     assert "risk-head-orders" in paint
     assert "risk-head-cash" in paint
     assert "risk-head-target" in paint
+    assert "risk-head-target-sub" in paint
+    assert "last_target_cash_weight" in paint
     assert "target_cash_weight" in paint
     assert "paintUtilTrack" in paint
     assert 'innerHTML = ""' not in paint
