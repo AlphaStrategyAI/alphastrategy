@@ -361,6 +361,10 @@ main {
   color: #ef4444;
 }
 
+#pos-count-wanted-sub.warn {
+  color: #f59e0b;
+}
+
 .stack {
   margin-top: 0.75rem;
 }
@@ -855,6 +859,15 @@ button.action.account-kill {
   width: 2px;
   height: 100%;
   background: #e5e9f0;
+  transform: translateX(-1px);
+}
+
+.wg-next {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #f59e0b;
   transform: translateX(-1px);
 }
 

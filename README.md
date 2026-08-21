@@ -137,7 +137,8 @@ show remaining flatten budgets. **Cash** shows invested versus residual
 against the last combined target. Sleeves show how much of the paper book
 is spoken for. An empty Portfolio shows **Start this paper desk** as the
 first glance band, then Book / Flatten budgets / Clock. Positions include
-wanted names with no fill and a **Book** bar (wanted vs got). **Book Drift**
+wanted names with no fill and a **Book** bar (wanted vs got).
+**Positions Book names Next against Wanted.** **Book Drift**
 follows the last fill, not last prices. Gross
 shows utilization against the spoken flatten cap. Sleeve overlays is
 **Spoken / Overlays / Tighter / Idle** (Spoken is the hero). Allocation

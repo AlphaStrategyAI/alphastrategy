@@ -124,6 +124,7 @@ SECTIONS: list[dict[str, str]] = [
             "Paper is the hero count. "
             "Positions and Sleeves sit side by side on a wide desk. "
             "The Positions Book column is wanted versus got. "
+            "Positions Book names Next against Wanted. "
             "Positions Day is that name since last close. "
             "Gross utilization "
             "is against the spoken flatten cap. Session and Next rebalance are the Clock tiles. "
@@ -227,6 +228,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "The Positions Book column is wanted versus got. "
             "Sleeves contribution follows current allocations on last sleeve weights. "
             "Positions Next follows current allocations on last sleeve weights. "
+            "Positions Book names Next against Wanted. "
             "Header LIVE is the Supervisor beat, not Session OPEN. "
             "Session OPEN is halt color while Supervisor is HALTED."
         ),
@@ -420,6 +422,7 @@ TASK_HOWTOS: list[dict[str, Any]] = [
             "Got is the current mark. Book Drift follows the last fill, not last prices. "
             "Positions Day is that name since last close. "
             "Positions Next follows current allocations on last sleeve weights. "
+            "Positions Book names Next against Wanted. "
             "2. On Activity, expand a rebalance blotter row for the Wanted / Got table, not a JSON dump."
         ),
     },

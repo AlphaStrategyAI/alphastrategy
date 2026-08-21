@@ -293,7 +293,7 @@
           formatDayPnlCell(pos.day_pnl) +
           `<td class="nums">${wanted}</td>` +
           formatNextCell(pos.next, pos.wanted) +
-          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap, pos.fill)}</td>` +
+          `<td class="nums">${got}</td><td>${wantedGotBar(pos.wanted, pos.weight, cap, pos.fill, pos.next)}</td>` +
           `<td>${nameCapBar(pos.weight, cap)}</td>`;
         posBody.appendChild(tr);
       }
@@ -360,6 +360,7 @@
     }
     if (rowsEl) rowsEl.textContent = String(rows.length);
     if (wantedEl) wantedEl.textContent = String(wantedN);
+    paintPositionsWantedNextSub(rows);
     if (gotEl) gotEl.textContent = String(gotN);
     if (capEl) {
       capEl.textContent = String(atCap);

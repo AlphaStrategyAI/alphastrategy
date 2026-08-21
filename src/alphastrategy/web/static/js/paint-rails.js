@@ -60,22 +60,42 @@
     return `<td class="nums${cls}">${has ? fmtPct(n) : "—"}</td>`;
   }
 
-  function wantedGotBar(wanted, got, cap, fill) {
+  function wantedGotBar(wanted, got, cap, fill, next) {
     const w = Math.max(0, Number(wanted) || 0);
     const g = Math.max(0, Number(got) || 0);
-    const capN = finiteNumber(cap, 0.2);
-    const scale = Math.max(capN, w, g, 0.01);
-    const wPct = Math.min(100, (w / scale) * 100);
-    const gPct = Math.min(100, (g / scale) * 100);
-    const fillW =
-      fill == null || fill === undefined ? g : Math.max(0, Number(fill) || 0);
+    const rawN = Number(next);
+    const hasNext = next != null && next !== "" && Number.isFinite(rawN);
+    const n = hasNext ? Math.max(0, rawN) : 0;
+    const scale = Math.max(finiteNumber(cap, 0.2), w, g, n, 0.01);
+    const fillW = fill == null || fill === undefined ? g : Math.max(0, Number(fill) || 0);
     const drift = Math.abs(w - fillW) > 0.001 ? " drift" : "";
+    const nextMark = hasNext
+      ? `<span class="wg-next" style="left:${Math.min(100, (n / scale) * 100)}%"></span>`
+      : "";
     return (
-      `<div class="wg-cell"><div class="wg-track${drift}" aria-label="wanted ${fmtPct(w)} got ${fmtPct(g)}">` +
-      `<span class="wg-got" style="width:${gPct}%"></span>` +
-      `<span class="wg-wanted" style="left:${wPct}%"></span>` +
-      `</div></div>`
+      `<div class="wg-cell"><div class="wg-track${drift}" aria-label="wanted ${fmtPct(w)} got ${fmtPct(g)}` +
+      (hasNext ? ` next ${fmtPct(n)}` : "") +
+      `"><span class="wg-got" style="width:${Math.min(100, (g / scale) * 100)}%"></span>` +
+      nextMark +
+      `<span class="wg-wanted" style="left:${Math.min(100, (w / scale) * 100)}%"></span></div></div>`
     );
+  }
+
+  function paintPositionsWantedNextSub(positions) {
+    const sub = document.getElementById("pos-count-wanted-sub");
+    if (!sub) return;
+    let diffs = 0;
+    let named = 0;
+    for (const pos of positions || []) {
+      const nxt = Number(pos.next);
+      if (pos.next == null || pos.next === "" || !Number.isFinite(nxt)) continue;
+      named += 1;
+      const w = Number(pos.wanted);
+      if (pos.wanted == null || pos.wanted === "" || !Number.isFinite(w) || Math.abs(nxt - w) > 1e-9) diffs += 1;
+    }
+    const show = named > 0 && diffs > 0;
+    sub.textContent = show ? "next " + diffs : "—";
+    sub.classList.toggle("warn", show);
   }
 
   function paintUtilTrack(bar, used, cap, label) {
