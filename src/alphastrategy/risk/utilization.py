@@ -77,6 +77,22 @@ def _next_send_combined(snapshot: Any) -> dict[str, float] | None:
     return dict(combined)
 
 
+def _next_send_ready(snapshot: Any) -> bool:
+    weights = getattr(snapshot, "last_sleeve_weights", None) or {}
+    sleeves = getattr(snapshot, "sleeves", None) or {}
+    for bundle_id, raw_alloc in sleeves.items():
+        try:
+            alloc = float(raw_alloc or 0)
+        except (TypeError, ValueError):
+            continue
+        if alloc <= 0:
+            continue
+        sleeve_weights = weights.get(bundle_id)
+        if not isinstance(sleeve_weights, dict) or not sleeve_weights:
+            return False
+    return True
+
+
 def summarize(
     *,
     policy: AccountPolicy,
@@ -158,12 +174,15 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
         last_got=live_weights or snapshot.last_got,
     )
     if live and out.get("live_limit") is None:
-        out["live_limit"] = _next_send_limit(
-            policy=supervisor.spoken_policy(),
-            combined=_next_send_combined(snapshot),
-            prices=getattr(snapshot, "last_prices", None),
-            positions=positions,
-            equity=equity,
-            orders_today=snapshot.orders_today,
-        )
+        if not _next_send_ready(snapshot):
+            out["live_limit"] = {"reason": "next_send_unknown", "kind": "unknown"}
+        else:
+            out["live_limit"] = _next_send_limit(
+                policy=supervisor.spoken_policy(),
+                combined=_next_send_combined(snapshot),
+                prices=getattr(snapshot, "last_prices", None),
+                positions=positions,
+                equity=equity,
+                orders_today=snapshot.orders_today,
+            )
     return out

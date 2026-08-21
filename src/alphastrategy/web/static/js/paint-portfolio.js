@@ -70,8 +70,9 @@
         utilization().live_limit.reason
       ) {
         countEl.classList.add("warn");
-        const send = utilization().live_limit.kind === "send";
-        kindEl.textContent = (send ? "flatten send · " : "flatten · ") + kind;
+        const prefix = utilization().live_limit.kind === "unknown" ? "weights · "
+          : utilization().live_limit.kind === "send" ? "flatten send · " : "flatten · ";
+        kindEl.textContent = prefix + kind;
       } else {
         kindEl.textContent = kind;
       }

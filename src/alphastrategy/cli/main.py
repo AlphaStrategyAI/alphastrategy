@@ -46,6 +46,9 @@ _LIMIT_STATUS = (
 _LIMIT_SEND_STATUS = (
     "LIMIT: next send through {label} — next rebalance will flatten"
 )
+_LIMIT_UNKNOWN_STATUS = (
+    "LIMIT: next send waits for last sleeve weights — Caps cannot dry-run"
+)
 _BOOK_STATUS = "BOOK: {source}"
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
@@ -258,6 +261,8 @@ def _status_limit_line(payload: dict[str, Any]) -> str | None:
     reason = limit.get("reason")
     if not reason:
         return None
+    if limit.get("kind") == "unknown":
+        return _LIMIT_UNKNOWN_STATUS
     template = _LIMIT_SEND_STATUS if limit.get("kind") == "send" else _LIMIT_STATUS
     return template.format(label=label_for(str(reason)))
 

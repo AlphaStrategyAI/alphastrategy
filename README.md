@@ -197,8 +197,10 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Caps LIMIT follows the same live book as Tighten.
   Caps LIMIT follows a next send through Order size.
   Caps LIMIT follows current allocations on last sleeve weights.
+  Caps LIMIT waits when a paper sleeve has no last weights.
   Caps LIMIT follows a next send through Orders / rebalance.
   Clock Next is flatten send while a next send will flatten.
+  Clock Next is weights while a paper sleeve has no last weights.
   LIMIT names a next send through Order size.
   Book takes LIMIT color while a next rebalance will flatten.
   Header Pulse, Session, and Supervisor are instruments.

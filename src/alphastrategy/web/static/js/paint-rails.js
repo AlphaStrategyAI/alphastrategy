@@ -128,6 +128,11 @@
       return;
     }
     el.classList.remove("hidden");
+    if (limit.kind === "unknown") {
+      el.textContent =
+        "LIMIT: next send waits for last sleeve weights — Caps cannot dry-run";
+      return;
+    }
     const through =
       limit.kind === "send" ? "next send through " : "live book through ";
     el.textContent =
@@ -147,7 +152,7 @@
       return;
     }
     const limit = utilization().live_limit;
-    if (limit && limit.reason) band.classList.add("warn");
+    if (limit && limit.reason && limit.kind !== "unknown") band.classList.add("warn");
   }
 
   function renderGrossUtilization(gross) {
