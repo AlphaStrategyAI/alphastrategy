@@ -196,6 +196,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Tighten and Start paper flatten the same live book as Book.
   Caps LIMIT follows the same live book as Tighten.
   Caps LIMIT follows a next send through Order size.
+  Caps LIMIT follows current allocations on last sleeve weights.
   Caps LIMIT follows a next send through Orders / rebalance.
   Clock Next is flatten send while a next send will flatten.
   LIMIT names a next send through Order size.

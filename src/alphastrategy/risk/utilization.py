@@ -5,6 +5,7 @@ from typing import Any
 from alphastrategy.errors import FlattenRequested
 from alphastrategy.risk.check import check_book
 from alphastrategy.risk.policy import AccountPolicy
+from alphastrategy.supervisor.combine import combine
 from alphastrategy.supervisor.orders import plan_orders
 
 _EPS = 1e-12
@@ -49,6 +50,31 @@ def _next_send_limit(
     except Exception:
         return None
     return None
+
+
+def _next_send_combined(snapshot: Any) -> dict[str, float] | None:
+    weights = getattr(snapshot, "last_sleeve_weights", None) or {}
+    sleeves = getattr(snapshot, "sleeves", None) or {}
+    pairs: list[tuple[float, dict[str, float]]] = []
+    for bundle_id, sleeve_weights in weights.items():
+        if not isinstance(sleeve_weights, dict) or not sleeve_weights:
+            continue
+        try:
+            alloc = float(sleeves.get(bundle_id) or 0)
+        except (TypeError, ValueError):
+            continue
+        if alloc <= 0:
+            continue
+        pairs.append((alloc, dict(sleeve_weights)))
+    if pairs:
+        try:
+            return combine(pairs)
+        except Exception:
+            return None
+    combined = getattr(snapshot, "last_combined", None)
+    if not combined:
+        return None
+    return dict(combined)
 
 
 def summarize(
@@ -134,7 +160,7 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
     if live and out.get("live_limit") is None:
         out["live_limit"] = _next_send_limit(
             policy=supervisor.spoken_policy(),
-            combined=snapshot.last_combined,
+            combined=_next_send_combined(snapshot),
             prices=getattr(snapshot, "last_prices", None),
             positions=positions,
             equity=equity,
