@@ -369,7 +369,7 @@ def test_js_session_name_and_alloc_rails(js_text: str) -> None:
     assert "function nameCapBar" in js_text
     assert "function renderSleeveAllocBook" in js_text
     assert "Spoken " in js_text
-    assert "colspan='8'" in js_text
+    assert "colspan='9'" in js_text
     assert "window.confirm" not in js_text
 
 
@@ -658,6 +658,8 @@ def test_html_positions_glance_bands(html_text: str) -> None:
     assert ">Day<" in head
     assert head.find(">Notional<") < head.find(">Day<")
     assert head.find(">Day<") < head.find(">Wanted<")
+    assert head.find(">Wanted<") < head.find(">Next<")
+    assert head.find(">Next<") < head.find(">Got<")
     assert 'id="sleeves-table"' in sleeves
     assert 'id="sleeve-alloc-track"' in sleeves
     assert "book-grid" in port
@@ -1311,10 +1313,33 @@ def test_js_paints_positions_day_pnl(js_text: str) -> None:
     ]
     assert "formatDayPnlCell(pos.day_pnl)" in port
     assert "unrealized_pl" not in port
-    assert "colspan='8'" in port
+    assert "colspan='9'" in port
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
+
+
+def test_js_paints_positions_next(js_text: str) -> None:
+    assert "function formatNextCell" in js_text
+    helper = js_text[
+        js_text.find("function formatNextCell") : js_text.find("function wantedGotBar")
+    ]
+    assert "fmtPct" in helper
+    assert "warn" in helper
+    port = js_text[
+        js_text.find("function renderPortfolio") : js_text.find("function pulseLabel")
+    ]
+    assert "formatNextCell(pos.next, pos.wanted)" in port
+    assert "colspan='9'" in port
+    assert "Gross cap" not in js_text
+    assert "Order size" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_positions_next_warn_token(css_text: str) -> None:
+    warn = re.search(r"#positions-table td\.warn\s*\{[^}]*\}", css_text)
+    assert warn is not None and "#f59e0b" in warn.group(0).lower()
 
 
 def test_css_positions_day_signed_tokens(css_text: str) -> None:
