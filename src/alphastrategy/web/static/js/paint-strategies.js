@@ -6,8 +6,11 @@
 
     const ids = [...new Set([...bundles.imported, ...Object.keys(bundles.paper)])].sort();
     const counts = { imported: 0, paper: 0, halted: 0, stopped: 0 };
+    let waiting = false;
     for (const id of ids) {
       counts[sleeveState(id, bundles, state.status)] += 1;
+      const alloc = bundles.paper[id] || 0;
+      if (Number(alloc) > 0 && !sleeveHasLastWeights(id)) waiting = true;
     }
     const setCount = (elId, value, onClass) => {
       const el = document.getElementById(elId);
@@ -16,7 +19,12 @@
       if (onClass) el.classList.toggle(onClass, value > 0);
     };
     setCount("strat-count-imported", counts.imported);
-    setCount("strat-count-paper", counts.paper, "status-running");
+    const paperEl = document.getElementById("strat-count-paper");
+    if (paperEl) {
+      paperEl.textContent = String(counts.paper);
+      paperEl.classList.toggle("warn", waiting && counts.paper > 0);
+      paperEl.classList.toggle("status-running", !waiting && counts.paper > 0);
+    }
     setCount("strat-count-halted", counts.halted, "status-halt");
     setCount("strat-count-stopped", counts.stopped, "status-stopped");
 

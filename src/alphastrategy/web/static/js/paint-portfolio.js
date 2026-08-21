@@ -310,7 +310,7 @@
     } else {
       for (const id of ids) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${id}</td><td class="nums">${fmtPct(sleeves[id])}</td>` + formatContributionCell(contrib[id], lastContrib[id]);
+        tr.innerHTML = `<td>${id}</td><td class="nums">${fmtPct(sleeves[id])}</td>` + formatContributionCell(contrib[id], lastContrib[id], id, sleeves[id]);
         sleeveBody.appendChild(tr);
       }
     }

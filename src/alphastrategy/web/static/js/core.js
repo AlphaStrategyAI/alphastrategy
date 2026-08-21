@@ -67,7 +67,11 @@
     return text || fallback || "halted";
   }
 
-  function formatContributionCell(nextMap, lastMap) {
+  function formatContributionCell(nextMap, lastMap, bundleId, alloc) {
+    const wait = formatWeightsWaitSub(bundleId, alloc);
+    if (wait) {
+      return `<td class="nums">${wait}</td>`;
+    }
     const nextText = fmtContribution(nextMap);
     const lastText = fmtContribution(lastMap);
     const hasLast = lastMap && typeof lastMap === "object" && Object.keys(lastMap).length;

@@ -913,6 +913,14 @@ button.action.account-kill {
   max-width: 8rem;
 }
 
+#sleeves-table .metric-sub.warn {
+  color: #f59e0b;
+}
+
+#strat-count-paper.warn {
+  color: #f59e0b;
+}
+
 nav button:focus-visible,
 button.action:focus-visible,
 #help-toggle:focus-visible {

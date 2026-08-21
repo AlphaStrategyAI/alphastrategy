@@ -204,6 +204,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Sleeves Contribution names last against next.
   Caps LIMIT waits when a paper sleeve has no last weights.
   Roster names when a paper sleeve has no last weights.
+  Sleeves names when a paper sleeve has no last weights.
+  Paper count warns when a paper sleeve has no last weights.
   Start paper seeds last sleeve weights.
   Start paper that cannot seed last weights holds.
   HALT names Start paper that cannot seed last weights holds.
