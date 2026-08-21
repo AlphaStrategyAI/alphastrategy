@@ -99,13 +99,17 @@ def _cash_residual(weights: dict[str, float] | None) -> float | None:
     return max(0.0, 1.0 - sum(float(v) for v in weights.values()))
 
 
-def sleeve_contribution_glance(snapshot: Any) -> dict[str, dict[str, float]]:
+def last_sleeve_contribution_glance(snapshot: Any) -> dict[str, dict[str, float]]:
     last = getattr(snapshot, "last_sleeve_contribution", None) or {}
-    out: dict[str, dict[str, float]] = {
+    return {
         str(bundle_id): {str(asset): float(weight) for asset, weight in weights.items()}
         for bundle_id, weights in last.items()
         if isinstance(weights, dict)
     }
+
+
+def sleeve_contribution_glance(snapshot: Any) -> dict[str, dict[str, float]]:
+    out = last_sleeve_contribution_glance(snapshot)
     if not _next_send_ready(snapshot):
         return out
     sleeve_weights = getattr(snapshot, "last_sleeve_weights", None) or {}

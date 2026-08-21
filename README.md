@@ -201,6 +201,7 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Caps LIMIT follows current allocations on last sleeve weights.
   Headroom Target cash follows current allocations on last sleeve weights.
   Sleeves contribution follows current allocations on last sleeve weights.
+  Sleeves Contribution names last against next.
   Caps LIMIT waits when a paper sleeve has no last weights.
   Caps LIMIT follows a next send through Orders / rebalance.
   Clock Next is flatten send while a next send will flatten.

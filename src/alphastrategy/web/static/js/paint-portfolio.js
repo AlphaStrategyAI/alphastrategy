@@ -303,13 +303,14 @@
     sleeveBody.innerHTML = "";
     const sleeves = portfolio.sleeves || {};
     const contrib = portfolio.sleeve_contribution || {};
+    const lastContrib = portfolio.last_sleeve_contribution || {};
     const ids = Object.keys(sleeves).sort();
     if (!ids.length) {
       sleeveBody.innerHTML = "<tr><td colspan='3' class='muted'>No sleeves</td></tr>";
     } else {
       for (const id of ids) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${id}</td><td class="nums">${fmtPct(sleeves[id])}</td><td class="nums">${fmtContribution(contrib[id])}</td>`;
+        tr.innerHTML = `<td>${id}</td><td class="nums">${fmtPct(sleeves[id])}</td>` + formatContributionCell(contrib[id], lastContrib[id]);
         sleeveBody.appendChild(tr);
       }
     }

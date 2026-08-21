@@ -56,6 +56,17 @@
       .join(" · ");
   }
 
+  function formatContributionCell(nextMap, lastMap) {
+    const nextText = fmtContribution(nextMap);
+    const lastText = fmtContribution(lastMap);
+    const hasLast = lastMap && typeof lastMap === "object" && Object.keys(lastMap).length;
+    const differs = Boolean(hasLast && lastText !== nextText);
+    const sub = differs
+      ? `<div class="metric-sub nums">` + "last " + lastText + `</div>`
+      : "";
+    return `<td class="nums">${nextText}${sub}</td>`;
+  }
+
   async function api(method, path, body) {
     const opts = { method, headers: {} };
     if (body !== undefined) {
