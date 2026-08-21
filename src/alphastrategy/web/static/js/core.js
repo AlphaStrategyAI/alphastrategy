@@ -217,6 +217,16 @@
     );
   }
 
+  function sleeveHasLastWeights(bundleId) {
+    const ids = (state.portfolio && state.portfolio.last_sleeve_weight_ids) || [];
+    return ids.indexOf(bundleId) >= 0;
+  }
+
+  function formatWeightsWaitSub(bundleId, alloc) {
+    if (!(Number(alloc) > 0) || sleeveHasLastWeights(bundleId)) return "";
+    return `<div class="metric-sub nums warn">weights</div>`;
+  }
+
   function importedIds() {
     const bundles = state.bundles || { imported: [], paper: {} };
     const paper = bundles.paper || {};

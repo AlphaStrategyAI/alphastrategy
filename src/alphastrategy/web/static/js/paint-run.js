@@ -66,6 +66,7 @@
           <span class="sleeve-state ${statusClass}">${st}</span>
         </div>
         <div class="util-track" data-alloc-rail></div>
+        ${formatWeightsWaitSub(id, alloc)}
         <form class="inline sleeve-alloc-form" data-bundle="${id}">
           <label>
             Allocation

@@ -900,6 +900,19 @@ button.action.account-kill {
   text-transform: lowercase;
 }
 
+#strategies-table .metric-sub.warn {
+  color: #f59e0b;
+}
+
+.sleeve-card .metric-sub.warn {
+  color: #f59e0b;
+}
+
+#strategies-table .util-track {
+  margin-top: 0.35rem;
+  max-width: 8rem;
+}
+
 nav button:focus-visible,
 button.action:focus-visible,
 #help-toggle:focus-visible {

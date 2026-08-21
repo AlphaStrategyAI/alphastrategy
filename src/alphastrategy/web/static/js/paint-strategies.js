@@ -35,10 +35,12 @@
         tr.innerHTML = `
         <td>${id}<div class="metric-sub nums">${when}</div></td>
         <td class="status-${statusClass}">${st}</td>
-        <td class="nums">${fmtPct(alloc)}</td>
+        <td class="nums">${fmtPct(alloc)}<div class="util-track" data-alloc-rail></div>${formatWeightsWaitSub(id, alloc)}</td>
         <td class="muted">${riskSummary(policy)}</td>
       `;
         tbody.appendChild(tr);
+        const track = tr.querySelector("[data-alloc-rail]");
+        paintUtilTrack(track, alloc, 1, "allocation " + fmtPct(alloc));
       }
     }
 

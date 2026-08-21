@@ -93,6 +93,15 @@ def _next_send_ready(snapshot: Any) -> bool:
     return True
 
 
+def last_sleeve_weight_ids(snapshot: Any) -> list[str]:
+    weights = getattr(snapshot, "last_sleeve_weights", None) or {}
+    ids: list[str] = []
+    for bundle_id, sleeve_weights in weights.items():
+        if isinstance(sleeve_weights, dict) and sleeve_weights:
+            ids.append(str(bundle_id))
+    return sorted(ids)
+
+
 def _cash_residual(weights: dict[str, float] | None) -> float | None:
     if not weights:
         return None

@@ -18,6 +18,7 @@ from alphastrategy.risk.policy import AccountPolicy
 from alphastrategy.risk.utilization import (
     from_supervisor,
     last_sleeve_contribution_glance,
+    last_sleeve_weight_ids,
     next_send_combined_glance,
     sleeve_contribution_glance,
 )
@@ -369,6 +370,7 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
         "last_combined": dict(snapshot.last_combined),
         "sleeve_contribution": sleeve_contribution_glance(snapshot),
         "last_sleeve_contribution": last_sleeve_contribution_glance(snapshot),
+        "last_sleeve_weight_ids": last_sleeve_weight_ids(snapshot),
         "last_rebalance_event": snapshot.last_rebalance_event,
         "book": {"source": supervisor.live_book_source()},
     }
