@@ -289,6 +289,7 @@ class Supervisor:
                 item for item in self._snapshot.stopped if item != bundle_id
             ]
             self._audit("paper_start", bundle_id=bundle_id, allocation=allocation)
+            self._seed_last_sleeve_weights(bundle_id, allocation)
             self._persist()
             self._enforce_live_book()
             return self._snapshot.state == SupervisorState.HALTED
@@ -624,6 +625,20 @@ class Supervisor:
         if bundle_id in self._evaluators:
             return dict(self._evaluators[bundle_id])
         raise HaltRequested(f"no evaluator for sleeve {bundle_id}")
+
+    def _seed_last_sleeve_weights(self, bundle_id: str, allocation: float) -> None:
+        if allocation <= 0 or self._broker is None:
+            return
+        stored = self._snapshot.last_sleeve_weights.get(bundle_id)
+        if isinstance(stored, dict) and stored:
+            return
+        try:
+            weights = self._sleeve_weights(bundle_id)
+            self._validate_weights(weights)
+        except (HaltRequested, IllegalWeights) as exc:
+            self._halt(str(exc))
+            return
+        self._snapshot.last_sleeve_weights[bundle_id] = dict(weights)
 
     def _collect_sleeves(self) -> list[tuple[str, float, dict[str, float]]]:
         sleeves: list[tuple[str, float, dict[str, float]]] = []
