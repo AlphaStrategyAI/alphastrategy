@@ -36,6 +36,7 @@ SECTIONS: list[dict[str, str]] = [
             "Caps LIMIT waits when a paper sleeve has no last weights. "
             "Start paper seeds last sleeve weights. "
             "Start paper that cannot seed last weights holds. "
+            "HALT names Start paper that cannot seed last weights holds. "
             "Runtime overlays load once until the file changes. "
             "Tighten PUT reads runtime overlays from the Supervisor. "
             "At most two RTH rebalances fire: open plus 3 minutes, and 12 minutes before close. "
@@ -77,6 +78,7 @@ SECTIONS: list[dict[str, str]] = [
             "Caps LIMIT waits when a paper sleeve has no last weights. "
             "Start paper seeds last sleeve weights. "
             "Start paper that cannot seed last weights holds. "
+            "HALT names Start paper that cannot seed last weights holds. "
             "LIMIT names a next send through Order size. "
             "Caps LIMIT follows a next send through Orders / rebalance. "
             "Clock Next is flatten send while a next send will flatten. "
@@ -187,6 +189,7 @@ SECTIONS: list[dict[str, str]] = [
             "LIMIT names a next send through Order size. "
             "status names BOOK heartbeat or glance. "
             "status names Day PnL. "
+            "status names HALT. "
         ),
     },
     {
@@ -212,6 +215,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Book Drift follows the last fill, not last prices. "
             "A live book through the spoken cap warns before the next rebalance flattens. "
             "The deviation banner follows Book Drift and cannot go quiet while Drift is above zero. "
+            "HALT names Start paper that cannot seed last weights holds. "
             "A spent window keeps it. "
             "Positions is four tiles Rows / Wanted / Got / At cap. Wanted is the hero. "
             "Positions Day is that name since last close. "
@@ -270,6 +274,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
             "Sleeve kill flattens that sleeve, or the whole account if isolation is unclean. "
             "Resume lives under After halt and does not catch up. "
             "After halt shows the halt reason. "
+            "HALT names Start paper that cannot seed last weights holds. "
             "After halt names the spent session event. "
             "Account kill lives under Flatten account and requires typing FLATTEN. "
             "Each Run band shows its own error."

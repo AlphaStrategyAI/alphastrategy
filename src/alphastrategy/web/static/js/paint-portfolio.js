@@ -190,7 +190,7 @@
 
     if (halted || reason) {
       haltEl.classList.remove("hidden");
-      haltEl.textContent = `HALT: ${reason || state.status.state || "halted"}`;
+      haltEl.textContent = "HALT: " + formatHaltBanner(reason, state.status && state.status.state);
     } else {
       haltEl.classList.add("hidden");
     }

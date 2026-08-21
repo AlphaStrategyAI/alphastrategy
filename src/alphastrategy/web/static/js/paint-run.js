@@ -194,7 +194,9 @@
       "";
     if (halted || reason) {
       el.className = "warn";
-      el.textContent = reason || (state.status && state.status.state) || "halted";
+      el.textContent = /start paper seeds last sleeve weights/i.test(String(reason))
+        ? "Start paper that cannot seed last weights holds. Resume does not catch up."
+        : reason || (state.status && state.status.state) || "halted";
       return;
     }
     el.className = "muted";

@@ -59,6 +59,7 @@ _LIMIT_SEND_STATUS = (
 _LIMIT_UNKNOWN_STATUS = (
     "LIMIT: next send waits for last sleeve weights — Caps cannot dry-run"
 )
+_HALT_SEED_STATUS = "HALT: start paper that cannot seed last weights holds"
 _BOOK_STATUS = "BOOK: {source}"
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
@@ -303,6 +304,16 @@ def _status_pnl_line(payload: dict[str, Any]) -> str | None:
     return line
 
 
+def _status_halt_line(payload: dict[str, Any]) -> str | None:
+    if not payload.get("halted"):
+        return None
+    text = str(payload.get("halt_reason") or "").lower()
+    if "start paper seeds last sleeve weights" in text:
+        return _HALT_SEED_STATUS
+    reason = payload.get("halt_reason") or payload.get("state") or "halted"
+    return f"HALT: {reason}"
+
+
 def _print_status(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, separators=(",", ":")))
     book_line = _status_book_line(payload)
@@ -311,6 +322,9 @@ def _print_status(payload: dict[str, Any]) -> None:
     pnl_line = _status_pnl_line(payload)
     if pnl_line:
         print(pnl_line, file=sys.stderr)
+    halt_line = _status_halt_line(payload)
+    if halt_line:
+        print(halt_line, file=sys.stderr)
     line = _status_limit_line(payload)
     if line:
         print(line, file=sys.stderr)

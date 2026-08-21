@@ -56,6 +56,14 @@
       .join(" · ");
   }
 
+  function formatHaltBanner(reason, fallback) {
+    const text = String(reason || "");
+    if (/start paper seeds last sleeve weights/i.test(text)) {
+      return "start paper that cannot seed last weights holds";
+    }
+    return text || fallback || "halted";
+  }
+
   function formatContributionCell(nextMap, lastMap) {
     const nextText = fmtContribution(nextMap);
     const lastText = fmtContribution(lastMap);
