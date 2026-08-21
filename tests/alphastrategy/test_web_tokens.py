@@ -1238,6 +1238,7 @@ def test_html_risk_glance_bands(html_text: str) -> None:
     assert ">Fields<" in tighten
     assert 'id="risk-sleeves"' in overlays
     assert 'id="risk-overlay-spoken"' in overlays
+    assert 'id="risk-overlay-spoken-bar"' in overlays
     assert 'id="risk-overlay-count"' in overlays
     assert 'id="risk-overlay-tighter"' in overlays
     assert 'id="risk-overlay-idle"' in overlays
@@ -1313,6 +1314,27 @@ def test_js_paints_risk_overlay_glance(js_text: str) -> None:
     assert "risk-sleeve-tighten" in paint
     assert "Tighten this sleeve" in paint
     assert 'createElement("details")' in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_overlay_cards_name_contribution(js_text: str) -> None:
+    paint = js_text[js_text.find("function renderRisk") :]
+    cards = paint.split("No sleeve overlays")[1]
+    assert "sleeveState" in cards
+    assert "sleeve-head" in cards
+    assert "sleeve-state" in cards
+    assert "formatContributionInner" in cards
+    assert "sleeve_contribution" in cards
+    assert "last_sleeve_contribution" in cards
+    glance = js_text[
+        js_text.find("function renderOverlayGlance") : js_text.find("function riskFormIsDirty")
+    ]
+    assert "risk-overlay-spoken-bar" in glance
+    assert "paintUtilTrack" in glance
+    assert "spoken " in glance
+    assert "Tighten this sleeve" in paint
+    assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 
