@@ -214,6 +214,10 @@
       spokenEl.classList.toggle("warn", spoken >= 0.9 && spoken < 1);
       spokenEl.classList.toggle("fail", spoken >= 1);
     }
+    const spokenBar = document.getElementById("risk-overlay-spoken-bar");
+    if (spokenBar) {
+      paintUtilTrack(spokenBar, spoken, 1, "spoken " + fmtPct(spoken));
+    }
     const countEl = document.getElementById("risk-overlay-count");
     if (countEl) countEl.textContent = String(ids.length);
     const tightEl = document.getElementById("risk-overlay-tighter");
@@ -266,13 +270,32 @@
       return;
     }
     const account = risk.account || {};
+    const contrib = (state.portfolio && state.portfolio.sleeve_contribution) || {};
+    const lastContrib = (state.portfolio && state.portfolio.last_sleeve_contribution) || {};
+    const bundles = state.bundles || { imported: [], paper: {} };
     for (const id of ids) {
       const panel = document.createElement("div");
       panel.className = "panel";
       const alloc = ((state.bundles && state.bundles.paper) || {})[id] || 0;
-      const heading = document.createElement("h2");
+      const st = sleeveState(id, bundles, state.status);
+      const statusClass =
+        st === "paper"
+          ? "status-running"
+          : st === "halted"
+            ? "status-halt"
+            : st === "stopped"
+              ? "status-stopped"
+              : "status-muted";
+      const head = document.createElement("div");
+      head.className = "sleeve-head";
+      const heading = document.createElement("h3");
       heading.textContent = id;
-      panel.appendChild(heading);
+      const badge = document.createElement("span");
+      badge.className = "sleeve-state " + statusClass;
+      badge.textContent = st;
+      head.appendChild(heading);
+      head.appendChild(badge);
+      panel.appendChild(head);
       const allocRow = document.createElement("div");
       allocRow.innerHTML =
         `<span class="muted nums">Allocation ${fmtPct(alloc)}</span>`;
@@ -280,6 +303,10 @@
       const track = document.createElement("div");
       paintUtilTrack(track, alloc, 1, `allocation ${fmtPct(alloc)}`);
       panel.appendChild(track);
+      const contribEl = document.createElement("div");
+      contribEl.className = "nums";
+      contribEl.innerHTML = formatContributionInner(contrib[id], lastContrib[id], id, alloc);
+      panel.appendChild(contribEl);
       const tight = overlayTighterCount(risk.sleeves[id], account);
       const tightLine = document.createElement("p");
       tightLine.className = "nums tighter-line";

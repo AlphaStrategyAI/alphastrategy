@@ -208,6 +208,9 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Paper count warns when a paper sleeve has no last weights.
   Run sleeves name contribution last against next.
   Run Remaining is a rail.
+  Sleeve overlays name contribution last against next.
+  Each overlay card names imported, paper, halted, or stopped.
+  Sleeve overlay Spoken is a rail.
   Activity paper_start names allocation.
   Start paper seeds last sleeve weights.
   Start paper that cannot seed last weights holds.

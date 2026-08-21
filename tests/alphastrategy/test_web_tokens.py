@@ -1397,8 +1397,12 @@ def test_css_risk_overlay_card_tokens(css_text: str) -> None:
     tight = re.search(
         r"#risk-sleeves\s+\.tighter-line\.warn\s*\{[^}]*\}", css_text
     )
+    wait = re.search(
+        r"#risk-sleeves\s+\.metric-sub\.warn\s*\{[^}]*\}", css_text
+    )
     summary = re.search(r"\.risk-sleeve-tighten\s+summary\s*\{[^}]*\}", css_text)
     assert tight is not None and "#f59e0b" in tight.group(0).lower()
+    assert wait is not None and "#f59e0b" in wait.group(0).lower()
     assert summary is not None and "#9ba3b4" in summary.group(0).lower()
 
 
