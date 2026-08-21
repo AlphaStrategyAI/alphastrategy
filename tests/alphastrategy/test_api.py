@@ -280,6 +280,10 @@ def test_resume_after_seed_failure_keeps_unknown_limit(api_stack):
     assert not (supervisor.snapshot.last_sleeve_weights.get("asb_z") or {})
     assert broker.close_all_count == close_all_before
     assert supervisor.state.value != "halted"
+    book = client.get("/api/portfolio").json()
+    assert "asb_z" not in book["last_sleeve_weight_ids"]
+    assert "last_sleeve_weights" not in book
+    assert broker.close_all_count == close_all_before
 
 
 def test_status_returns_state_clock_and_halt(api_client: ApiClient):
@@ -1129,6 +1133,40 @@ def test_portfolio_omits_next_when_paper_sleeve_has_no_last_weights(api_stack):
     pos = next(item for item in body["positions"] if item["symbol"] == "AAPL")
     assert pos["wanted"] == pytest.approx(0.18)
     assert pos.get("next") is None
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
+def test_portfolio_lists_last_sleeve_weight_ids(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_sleeve_weights = {
+        "asb_x": {"AAPL": 1.0},
+        "asb_z": {},
+    }
+    supervisor.snapshot.sleeves = {"asb_x": 0.18, "asb_z": 0.10}
+    save_state(home.state_path(), supervisor.snapshot)
+    close_all_before = broker.close_all_count
+    body = client.get("/api/portfolio").json()
+    assert body["last_sleeve_weight_ids"] == ["asb_x"]
+    assert "last_sleeve_weights" not in body
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
+def test_portfolio_omits_last_sleeve_weight_id_when_paper_sleeve_has_no_last_weights(
+    api_stack,
+):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.18}
+    supervisor.snapshot.last_sleeve_weights = {}
+    supervisor.snapshot.sleeves = {"asb_y": 0.18}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    close_all_before = broker.close_all_count
+    body = client.get("/api/portfolio").json()
+    assert "asb_y" not in body["last_sleeve_weight_ids"]
+    assert "last_sleeve_weights" not in body
     assert broker.close_all_count == close_all_before
     assert supervisor.state.value != "stopped"
 

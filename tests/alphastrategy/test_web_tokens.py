@@ -1121,6 +1121,36 @@ def test_js_paints_strategy_inventory(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_paints_roster_weights_wait(js_text: str) -> None:
+    helper = js_text[
+        js_text.find("function sleeveHasLastWeights") : js_text.find("function importedIds")
+    ]
+    assert "formatWeightsWaitSub" in helper
+    assert "last_sleeve_weight_ids" in helper
+    assert ">weights<" in helper
+    paint = js_text[
+        js_text.find("function renderStrategies") : js_text.find("function runFormIsDirty")
+    ]
+    assert "formatWeightsWaitSub" in paint
+    assert "data-alloc-rail" in paint
+    assert "paintUtilTrack" in paint
+    assert "colspan='4'" in paint
+    run = js_text[
+        js_text.find("function renderRunSleeves") : js_text.find("function renderRunStartHint")
+    ]
+    assert "formatWeightsWaitSub" in run
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_css_roster_weights_wait_token(css_text: str) -> None:
+    roster = re.search(r"#strategies-table \.metric-sub\.warn\s*\{[^}]*\}", css_text)
+    card = re.search(r"\.sleeve-card \.metric-sub\.warn\s*\{[^}]*\}", css_text)
+    assert roster is not None and "#f59e0b" in roster.group(0).lower()
+    assert card is not None and "#f59e0b" in card.group(0).lower()
+
+
 def test_html_risk_glance_bands(html_text: str) -> None:
     assert 'id="risk-caps"' in html_text
     assert 'id="risk-headroom"' in html_text

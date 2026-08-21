@@ -284,6 +284,28 @@ def test_from_supervisor_live_limit_unknown_when_paper_sleeve_has_no_last_weight
     assert out["live_limit"]["kind"] == "unknown"
 
 
+def test_last_sleeve_weight_ids_skips_empty_and_sorts() -> None:
+    from alphastrategy.risk.utilization import last_sleeve_weight_ids
+
+    class Snap:
+        last_sleeve_weights = {
+            "asb_z": {},
+            "asb_x": {"AAPL": 1.0},
+            "asb_y": {"MSFT": 1.0},
+        }
+
+    assert last_sleeve_weight_ids(Snap()) == ["asb_x", "asb_y"]
+
+
+def test_last_sleeve_weight_ids_empty_when_missing() -> None:
+    from alphastrategy.risk.utilization import last_sleeve_weight_ids
+
+    class Snap:
+        last_sleeve_weights = {}
+
+    assert last_sleeve_weight_ids(Snap()) == []
+
+
 def test_from_supervisor_live_limit_next_send_orders_per_rebalance() -> None:
     from alphastrategy.risk.utilization import from_supervisor
 

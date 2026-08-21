@@ -70,6 +70,7 @@ REQUIRED_PHRASES = (
     "Tape Rebalances sub names spent",
     "deviation banner follows Book Drift",
     "Roster names imported at",
+    "Roster names when a paper sleeve has no last weights",
     "import-meta flushes to disk",
     "How to read a spent window",
     "Clock Last is spent",
