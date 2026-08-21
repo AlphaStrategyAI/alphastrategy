@@ -43,10 +43,16 @@
     if (liveEl) liveEl.textContent = String(live);
     const idleEl = document.getElementById("run-count-idle");
     if (idleEl) idleEl.textContent = String(idle);
+    const remBar = document.getElementById("run-remaining-bar");
+    if (remBar) {
+      paintUtilTrack(remBar, spoken, 1, "spoken " + fmtPct(spoken));
+    }
     if (!ids.length) {
       container.innerHTML = "<p class='muted'>No sleeves yet. Import a qualified .asb, then start paper.</p>";
       return;
     }
+    const contrib = (state.portfolio && state.portfolio.sleeve_contribution) || {};
+    const lastContrib = (state.portfolio && state.portfolio.last_sleeve_contribution) || {};
     for (const id of ids) {
       const card = document.createElement("div");
       card.className = "sleeve-card panel";
@@ -66,7 +72,7 @@
           <span class="sleeve-state ${statusClass}">${st}</span>
         </div>
         <div class="util-track" data-alloc-rail></div>
-        ${formatWeightsWaitSub(id, alloc)}
+        ${formatContributionInner(contrib[id], lastContrib[id], id, alloc)}
         <form class="inline sleeve-alloc-form" data-bundle="${id}">
           <label>
             Allocation

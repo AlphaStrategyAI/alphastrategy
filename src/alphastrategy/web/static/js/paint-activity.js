@@ -14,6 +14,7 @@
       case "execution_deviation":
         return `${ev.asset || ""} wanted ${ev.wanted} got ${ev.got}`;
       case "paper_start":
+        return `${ev.bundle_id || ""} ${fmtPct(ev.allocation)}`.trim();
       case "paper_stop":
       case "import":
         return ev.bundle_id || ev.scope || "";
@@ -143,7 +144,16 @@
       wrap.appendChild(detailList([["Scope", ev.scope || "account"]]));
       return wrap;
     }
-    if (kind === "paper_start" || kind === "paper_stop" || kind === "import") {
+    if (kind === "paper_start") {
+      wrap.appendChild(
+        detailList([
+          ["Bundle", ev.bundle_id || ev.scope],
+          ["Allocation", fmtPct(ev.allocation)],
+        ])
+      );
+      return wrap;
+    }
+    if (kind === "paper_stop" || kind === "import") {
       wrap.appendChild(detailList([["Bundle", ev.bundle_id || ev.scope]]));
       return wrap;
     }

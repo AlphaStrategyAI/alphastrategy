@@ -67,11 +67,9 @@
     return text || fallback || "halted";
   }
 
-  function formatContributionCell(nextMap, lastMap, bundleId, alloc) {
+  function formatContributionInner(nextMap, lastMap, bundleId, alloc) {
     const wait = formatWeightsWaitSub(bundleId, alloc);
-    if (wait) {
-      return `<td class="nums">${wait}</td>`;
-    }
+    if (wait) return wait;
     const nextText = fmtContribution(nextMap);
     const lastText = fmtContribution(lastMap);
     const hasLast = lastMap && typeof lastMap === "object" && Object.keys(lastMap).length;
@@ -79,7 +77,11 @@
     const sub = differs
       ? `<div class="metric-sub nums">` + "last " + lastText + `</div>`
       : "";
-    return `<td class="nums">${nextText}${sub}</td>`;
+    return nextText + sub;
+  }
+
+  function formatContributionCell(nextMap, lastMap, bundleId, alloc) {
+    return `<td class="nums">${formatContributionInner(nextMap, lastMap, bundleId, alloc)}</td>`;
   }
 
   async function api(method, path, body) {

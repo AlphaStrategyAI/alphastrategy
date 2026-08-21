@@ -206,6 +206,9 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Roster names when a paper sleeve has no last weights.
   Sleeves names when a paper sleeve has no last weights.
   Paper count warns when a paper sleeve has no last weights.
+  Run sleeves name contribution last against next.
+  Run Remaining is a rail.
+  Activity paper_start names allocation.
   Start paper seeds last sleeve weights.
   Start paper that cannot seed last weights holds.
   HALT names Start paper that cannot seed last weights holds.

@@ -1154,7 +1154,7 @@ def test_js_paints_roster_weights_wait(js_text: str) -> None:
     run = js_text[
         js_text.find("function renderRunSleeves") : js_text.find("function renderRunStartHint")
     ]
-    assert "formatWeightsWaitSub" in run
+    assert "formatContributionInner" in run
     assert "Gross cap" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
