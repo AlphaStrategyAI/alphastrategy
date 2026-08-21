@@ -767,6 +767,34 @@ def test_status_live_limit_unknown_when_paper_sleeve_has_no_last_weights(api_sta
     assert supervisor.state.value != "stopped"
 
 
+def test_start_paper_seeds_last_sleeve_weights_for_next_send(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.set_policy({"max_order_notional_frac": 0.10})
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.18}
+    supervisor.snapshot.last_sleeve_weights = {}
+    supervisor.snapshot.sleeves = {}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0, "MSFT": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    started = client.post("/api/paper/start", json={"bundle_id": "asb_y", "allocation": 0.18})
+    assert started.status == 200
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["kind"] == "send"
+    assert body["utilization"]["live_limit"]["reason"] == "max_order_notional_frac"
+    portfolio = client.get("/api/portfolio").json()
+    msft = next(item for item in portfolio["positions"] if item["symbol"] == "MSFT")
+    assert msft["next"] == pytest.approx(0.18)
+    aapl = next(item for item in portfolio["positions"] if item["symbol"] == "AAPL")
+    assert aapl["wanted"] == pytest.approx(0.18)
+    assert aapl.get("next") is None
+    assert supervisor.snapshot.last_sleeve_weights["asb_y"]["MSFT"] == pytest.approx(1.0)
+    assert supervisor.snapshot.last_combined == {"AAPL": 0.18}
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
 def test_status_live_limit_unknown_when_one_paper_sleeve_missing_weights(api_stack):
     client, home, supervisor, broker = api_stack
     supervisor.set_policy({"max_order_notional_frac": 0.10})

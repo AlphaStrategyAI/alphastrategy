@@ -705,6 +705,57 @@ def test_start_sleeve_clears_stopped(tmp_path: Path):
     assert supervisor.snapshot.sleeves["asb_test"] == 0.2
 
 
+def test_start_sleeve_seeds_last_sleeve_weights(tmp_path: Path):
+    broker = FakeBroker()
+    supervisor = _make_supervisor(tmp_path, broker)
+    close_all_before = broker.close_all_count
+    orders_before = list(broker.orders)
+    held = supervisor.start_sleeve("asb_test", 0.18)
+    assert held is False
+    assert supervisor.snapshot.last_sleeve_weights["asb_test"]["AAPL"] == pytest.approx(1.0)
+    assert supervisor.snapshot.last_combined == {}
+    assert broker.close_all_count == close_all_before
+    assert broker.orders == orders_before
+    assert supervisor.state.value != "stopped"
+
+
+def test_start_sleeve_does_not_reseed_existing_last_weights(tmp_path: Path):
+    calls = {"n": 0}
+
+    def weight_fn(bundle_id: str) -> dict[str, float]:
+        calls["n"] += 1
+        return {"MSFT": 1.0}
+
+    home = AlphaStrategyHome(root=tmp_path)
+    home.bundle_dir("asb_test").mkdir(parents=True, exist_ok=True)
+    broker = FakeBroker()
+    supervisor = Supervisor(
+        home=home,
+        broker=broker,
+        evaluators={"asb_test": {"AAPL": 1.0}},
+        weight_fn=weight_fn,
+    )
+    supervisor.snapshot.last_sleeve_weights = {"asb_test": {"AAPL": 1.0}}
+    supervisor.start_sleeve("asb_test", 0.18)
+    assert calls["n"] == 0
+    assert supervisor.snapshot.last_sleeve_weights["asb_test"]["AAPL"] == pytest.approx(1.0)
+    assert broker.close_all_count == 0
+
+
+def test_start_sleeve_halts_when_sleeve_has_no_evaluator(tmp_path: Path):
+    home = AlphaStrategyHome(root=tmp_path)
+    home.bundle_dir("asb_x").mkdir(parents=True, exist_ok=True)
+    broker = FakeBroker()
+    supervisor = Supervisor(home=home, broker=broker, evaluators={})
+    close_all_before = broker.close_all_count
+    held = supervisor.start_sleeve("asb_x", 0.18)
+    assert held is True
+    assert supervisor.state == SupervisorState.HALTED
+    assert not (supervisor.snapshot.last_sleeve_weights.get("asb_x") or {})
+    assert broker.close_all_count == close_all_before
+    assert supervisor.snapshot.sleeves["asb_x"] == pytest.approx(0.18)
+
+
 def test_rebalance_persists_contribution_and_stop_does_not_zero_it(tmp_path: Path):
     open_time = datetime(2024, 1, 31, 14, 30)
     session_close = datetime(2024, 1, 31, 21, 0)
