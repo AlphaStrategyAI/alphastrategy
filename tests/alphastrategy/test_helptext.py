@@ -110,6 +110,8 @@ REQUIRED_PHRASES = (
     "Caps LIMIT follows a next send through Orders / rebalance",
     "Clock Next is flatten send while a next send will flatten",
     "Caps LIMIT follows current allocations on last sleeve weights",
+    "Caps LIMIT waits when a paper sleeve has no last weights",
+    "Clock Next is weights while a paper sleeve has no last weights",
     "Book takes LIMIT color while a next rebalance will flatten",
     "Header Pulse, Session, and Supervisor are instruments",
     "Day PnL is equity minus last close",

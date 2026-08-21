@@ -340,6 +340,39 @@ def test_status_prints_send_limit_on_stderr(
     patch_alpaca.assert_not_called()
 
 
+def test_status_prints_unknown_limit_on_stderr(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = {
+        "state": "idle_in_session",
+        "clock": {},
+        "halted": False,
+        "flattened": False,
+        "utilization": {
+            "live_limit": {"reason": "next_send_unknown", "kind": "unknown"}
+        },
+        "heartbeat": {"age_seconds": 4, "pulse": "live", "interval_seconds": 20},
+        "book": {"source": "heartbeat"},
+        "pnl": 100.0,
+        "pnl_source": "last_close",
+    }
+    monkeypatch.setattr(
+        "alphastrategy.cli.main._control_request",
+        lambda *args, **kwargs: (200, payload),
+    )
+    rc = main(["status"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    out = json.loads(captured.out.strip())
+    assert out["pnl"] == 100.0
+    assert captured.err.splitlines() == [
+        "BOOK: heartbeat",
+        "PNL: 100.00 vs last close",
+        "LIMIT: next send waits for last sleeve weights — Caps cannot dry-run",
+    ]
+    patch_alpaca.assert_not_called()
+
+
 def test_status_omits_pnl_when_null(
     cli_home: Path, patch_alpaca: mock.MagicMock, capsys, monkeypatch: pytest.MonkeyPatch
 ) -> None:

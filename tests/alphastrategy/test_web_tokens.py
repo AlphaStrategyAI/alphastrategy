@@ -567,6 +567,20 @@ def test_js_clock_next_flatten_while_live_limit(js_text: str) -> None:
     assert "window.state" not in js_text
 
 
+def test_js_clock_next_weights_while_unknown_limit(js_text: str) -> None:
+    session = js_text[
+        js_text.find("function renderSessionMetrics") : js_text.find("function bookDrift")
+    ]
+    assert "weights · " in session
+    assert 'kind === "unknown"' in session
+    assert "flatten send · " in session
+    assert "held · " in session
+    assert "flat · " in session
+    assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
 def test_css_countdown_fail_uses_kill_token(css_text: str) -> None:
     fail = re.search(r"#metric-countdown\.fail\s*\{[^}]*\}", css_text)
     warn = re.search(r"#metric-countdown\.warn\s*\{[^}]*\}", css_text)
@@ -1548,6 +1562,24 @@ def test_js_paints_live_limit_banner(js_text: str) -> None:
     assert "live book through" in js_text
     assert banners.count("const reason") == 1
     assert "Gross cap" not in js_text
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_paints_unknown_limit_banner(js_text: str) -> None:
+    rails = js_text[
+        js_text.find("function renderLiveLimitBanner") : js_text.find("function paintBookLimitRail")
+    ]
+    assert "next send waits for last sleeve weights" in rails
+    assert "Caps cannot dry-run" in rails
+    assert 'kind === "unknown"' in rails
+    assert "next rebalance will flatten" in rails
+    banners = js_text[
+        js_text.find("function renderBanners") : js_text.find("function renderPortfolio")
+    ]
+    assert banners.count("const reason") == 1
+    assert "Gross cap" not in js_text
+    assert "Order size" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 

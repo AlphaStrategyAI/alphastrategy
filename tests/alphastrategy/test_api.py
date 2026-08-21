@@ -726,6 +726,61 @@ def test_status_live_limit_next_send_follows_current_allocation(api_stack):
     assert supervisor.state.value != "stopped"
 
 
+def test_status_live_limit_unknown_when_paper_sleeve_has_no_last_weights(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.set_policy({"max_order_notional_frac": 0.10})
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.18}
+    supervisor.snapshot.last_sleeve_weights = {}
+    supervisor.snapshot.sleeves = {"asb_y": 0.18}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["reason"] == "next_send_unknown"
+    assert body["utilization"]["live_limit"]["kind"] == "unknown"
+    risk = client.get("/api/risk").json()
+    assert risk["utilization"]["live_limit"]["reason"] == "next_send_unknown"
+    assert risk["utilization"]["live_limit"]["kind"] == "unknown"
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
+def test_status_live_limit_unknown_when_one_paper_sleeve_missing_weights(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.set_policy({"max_order_notional_frac": 0.10})
+    supervisor.snapshot.last_got = {}
+    supervisor.snapshot.last_combined = {"AAPL": 0.18}
+    supervisor.snapshot.last_sleeve_weights = {"asb_x": {"AAPL": 1.0}}
+    supervisor.snapshot.sleeves = {"asb_x": 0.18, "asb_y": 0.01}
+    supervisor.snapshot.last_prices = {"AAPL": 100.0}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["reason"] == "next_send_unknown"
+    assert body["utilization"]["live_limit"]["kind"] == "unknown"
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
+def test_status_book_limit_wins_over_unknown_next_send(api_stack):
+    client, home, supervisor, broker = api_stack
+    supervisor.snapshot.last_got = {"AAPL": 0.225}
+    supervisor.snapshot.last_prices = {"AAPL": 150.0}
+    supervisor.snapshot.last_sleeve_weights = {}
+    supervisor.snapshot.sleeves = {"asb_y": 0.18}
+    save_state(home.state_path(), supervisor.snapshot)
+    broker.positions = {"AAPL": 15.0}
+    close_all_before = broker.close_all_count
+    body = client.get("/api/status").json()
+    assert body["utilization"]["live_limit"]["reason"] == "max_name_weight"
+    assert body["utilization"]["live_limit"]["kind"] == "book"
+    assert broker.close_all_count == close_all_before
+    assert supervisor.state.value != "stopped"
+
+
 def test_status_live_limit_next_send_orders_per_rebalance(api_stack):
     client, home, supervisor, broker = api_stack
     supervisor.set_policy({"max_orders_per_rebalance": 2})
