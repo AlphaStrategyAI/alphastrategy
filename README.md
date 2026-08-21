@@ -207,6 +207,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Start paper that cannot seed last weights holds.
   HALT names Start paper that cannot seed last weights holds.
   After halt is four tiles Reason / Spent / Next / Resume.
+  Resume does not seed last weights.
+  Activity halt rows name Start paper that cannot seed last weights holds.
   status names HALT.
   Caps LIMIT follows a next send through Orders / rebalance.
   Clock Next is flatten send while a next send will flatten.

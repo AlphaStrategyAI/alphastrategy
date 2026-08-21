@@ -171,6 +171,12 @@
         : restart;
       return;
     }
+    if (utilization().live_limit && utilization().live_limit.kind === "unknown") {
+      el.className = "warn";
+      el.textContent =
+        "Resume does not seed last weights. Start paper seeds last sleeve weights.";
+      return;
+    }
     el.className = "muted";
     el.textContent =
       "Start paper is a second explicit action. Import is not permission to trade.";
@@ -194,8 +200,11 @@
       "";
     const banner = formatHaltBanner(reason, state.status && state.status.state);
     const active = Boolean(halted || reason);
-    el.className = "metric-value" + (active ? " warn" : "");
-    el.textContent = active ? banner : "—";
+    const unknown = Boolean(
+      utilization().live_limit && utilization().live_limit.kind === "unknown"
+    );
+    el.className = "metric-value" + (active || unknown ? " warn" : "");
+    el.textContent = active ? banner : unknown ? "weights" : "—";
     const sub = document.getElementById("run-halt-reason-sub");
     if (sub) {
       const raw = String(reason || "");
@@ -209,8 +218,8 @@
     }
     const nextEl = document.getElementById("run-halt-next");
     if (nextEl) {
-      nextEl.className = "metric-value" + (halted ? " warn" : "");
-      nextEl.textContent = halted ? "held" : "—";
+      nextEl.className = "metric-value" + (halted || (!active && unknown) ? " warn" : "");
+      nextEl.textContent = halted ? "held" : !active && unknown ? "weights" : "—";
     }
     const resumeEl = document.getElementById("run-halt-resume");
     if (resumeEl) {
@@ -224,6 +233,10 @@
         hint.textContent = /start paper seeds last sleeve weights/i.test(String(reason))
           ? "Start paper that cannot seed last weights holds. Resume does not catch up."
           : "Resume does not catch up.";
+      } else if (unknown) {
+        hint.className = "warn";
+        hint.textContent =
+          "Resume does not seed last weights. Start paper seeds last sleeve weights.";
       } else {
         hint.className = "muted";
         hint.textContent = "Resume is only after halt.";

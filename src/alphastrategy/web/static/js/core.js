@@ -61,6 +61,9 @@
     if (/start paper seeds last sleeve weights/i.test(text)) {
       return "start paper that cannot seed last weights holds";
     }
+    if (/no evaluator for sleeve/i.test(text)) {
+      return "resume does not seed last weights";
+    }
     return text || fallback || "halted";
   }
 

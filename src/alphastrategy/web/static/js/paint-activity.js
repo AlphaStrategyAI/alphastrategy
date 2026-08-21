@@ -3,7 +3,7 @@
       case "order":
         return `${ev.side || ""} ${ev.qty || ""} ${ev.symbol || ""}`.trim();
       case "halt":
-        return ev.reason || "halt";
+        return formatHaltBanner(ev.reason, "halt");
       case "rebalance": {
         const wantedN = ev.wanted && typeof ev.wanted === "object" ? Object.keys(ev.wanted).length : 0;
         const gotN = ev.got && typeof ev.got === "object" ? Object.keys(ev.got).length : 0;

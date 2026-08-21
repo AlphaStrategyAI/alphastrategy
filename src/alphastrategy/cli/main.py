@@ -60,6 +60,7 @@ _LIMIT_UNKNOWN_STATUS = (
     "LIMIT: next send waits for last sleeve weights — Caps cannot dry-run"
 )
 _HALT_SEED_STATUS = "HALT: start paper that cannot seed last weights holds"
+_HALT_RESUME_SEED_STATUS = "HALT: resume does not seed last weights"
 _BOOK_STATUS = "BOOK: {source}"
 
 _FORBIDDEN_LIVE_FLAGS = frozenset(
@@ -310,6 +311,8 @@ def _status_halt_line(payload: dict[str, Any]) -> str | None:
     text = str(payload.get("halt_reason") or "").lower()
     if "start paper seeds last sleeve weights" in text:
         return _HALT_SEED_STATUS
+    if "no evaluator for sleeve" in text:
+        return _HALT_RESUME_SEED_STATUS
     reason = payload.get("halt_reason") or payload.get("state") or "halted"
     return f"HALT: {reason}"
 
