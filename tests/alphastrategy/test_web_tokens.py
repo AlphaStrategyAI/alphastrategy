@@ -769,6 +769,16 @@ def test_html_run_kill_switch_zones(html_text: str) -> None:
     assert ">Remaining<" in book
     assert 'id="account-resume"' in recover
     assert 'id="run-halt-reason"' in recover
+    assert "metrics-4" in recover
+    assert ">Reason<" in recover
+    assert ">Spent<" in recover
+    assert ">Next<" in recover
+    assert ">Resume<" in recover
+    assert 'id="run-halt-spent"' in recover
+    assert 'id="run-halt-next"' in recover
+    assert 'id="run-halt-resume"' in recover
+    assert 'id="run-halt-hint"' in recover
+    assert 'id="run-halt-reason-sub"' in recover
     assert 'id="run-halt-reason"' not in flatten
     assert 'id="account-kill"' not in recover
     assert 'id="account-kill"' in flatten
@@ -785,6 +795,22 @@ def test_css_run_kill_switch_zones(css_text: str) -> None:
     assert ".recover-zone" in css_text
     assert ".flatten-zone .panel" in css_text
     assert ".flatten-zone .glance-heading" in css_text
+
+
+def test_css_after_halt_tiles(css_text: str) -> None:
+    hero = re.search(
+        r"#run-recover\s+\.metric\.hero\s+\.metric-value\s*\{[^}]*\}",
+        css_text,
+    )
+    assert hero is not None and "1.15rem" in hero.group(0)
+    for sel in (
+        "#run-halt-reason.warn",
+        "#run-halt-spent.warn",
+        "#run-halt-next.warn",
+        "#run-halt-resume.warn",
+    ):
+        block = re.search(re.escape(sel) + r"\s*\{[^}]*\}", css_text)
+        assert block is not None and "#f59e0b" in block.group(0).lower()
 
 
 def test_js_paints_run_capacity(js_text: str) -> None:
@@ -909,6 +935,15 @@ def test_js_paints_run_halt_reason(js_text: str) -> None:
     assert "Resume is only after halt." in paint
     assert "Start paper that cannot seed last weights holds. Resume does not catch up." in paint
     assert "start paper seeds last sleeve weights" in paint
+    assert "run-halt-spent" in paint
+    assert "run-halt-next" in paint
+    assert "run-halt-resume" in paint
+    assert "run-halt-hint" in paint
+    assert "run-halt-reason-sub" in paint
+    assert "formatHaltBanner" in paint
+    assert "spent" in paint
+    assert '"held"' in paint
+    assert '"wait"' in paint
     assert "innerHTML" not in paint
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
