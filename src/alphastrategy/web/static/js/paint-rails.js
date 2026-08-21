@@ -308,6 +308,17 @@
       targetEl.textContent =
         target == null || target === undefined ? "—" : fmtPct(target);
     }
+    const targetSub = document.getElementById("risk-head-target-sub");
+    if (targetSub) {
+      const lastTarget = util.last_target_cash_weight;
+      const differs =
+        lastTarget != null &&
+        lastTarget !== undefined &&
+        target != null &&
+        target !== undefined &&
+        Math.abs(Number(lastTarget) - Number(target)) > 1e-9;
+      targetSub.textContent = differs ? "last " + fmtPct(lastTarget) : "—";
+    }
   }
 
   function nameCapBar(got, cap) {

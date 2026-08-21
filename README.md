@@ -197,6 +197,8 @@ Expanding a blotter row shows **Wanted / Got**, not a JSON dump.
   Caps LIMIT follows the same live book as Tighten.
   Caps LIMIT follows a next send through Order size.
   Caps LIMIT follows current allocations on last sleeve weights.
+  Headroom Target cash follows current allocations on last sleeve weights.
+  Sleeves contribution follows current allocations on last sleeve weights.
   Caps LIMIT waits when a paper sleeve has no last weights.
   Caps LIMIT follows a next send through Orders / rebalance.
   Clock Next is flatten send while a next send will flatten.

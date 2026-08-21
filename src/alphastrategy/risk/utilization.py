@@ -93,6 +93,39 @@ def _next_send_ready(snapshot: Any) -> bool:
     return True
 
 
+def _cash_residual(weights: dict[str, float] | None) -> float | None:
+    if not weights:
+        return None
+    return max(0.0, 1.0 - sum(float(v) for v in weights.values()))
+
+
+def sleeve_contribution_glance(snapshot: Any) -> dict[str, dict[str, float]]:
+    last = getattr(snapshot, "last_sleeve_contribution", None) or {}
+    out: dict[str, dict[str, float]] = {
+        str(bundle_id): {str(asset): float(weight) for asset, weight in weights.items()}
+        for bundle_id, weights in last.items()
+        if isinstance(weights, dict)
+    }
+    if not _next_send_ready(snapshot):
+        return out
+    sleeve_weights = getattr(snapshot, "last_sleeve_weights", None) or {}
+    sleeves = getattr(snapshot, "sleeves", None) or {}
+    for bundle_id, raw_alloc in sleeves.items():
+        try:
+            alloc = float(raw_alloc or 0)
+        except (TypeError, ValueError):
+            continue
+        if alloc <= 0:
+            continue
+        weights = sleeve_weights.get(bundle_id)
+        if not isinstance(weights, dict) or not weights:
+            continue
+        out[str(bundle_id)] = {
+            str(asset): alloc * float(weight) for asset, weight in weights.items()
+        }
+    return out
+
+
 def summarize(
     *,
     policy: AccountPolicy,
@@ -122,9 +155,7 @@ def summarize(
         cash_weight = 0.0
         invested_weight = 0.0
 
-    target_cash_weight: float | None = None
-    if last_combined:
-        target_cash_weight = max(0.0, 1.0 - sum(float(v) for v in last_combined.values()))
+    target_cash_weight: float | None = _cash_residual(last_combined)
 
     live_limit = None
     if last_got:
@@ -173,6 +204,11 @@ def from_supervisor(supervisor: Any, *, live: bool) -> dict[str, Any]:
         last_combined=snapshot.last_combined,
         last_got=live_weights or snapshot.last_got,
     )
+    out["last_target_cash_weight"] = out.get("target_cash_weight")
+    if _next_send_ready(snapshot):
+        residual = _cash_residual(_next_send_combined(snapshot))
+        if residual is not None:
+            out["target_cash_weight"] = residual
     if live and out.get("live_limit") is None:
         if not _next_send_ready(snapshot):
             out["live_limit"] = {"reason": "next_send_unknown", "kind": "unknown"}

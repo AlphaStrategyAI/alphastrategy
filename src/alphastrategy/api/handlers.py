@@ -15,7 +15,7 @@ from alphastrategy.helptext import help_payload
 from alphastrategy.home import AlphaStrategyHome
 from alphastrategy.risk.labels import POLICY_LABELS
 from alphastrategy.risk.policy import AccountPolicy
-from alphastrategy.risk.utilization import from_supervisor
+from alphastrategy.risk.utilization import from_supervisor, sleeve_contribution_glance
 from alphastrategy.supervisor.heartbeat import describe
 from alphastrategy.supervisor import audit
 from alphastrategy.supervisor.clock import ClockSnapshot, rebalance_countdown
@@ -337,10 +337,7 @@ def handle_get_portfolio(handler: Any, home: AlphaStrategyHome, supervisor: Supe
         "positions": positions,
         "sleeves": dict(snapshot.sleeves),
         "last_combined": dict(snapshot.last_combined),
-        "sleeve_contribution": {
-            bundle_id: dict(weights)
-            for bundle_id, weights in snapshot.last_sleeve_contribution.items()
-        },
+        "sleeve_contribution": sleeve_contribution_glance(snapshot),
         "last_rebalance_event": snapshot.last_rebalance_event,
         "book": {"source": supervisor.live_book_source()},
     }
