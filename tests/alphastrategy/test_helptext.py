@@ -113,6 +113,8 @@ REQUIRED_PHRASES = (
     "Caps LIMIT waits when a paper sleeve has no last weights",
     "Start paper seeds last sleeve weights",
     "Start paper that cannot seed last weights holds",
+    "HALT names Start paper that cannot seed last weights holds",
+    "status names HALT",
     "Clock Next is weights while a paper sleeve has no last weights",
     "Headroom Target cash follows current allocations on last sleeve weights",
     "Sleeves contribution follows current allocations on last sleeve weights",

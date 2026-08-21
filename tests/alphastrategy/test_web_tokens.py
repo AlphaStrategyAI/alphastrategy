@@ -907,7 +907,26 @@ def test_js_paints_run_halt_reason(js_text: str) -> None:
     assert "run-halt-reason" in paint
     assert "halt_reason" in paint
     assert "Resume is only after halt." in paint
+    assert "Start paper that cannot seed last weights holds. Resume does not catch up." in paint
+    assert "start paper seeds last sleeve weights" in paint
     assert "innerHTML" not in paint
+    assert "window.confirm" not in js_text
+    assert "window.state" not in js_text
+
+
+def test_js_paints_halt_banner_seed_hold(js_text: str) -> None:
+    banners = js_text[
+        js_text.find("function renderBanners") : js_text.find("function renderPortfolio")
+    ]
+    assert "formatHaltBanner" in banners
+    assert banners.count("const reason") == 1
+    mapper = js_text[
+        js_text.find("function formatHaltBanner") : js_text.find("function formatContributionCell")
+    ]
+    assert "start paper that cannot seed last weights holds" in mapper
+    assert "start paper seeds last sleeve weights" in mapper
+    assert "Gross cap" not in js_text
+    assert "Order size" not in js_text
     assert "window.confirm" not in js_text
     assert "window.state" not in js_text
 
