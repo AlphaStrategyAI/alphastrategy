@@ -750,6 +750,9 @@ def test_start_sleeve_halts_when_sleeve_has_no_evaluator(tmp_path: Path):
     close_all_before = broker.close_all_count
     held = supervisor.start_sleeve("asb_x", 0.18)
     assert held is True
+    reason = (supervisor.snapshot.halt_reason or "").lower()
+    assert "start paper seeds last sleeve weights" in reason
+    assert "asb_x" in reason
     assert supervisor.state == SupervisorState.HALTED
     assert not (supervisor.snapshot.last_sleeve_weights.get("asb_x") or {})
     assert broker.close_all_count == close_all_before

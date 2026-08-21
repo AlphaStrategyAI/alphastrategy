@@ -612,6 +612,20 @@ def test_paper_start_while_halted_prints_held(
     assert "catch up" in err.lower()
 
 
+def test_paper_start_seed_failure_prints_seed_hold(
+    cli_home: Path, patch_alpaca: mock.MagicMock, capsys
+) -> None:
+    home = AlphaStrategyHome.from_env()
+    home.bundle_dir("asb_z").mkdir(parents=True, exist_ok=True)
+    rc = main(["paper", "start", "--bundle", "asb_z", "--allocation", "0.18"])
+    assert rc == 0
+    err = capsys.readouterr().err.lower()
+    assert "held:" in err
+    assert "cannot seed last weights holds" in err
+    assert "catch up" in err
+    assert "flattened:" not in err
+
+
 def test_paper_start_overlay_breach_prints_flattened(
     cli_home: Path, patch_alpaca: mock.MagicMock, capsys
 ) -> None:

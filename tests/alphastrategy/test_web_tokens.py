@@ -848,6 +848,9 @@ def test_js_paints_run_start_hint(js_text: str) -> None:
     ]
     assert "run-start-hint" in paint
     assert "Start paper while halted waits for resume. Resume does not catch up." in paint
+    assert "Start paper that cannot seed last weights holds. Resume does not catch up." in paint
+    assert "start paper seeds last sleeve weights" in paint
+    assert "halt_reason" in paint
     assert "Start paper after flatten starts the session loop again and does not catch up." in paint
     assert "Start paper is a second explicit action. Import is not permission to trade." in paint
     assert "last_kill" in paint
