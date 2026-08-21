@@ -279,8 +279,27 @@
       </div>
       <div id="run-recover" class="glance-band recover-zone">
         <h2 class="glance-heading">After halt</h2>
+        <div class="metrics metrics-4 nums">
+          <div class="metric hero">
+            <div class="metric-label">Reason</div>
+            <div id="run-halt-reason" class="metric-value">—</div>
+            <div id="run-halt-reason-sub" class="metric-sub">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Spent</div>
+            <div id="run-halt-spent" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Next</div>
+            <div id="run-halt-next" class="metric-value">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Resume</div>
+            <div id="run-halt-resume" class="metric-value">—</div>
+          </div>
+        </div>
+        <p id="run-halt-hint" class="muted">Resume is only after halt.</p>
         <div class="panel">
-          <p id="run-halt-reason" class="muted">Resume is only after halt.</p>
           <button type="button" id="account-resume" class="action warn">Resume after halt</button>
           <div id="run-recover-error" class="error-box hidden"></div>
         </div>

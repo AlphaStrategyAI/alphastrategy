@@ -192,14 +192,42 @@
       (state.portfolio && state.portfolio.halt_reason) ||
       (state.status && state.status.halt_reason) ||
       "";
-    if (halted || reason) {
-      el.className = "warn";
-      el.textContent = /start paper seeds last sleeve weights/i.test(String(reason))
-        ? "Start paper that cannot seed last weights holds. Resume does not catch up."
-        : reason || (state.status && state.status.state) || "halted";
-      return;
+    const banner = formatHaltBanner(reason, state.status && state.status.state);
+    const active = Boolean(halted || reason);
+    el.className = "metric-value" + (active ? " warn" : "");
+    el.textContent = active ? banner : "—";
+    const sub = document.getElementById("run-halt-reason-sub");
+    if (sub) {
+      const raw = String(reason || "");
+      sub.textContent = active && raw && raw !== banner ? raw : "—";
     }
-    el.className = "muted";
-    el.textContent = "Resume is only after halt.";
+    const spentEl = document.getElementById("run-halt-spent");
+    if (spentEl) {
+      const spent = state.status && state.status.last_rebalance_complete === false;
+      spentEl.className = "metric-value" + (spent ? " warn" : "");
+      spentEl.textContent = spent ? "spent" : "—";
+    }
+    const nextEl = document.getElementById("run-halt-next");
+    if (nextEl) {
+      nextEl.className = "metric-value" + (halted ? " warn" : "");
+      nextEl.textContent = halted ? "held" : "—";
+    }
+    const resumeEl = document.getElementById("run-halt-resume");
+    if (resumeEl) {
+      resumeEl.className = "metric-value" + (halted ? " warn" : "");
+      resumeEl.textContent = halted ? "wait" : "—";
+    }
+    const hint = document.getElementById("run-halt-hint");
+    if (hint) {
+      if (active) {
+        hint.className = "warn";
+        hint.textContent = /start paper seeds last sleeve weights/i.test(String(reason))
+          ? "Start paper that cannot seed last weights holds. Resume does not catch up."
+          : "Resume does not catch up.";
+      } else {
+        hint.className = "muted";
+        hint.textContent = "Resume is only after halt.";
+      }
+    }
   }
 

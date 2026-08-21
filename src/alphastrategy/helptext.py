@@ -79,6 +79,7 @@ SECTIONS: list[dict[str, str]] = [
             "Start paper seeds last sleeve weights. "
             "Start paper that cannot seed last weights holds. "
             "HALT names Start paper that cannot seed last weights holds. "
+            "After halt is four tiles Reason / Spent / Next / Resume. "
             "LIMIT names a next send through Order size. "
             "Caps LIMIT follows a next send through Orders / rebalance. "
             "Clock Next is flatten send while a next send will flatten. "
@@ -140,6 +141,7 @@ SECTIONS: list[dict[str, str]] = [
             "last combined target. status includes utilization. "
             "Sleeves show spoken share of the paper book. "
             "Run Sleeves is Remaining / Spoken / Active / Idle. "
+            "After halt is four tiles Reason / Spent / Next / Resume. "
             "Risk names caps in desk words (Gross cap, Names, Orders today). "
             "Caps is Gross cap / Name cap / Names / Orders today. "
             "Caps is the spoken book. Tighten still edits the account form. "
@@ -263,6 +265,7 @@ SCREEN_HOWTOS: list[dict[str, str]] = [
         "body": (
             "Run is four bands: Start paper, Sleeves, After halt, Flatten account. "
             "Sleeves is four tiles Remaining / Spoken / Active / Idle. Remaining is the hero. "
+            "After halt is four tiles Reason / Spent / Next / Resume. "
             "Each sleeve card names imported, paper, halted, or stopped. Allocation is a rail. "
             "Start paper is a second explicit action. "
             "Start paper seeds last sleeve weights. "
