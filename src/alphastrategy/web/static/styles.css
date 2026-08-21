@@ -976,6 +976,14 @@ button.action:focus-visible,
   color: #ef4444;
 }
 
+#risk-cap-rebalance.warn {
+  color: #f59e0b;
+}
+
+#risk-cap-rebalance.fail {
+  color: #ef4444;
+}
+
 #risk-sleeves .tighter-line.warn {
   color: #f59e0b;
 }

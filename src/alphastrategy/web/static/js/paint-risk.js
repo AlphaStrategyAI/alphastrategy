@@ -12,6 +12,7 @@
     const orders = document.getElementById("risk-cap-orders");
     const longEl = document.getElementById("risk-cap-long");
     const orderEl = document.getElementById("risk-cap-order");
+    const rebalanceEl = document.getElementById("risk-cap-rebalance");
     if (!policy) {
       if (gross) gross.textContent = "—";
       if (name) name.textContent = "—";
@@ -19,6 +20,7 @@
       if (orders) orders.textContent = "—";
       if (longEl) longEl.textContent = "—";
       if (orderEl) orderEl.textContent = "—";
+      if (rebalanceEl) rebalanceEl.textContent = "—";
       return;
     }
     if (gross) gross.textContent = fmtPct(policy.max_gross);
@@ -46,6 +48,15 @@
       orderEl.textContent =
         policyLabel("max_order_notional_frac") + " " + fmtPct(policy.max_order_notional_frac);
     }
+    if (rebalanceEl) {
+      rebalanceEl.textContent =
+        policy.max_orders_per_rebalance == null ||
+        policy.max_orders_per_rebalance === undefined
+          ? "—"
+          : policyLabel("max_orders_per_rebalance") +
+            " " +
+            String(policy.max_orders_per_rebalance);
+    }
     function markTighter(el, spokenVal, accountVal) {
       if (!el) return;
       el.classList.remove("warn");
@@ -65,6 +76,11 @@
       policy.max_order_notional_frac,
       account && account.max_order_notional_frac
     );
+    markTighter(
+      rebalanceEl,
+      policy.max_orders_per_rebalance,
+      account && account.max_orders_per_rebalance
+    );
     const flattened =
       Boolean(state.status && state.status.flattened) ||
       (state.status &&
@@ -82,6 +98,7 @@
     markLimit(orders, "max_orders_per_day");
     markLimit(longEl, "long_only");
     markLimit(orderEl, "max_order_notional_frac");
+    markLimit(rebalanceEl, "max_orders_per_rebalance");
   }
 
   function buildRiskInputs(prefix, policy, current) {

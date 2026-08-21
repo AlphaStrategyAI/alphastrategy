@@ -70,7 +70,8 @@
         utilization().live_limit.reason
       ) {
         countEl.classList.add("warn");
-        kindEl.textContent = "flatten · " + kind;
+        const send = utilization().live_limit.kind === "send";
+        kindEl.textContent = (send ? "flatten send · " : "flatten · ") + kind;
       } else {
         kindEl.textContent = kind;
       }
